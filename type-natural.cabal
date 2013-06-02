@@ -4,13 +4,13 @@
 name:                type-natural
 version:             0.0.1.0
 synopsis:            Type-level natural and proofs of their properties.
--- description:         
+description:         Type-level natural numbers and proofs of their properties.
 homepage:            https://github.com/konn/type-natural
 license:             BSD3
 license-file:        LICENSE
 author:              Hiromi ISHII
 maintainer:          konn.jinro_at_gmail.com
--- copyright:           
+copyright:           (C) Hiromi ISHII 2013
 category:            Math
 build-type:          Simple
 cabal-version:       >=1.8
