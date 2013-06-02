@@ -9,7 +9,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                      -- | Peano natural numbers. It will be promoted to the type-level natural number.
                      Nat(..),
                      -- | Singleton type for 'Nat'.
-                     SNat
+                     SNat, Sing (SZ, SS)
                     -- ** Smart constructors
                     , sZ, sS
                     -- ** Arithmetic functions and thir singletons.
