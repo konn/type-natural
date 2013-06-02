@@ -14,6 +14,10 @@ copyright:           (C) Hiromi ISHII 2013
 category:            Math
 build-type:          Simple
 cabal-version:       >=1.8
+source-repository head
+  Type: git
+  Location: git://github.com/konn/type-natural.git
+
 
 library
   exposed-modules:     Data.Type.Natural
