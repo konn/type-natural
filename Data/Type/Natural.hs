@@ -45,10 +45,12 @@ module Data.Type.Natural (-- * Re-exported modules.
                     , sN15, sN16, sN17, sN18, sN19, sN20
                     ) where
 import           Data.Singletons
-import           Prelude          (Bool (..), Eq (..), Integral (..), Ord ((<)),
+import           Data.Type.Monomorphic
+import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord ((<)),
                                    Show (..), error, id, otherwise, ($), (.), undefined)
 import qualified Prelude          as P
 import           Proof.Equational
+
 
 --------------------------------------------------
 -- * Natural numbers and its singleton type
@@ -627,3 +629,11 @@ natToInt (S n) = natToInt n P.+ 1
 sNatToInt :: P.Num n => SNat x -> n
 sNatToInt SZ     = 0
 sNatToInt (SS n) = sNatToInt n P.+ 1
+
+instance Monomorphicable (Sing :: Nat -> *) where
+  type MonomorphicRep (Sing :: Nat -> *) = Int
+  demote  (Monomorphic sn) = sNatToInt sn
+  promote n
+      | n < 0     = error "negative integer!"
+      | n == 0    = Monomorphic sZ
+      | otherwise = withPolymorhic (n P.- 1) $ \sn -> Monomorphic $ sS sn
