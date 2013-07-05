@@ -17,7 +17,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                     , (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*)
                     , (:-:), (:-), (%:-), (%-)
                     -- ** Type-level predicate & judgements
-                    , Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance, leqRefl, leqSucc
+                    , Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance(..), leqRefl, leqSucc
                     , boolToPropLeq, boolToClassLeq, propToClassLeq
                     , LeqTrueInstance(..), propToBoolLeq
                     -- * Conversion functions
