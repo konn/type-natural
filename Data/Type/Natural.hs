@@ -22,6 +22,8 @@ module Data.Type.Natural (-- * Re-exported modules.
                     , LeqTrueInstance(..), propToBoolLeq
                     -- * Conversion functions
                     , natToInt, intToNat, sNatToInt
+                    -- * Quasi quotes for natural numbers
+                    , nat, snat
                     -- * Properties of natural numbers
                     , succCongEq, plusCongR, plusCongL, succPlusL, succPlusR
                     , plusZR, plusZL, eqPreservesS, plusAssociative
@@ -50,7 +52,8 @@ import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord (
                                    Show (..), error, id, otherwise, ($), (.), undefined)
 import qualified Prelude          as P
 import           Proof.Equational
-
+import Language.Haskell.TH.Quote
+import Language.Haskell.TH
 
 --------------------------------------------------
 -- * Natural numbers and its singleton type
@@ -637,3 +640,27 @@ instance Monomorphicable (Sing :: Nat -> *) where
       | n < 0     = error "negative integer!"
       | n == 0    = Monomorphic sZ
       | otherwise = withPolymorhic (n P.- 1) $ \sn -> Monomorphic $ sS sn
+
+--------------------------------------------------
+-- * Quasi Quoter
+--------------------------------------------------
+
+-- | Quotesi-quoter for 'Nat'. This can be used for an expression, pattern and type.
+--
+--   for example: @sing :: SNat ([nat| 2 |] :+ [nat| 5 |])@
+nat :: QuasiQuoter
+nat = QuasiQuoter { quoteExp = P.foldr appE (conE 'Z) . P.flip P.replicate (conE 'S) . P.read
+                  , quotePat = P.foldr (\a b -> conP a [b]) (conP 'Z []) . P.flip P.replicate 'S . P.read
+                  , quoteType = P.foldr appT (conT 'Z) . P.flip P.replicate (conT 'S) . P.read
+                  , quoteDec = error "not implemented"
+                  }
+
+-- | Quotesi-quoter for 'SNat'. This can be used for an expression, pattern and type.
+-- 
+--  For example: @[snat|12|] '%+' [snat| 5 |]@, @'sing' :: [snat| 12 |]@, @f [snat| 12 |] = \"hey\"@
+snat :: QuasiQuoter
+snat = QuasiQuoter { quoteExp = P.foldr appE (conE 'SZ) . P.flip P.replicate (conE 'SS) . P.read
+                   , quotePat = P.foldr (\a b -> conP a [b]) (conP 'SZ []) . P.flip P.replicate 'SS . P.read
+                   , quoteType = appT (conT ''SNat) . P.foldr appT (conT 'Z) . P.flip P.replicate (conT 'S) . P.read
+                   , quoteDec = error "not implemented"
+                   }
