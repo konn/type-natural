@@ -12,7 +12,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                      SNat, Sing (SZ, SS)
                     -- ** Smart constructors
                     , sZ, sS
-                    -- ** Arithmetic functions and thir singletons.
+                    -- ** Arithmetic functions and their singletons.
                     , min, Min, sMin, max, Max, sMax
                     , (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*)
                     , (:-:), (:-), (%:-), (%-)
