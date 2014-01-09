@@ -9,7 +9,7 @@ module Data.Type.Ordinal
          -- * Conversion from cardinals to ordinals.
          sNatToOrd', sNatToOrd, ordToInt, ordToSNat, unsafeFromInt,
          -- * Ordinal arithmetics
-         (@+)
+         (@+), enumOrdinal
        ) where
 import Data.Type.Monomorphic
 import Data.Type.Natural hiding (promote)
