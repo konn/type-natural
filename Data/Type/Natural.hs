@@ -5,47 +5,47 @@
 -- | Type level peano natural number, some arithmetic functions and their singletons.
 module Data.Type.Natural (-- * Re-exported modules.
                           module Data.Singletons,
-                     -- * Natural Numbers
-                     -- | Peano natural numbers. It will be promoted to the type-level natural number.
-                     Nat(..),
-                     -- | Singleton type for 'Nat'.
-                     SNat, Sing (SZ, SS)
-                    -- ** Smart constructors
-                    , sZ, sS
-                    -- ** Arithmetic functions and their singletons.
-                    , min, Min, sMin, max, Max, sMax
-                    , (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*)
-                    , (:-:), (:-), (%:-), (%-)
-                    -- ** Type-level predicate & judgements
-                    , Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance(..), leqRefl, leqSucc
-                    , boolToPropLeq, boolToClassLeq, propToClassLeq
-                    , LeqTrueInstance(..), propToBoolLeq
-                    -- * Conversion functions
-                    , natToInt, intToNat, sNatToInt
-                    -- * Quasi quotes for natural numbers
-                    , nat, snat
-                    -- * Properties of natural numbers
-                    , succCongEq, plusCongR, plusCongL, succPlusL, succPlusR
-                    , plusZR, plusZL, eqPreservesS, plusAssociative
-                    , multAssociative, multComm, multZL, multZR, multOneL, multOneR
-                    , plusMultDistr, multPlusDistr, multCongL, multCongR
-                    , sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent
-                    , eqSuccMinus, plusMinusEqL, plusMinusEqR, plusLeqL, plusLeqR
-                    , zAbsorbsMinR, zAbsorbsMinL, minLeqL, minLeqR, plusSR
-                    , leqRhs, leqLhs, leqTrans, minComm, leqAnitsymmetric
-                    , maxZL, maxComm, maxZR, maxLeqL, maxLeqR, plusMonotone
-                    -- * Useful type synonyms and constructors
-                    , zero, one, two, three, four, five, six, seven, eight, nine, ten, eleven
-                    , twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty
-                    , Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten
-                    , Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty
-                    , sZero, sOne, sTwo, sThree, sFour, sFive, sSix, sSeven, sEight, sNine, sTen, sEleven
-                    , sTwelve, sThirteen, sFourteen, sFifteen, sSixteen, sSeventeen, sEighteen, sNineteen, sTwenty
-                    , n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20
-                    , N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N13, N14, N15, N16, N17, N18, N19, N20
-                    , sN0, sN1, sN2, sN3, sN4, sN5, sN6, sN7, sN8, sN9, sN10, sN11, sN12, sN13, sN14
-                    , sN15, sN16, sN17, sN18, sN19, sN20
-                    ) where
+                          -- * Natural Numbers
+                          -- | Peano natural numbers. It will be promoted to the type-level natural number.
+                          Nat(..),
+                          -- | Singleton type for 'Nat'.
+                          SNat, Sing (SZ, SS),
+                          -- ** Smart constructors
+                          sZ, sS,
+                          -- ** Arithmetic functions and their singletons.
+                          min, Min, sMin, max, Max, sMax,
+                          (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*),
+                          (:-:), (:-), (%:-), (%-),
+                          -- ** Type-level predicate & judgements
+                          Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance(..), leqRefl, leqSucc,
+                          boolToPropLeq, boolToClassLeq, propToClassLeq,
+                          LeqTrueInstance(..), propToBoolLeq,
+                          -- * Conversion functions
+                          natToInt, intToNat, sNatToInt,
+                          -- * Quasi quotes for natural numbers
+                          nat, snat,
+                          -- * Properties of natural numbers
+                          succCongEq, plusCongR, plusCongL, succPlusL, succPlusR,
+                          plusZR, plusZL, eqPreservesS, plusAssociative,
+                          multAssociative, multComm, multZL, multZR, multOneL, multOneR,
+                          plusMultDistr, multPlusDistr, multCongL, multCongR,
+                          sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent,
+                          eqSuccMinus, plusMinusEqL, plusMinusEqR, plusLeqL, plusLeqR,
+                          zAbsorbsMinR, zAbsorbsMinL, minLeqL, minLeqR, plusSR,
+                          leqRhs, leqLhs, leqTrans, minComm, leqAnitsymmetric,
+                          maxZL, maxComm, maxZR, maxLeqL, maxLeqR, plusMonotone,
+                          -- * Useful type synonyms and constructors
+                          zero, one, two, three, four, five, six, seven, eight, nine, ten, eleven,
+                          twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty,
+                          Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
+                          Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty,
+                          sZero, sOne, sTwo, sThree, sFour, sFive, sSix, sSeven, sEight, sNine, sTen, sEleven,
+                          sTwelve, sThirteen, sFourteen, sFifteen, sSixteen, sSeventeen, sEighteen, sNineteen, sTwenty,
+                          n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20,
+                          N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N13, N14, N15, N16, N17, N18, N19, N20,
+                          sN0, sN1, sN2, sN3, sN4, sN5, sN6, sN7, sN8, sN9, sN10, sN11, sN12, sN13, sN14,
+                          sN15, sN16, sN17, sN18, sN19, sN20
+                         ) where
 import           Data.Singletons
 import           Data.Type.Monomorphic
 import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord ((<)),
@@ -275,77 +275,6 @@ leqTrans _ _ = error "impossible!"
 instance Preorder Leq where
   reflexivity = leqRefl
   transitivity = leqTrans
-
-{-
-singletons [d|
-  (<<) :: Nat -> Nat -> Bool
-  Zero   << Succ n = True
-  n      << Zero   = False
-  Succ n << Succ m = n << m
-  (<<=) :: Nat -> Nat -> Bool
-  Zero   <<= _      = True
-  Succ n <<= Zero   = False
-  Succ n <<= Succ m = n <<= m
- |]
-
-type a :>> b = b :<< a
-type a :> b  = b :<: a
-
-type a :<=: b = a :<: b :\/: a :=: b
-
-instance FromBool (n :<: m) where
-  type Predicate (n :<: m) = n :<< m
-  type Args (n :<: m) = '[Sing n, Sing m]
-  fromBool = boolToPropLt
-
-boolToPropLt :: (x :<< y) ~ True => SNat x -> SNat y -> x :<: y
-boolToPropLt SZ (SS _)     = ZeroLtSucc
-boolToPropLt (SS n) (SS m) = SuccLtSucc $ boolToPropLt n m
-boolToPropLt _ _         = bugInGHC
-
-instance FromBool (n :<=: m) where
-  type Predicate (n :<=: m) = n :<<= m
-  type Args (n :<=: m) = '[Sing n, Sing m]
-  fromBool = boolToPropLe
-
-boolToPropLe :: (x :<<= y) ~ True => SNat x -> SNat y -> x :<=: y
-boolToPropLe SZ SZ         = Right Refl
-boolToPropLe SZ (SS _)     = Left ZeroLtSucc
-boolToPropLe (SS n) (SS m) =
-    case boolToPropLe n m of
-      Left reason -> Left $ SuccLtSucc reason
-      Right Refl  -> Right Refl
-boolToPropLe _ _         = bugInGHC
-
-rev :: (n :<<= m) ~ False => SNat n -> SNat m -> m :<: n
-rev (SS _) SZ     = ZeroLtSucc
-rev (SS n) (SS m) = SuccLtSucc $ rev n m
-rev _         _         = bugInGHC
-
-leTrans :: forall n m l. n :<=: m -> m :<=: l -> n :<=: l
-leTrans (Right Refl) a = a
-leTrans a (Right Refl) = a
-leTrans (Left ZeroLtSucc) (Left (SuccLtSucc _)) = Left ZeroLtSucc
-leTrans (Left (SuccLtSucc a)) (Left (SuccLtSucc b)) =
-  case leTrans (Left a) (Left b) of
-    Right Refl -> Right Refl
-    Left le -> Left $ SuccLtSucc le
-leTrans _ _ = bugInGHC
-
-nLtSn :: SNat n -> n :<: Succ n
-nLtSn SZ     = ZeroLtSucc
-nLtSn (SS n) = SuccLtSucc (nLtSn n)
-
-comparable :: SNat n -> SNat m -> n :<: m :\/: n :=: m :\/: m :<: n
-comparable SZ SZ         = orIntroR (orIntroL Refl)
-comparable SZ (SS _)     = orIntroL ZeroLtSucc
-comparable (SS _) SZ     = orIntroR (orIntroR ZeroLtSucc)
-comparable (SS n) (SS m) =
-  case comparable n m of
-    Left nLTm          -> orIntroL $ SuccLtSucc nLTm
-    Right (Left Refl)  -> orIntroR $ orIntroL Refl
-    Right (Right mLTn) -> orIntroR $ orIntroR $ SuccLtSucc mLTn
--}
 
 --------------------------------------------------
 -- * Properties

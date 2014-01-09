@@ -7,12 +7,12 @@ module Data.Type.Ordinal
        ( -- * Data-types
          Ordinal (..),
          -- * Conversion from cardinals to ordinals.
-         sNatToOrd', sNatToOrd, ordToInt, ordToSNat,
+         sNatToOrd', sNatToOrd, ordToInt, ordToSNat, unsafeFromInt,
          -- * Ordinal arithmetics
          (@+)
        ) where
 import Data.Type.Monomorphic
-import Data.Type.Natural
+import Data.Type.Natural hiding (promote)
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -27,10 +27,55 @@ data Ordinal n where
 instance Read (Ordinal Z) where
   readsPrec _ _ = []
 
+instance SingRep n => Num (Ordinal n) where
+  _ + _ = error "Finite ordinal is not closed under addition."
+  _ - _ = error "Ordinal subtraction is not defined"
+  negate OZ = OZ
+  negate _  = error "There are no negative oridnals!"
+  OZ * _ = OZ
+  _ * OZ = OZ
+  _ * _  = error "Finite ordinal is not closed under multiplication"
+  abs    = id
+  signum = error "What does Ordinal sign mean?"
+  fromInteger = unsafeFromInt . fromInteger
+
 deriving instance Read (Ordinal n) => Read (Ordinal (S n))
 deriving instance Show (Ordinal n)
 deriving instance Eq (Ordinal n)
 deriving instance Ord (Ordinal n)
+
+instance SingRep n => Enum (Ordinal n) where
+  fromEnum = ordToInt
+  toEnum   = unsafeFromInt
+  enumFrom = enumFromOrd
+  enumFromTo = enumFromToOrd
+
+enumFromToOrd :: forall n. SingRep n => Ordinal n -> Ordinal n -> [Ordinal n]
+enumFromToOrd ok ol =
+  let k = ordToInt ok
+      l = ordToInt ol
+  in take (l - k + 1) $ enumFromOrd ok
+
+enumFromOrd :: forall n. SingRep n => Ordinal n -> [Ordinal n]
+enumFromOrd ord = drop (ordToInt ord) $ enumOrdinal (sing :: SNat n)
+
+enumOrdinal :: SNat n -> [Ordinal n]
+enumOrdinal SZ = []
+enumOrdinal (SS n) = OZ : map OS (enumOrdinal n)
+
+instance SingRep n => Bounded (Ordinal (S n)) where
+  minBound = OZ
+  maxBound =
+    case propToBoolLeq $ leqRefl (sing :: SNat n) of
+      LeqTrueInstance -> sNatToOrd (sing :: SNat n)
+
+unsafeFromInt :: forall n. SingRep n => Int -> Ordinal n
+unsafeFromInt n = 
+    case promote n of
+      Monomorphic sn ->
+        case sS sn %:<<= (sing :: SNat n) of
+          STrue -> sNatToOrd' (sing :: SNat n) sn
+          SFalse -> error "Bound over!"
 
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
 sNatToOrd' :: (S m :<<= n) ~ True => SNat n -> SNat m -> Ordinal n
@@ -80,4 +125,3 @@ OS n @+ m =
   case sing :: SNat n of
     SS sn -> case singInstance sn of SingInstance -> OS $ n @+ m
     _ -> bugInGHC
-
