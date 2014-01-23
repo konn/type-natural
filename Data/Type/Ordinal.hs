@@ -7,7 +7,9 @@ module Data.Type.Ordinal
        ( -- * Data-types
          Ordinal (..),
          -- * Conversion from cardinals to ordinals.
-         sNatToOrd', sNatToOrd, ordToInt, ordToSNat, unsafeFromInt,
+         sNatToOrd', sNatToOrd, ordToInt, ordToSNat,
+         ordToSNat', CastedOrdinal(..),
+         unsafeFromInt,
          -- * Ordinal arithmetics
          (@+), enumOrdinal
        ) where
@@ -86,6 +88,16 @@ sNatToOrd' _ _ = bugInGHC
 -- | 'sNatToOrd'' with @n@ inferred.
 sNatToOrd :: (SingRep n, (S m :<<= n) ~ True) => SNat m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
+
+data CastedOrdinal n where
+  CastedOrdinal :: (S m :<<= n) ~ True => SNat m -> CastedOrdinal n
+
+-- | Convert @Ordinal n@ into @SNat m@ with the proof of @S m :<<= n@.
+ordToSNat' :: Ordinal n -> CastedOrdinal n
+ordToSNat' OZ = CastedOrdinal sZ
+ordToSNat' (OS on) =
+  case ordToSNat' on of
+    CastedOrdinal m -> CastedOrdinal (sS m)
 
 -- | Convert @Ordinal n@ into monomorphic @SNat@
 ordToSNat :: Ordinal n -> Monomorphic (Sing :: Nat -> *)
