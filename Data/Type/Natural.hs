@@ -17,9 +17,9 @@ module Data.Type.Natural (-- * Re-exported modules.
                           (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*),
                           (:-:), (:-), (%:-), (%-),
                           -- ** Type-level predicate & judgements
-                          Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance(..), leqRefl, leqSucc,
+                          Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance, leqRefl, leqSucc,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
-                          LeqTrueInstance(..), propToBoolLeq,
+                          LeqTrueInstance, propToBoolLeq,
                           -- * Conversion functions
                           natToInt, intToNat, sNatToInt,
                           -- * Quasi quotes for natural numbers
@@ -52,7 +52,9 @@ import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord (
                                    Show (..), error, id, otherwise, ($), (.), undefined)
 import qualified Prelude          as P
 import           Proof.Equational
+import Data.Constraint hiding ((:-))
 import Language.Haskell.TH.Quote
+import Unsafe.Coerce
 import Language.Haskell.TH
 
 --------------------------------------------------
@@ -203,8 +205,7 @@ data Leq (n :: Nat) (m :: Nat) where
   ZeroLeq     :: SNat m -> Leq Zero m
   SuccLeqSucc :: Leq n m -> Leq (S n) (S m)
 
-data LeqTrueInstance a b where
-  LeqTrueInstance :: (a :<<= b) ~ True => LeqTrueInstance a b
+type LeqTrueInstance a b = Dict ((a :<<= b) ~ True)
 
 (%-) :: (n :<<= m) ~ True => SNat n -> SNat m -> SNat (n :-: m)
 n   %- SZ    = n
@@ -225,13 +226,14 @@ deriving instance Show (a :<: b)
 -- * Total orderings on natural numbers.
 --------------------------------------------------
 propToBoolLeq :: Leq n m -> LeqTrueInstance n m
-propToBoolLeq (ZeroLeq _) = LeqTrueInstance
-propToBoolLeq (SuccLeqSucc leq) =
-  case propToBoolLeq leq of
-    LeqTrueInstance -> LeqTrueInstance
+propToBoolLeq (ZeroLeq _) = Dict
+propToBoolLeq (SuccLeqSucc leq) = case propToBoolLeq leq of Dict -> Dict
+{-# RULES
+ "propToBoolLeq/unsafeCoerce" forall (x :: Leq n m) .
+  propToBoolLeq x = unsafeCoerce (Dict :: Dict ()) :: Dict ((n :<<= m) ~ True)
+ #-}
 
-data LeqInstance n m where
-  LeqInstance :: (n :<= m) => LeqInstance n m
+type LeqInstance n m = Dict (n :<= m)
 
 boolToPropLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> Leq n m
 boolToPropLeq SZ     m      = ZeroLeq m
@@ -239,17 +241,21 @@ boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
 boolToPropLeq _      _      = bugInGHC
 
 boolToClassLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> LeqInstance n m
-boolToClassLeq SZ     _      = LeqInstance
-boolToClassLeq (SS n) (SS m) =
-  case boolToClassLeq n m of
-    LeqInstance -> LeqInstance
+boolToClassLeq SZ     _      = Dict
+boolToClassLeq (SS n) (SS m) = case boolToClassLeq n m of Dict -> Dict
 boolToClassLeq _ _ = bugInGHC
+{-# RULES
+ "boolToClassLeq/unsafeCoerce" forall (n :: SNat n) (m :: SNat m).
+  boolToClassLeq n m = unsafeCoerce (Dict :: Dict ()) :: Dict (n :<= m)
+ #-}
 
 propToClassLeq :: Leq n m -> LeqInstance n m
-propToClassLeq (ZeroLeq _) = LeqInstance
-propToClassLeq (SuccLeqSucc leq) =
-  case propToClassLeq leq of
-    LeqInstance -> LeqInstance
+propToClassLeq (ZeroLeq _) = Dict
+propToClassLeq (SuccLeqSucc leq) = case propToClassLeq leq of Dict -> Dict
+{-# RULES
+ "propToClassLeq/unsafeCoerce" forall (x :: Leq n m) .
+  propToClassLeq x = unsafeCoerce (Dict :: Dict ()) :: Dict (n :<= m)
+ #-}
 
 leqRefl :: SNat n -> Leq n n
 leqRefl SZ = ZeroLeq sZ
@@ -326,9 +332,6 @@ plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
     Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
 plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
 
-infer :: Proxy a
-infer = Proxy
-
 plusCongL :: SNat n -> m :=: m' -> n :+ m :=: n :+ m'
 plusCongL _ Refl = Refl
 
@@ -394,7 +397,7 @@ plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :=: n
 plusMinusEqL SZ     m = minusNilpotent m
 plusMinusEqL (SS n) m =
   case propToBoolLeq (plusLeqR n m) of
-    LeqTrueInstance -> transitivity (eqSuccMinus (n %+ m) m) (eqPreservesS $ plusMinusEqL n m)
+    Dict -> transitivity (eqSuccMinus (n %+ m) m) (eqPreservesS $ plusMinusEqL n m)
 
 plusMinusEqR :: SNat n -> SNat m -> (m :+: n) :-: m :=: n
 plusMinusEqR n m = transitivity (minusCongEq (plusCommutative m n) m) (plusMinusEqL n m)

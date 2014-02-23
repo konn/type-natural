@@ -27,3 +27,4 @@ library
                ,       equational-reasoning     == 0.0.*
                ,       monomorphic              >= 0.0.3
                ,       template-haskell         == 2.8.*
+               ,       constraints              == 0.3.*

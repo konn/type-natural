@@ -15,6 +15,7 @@ module Data.Type.Ordinal
        ) where
 import Data.Type.Monomorphic
 import Data.Type.Natural hiding (promote)
+import Data.Constraint
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -69,7 +70,7 @@ instance SingRep n => Bounded (Ordinal (S n)) where
   minBound = OZ
   maxBound =
     case propToBoolLeq $ leqRefl (sing :: SNat n) of
-      LeqTrueInstance -> sNatToOrd (sing :: SNat n)
+      Dict -> sNatToOrd (sing :: SNat n)
 
 unsafeFromInt :: forall n. SingRep n => Int -> Ordinal n
 unsafeFromInt n = 
@@ -132,8 +133,9 @@ OZ @+ n =
   in case singInstance (sn %+ sm) of
        SingInstance ->
          case propToBoolLeq (plusLeqR sn sm) of
-           LeqTrueInstance -> inclusion n
+           Dict -> inclusion n
 OS n @+ m =
   case sing :: SNat n of
     SS sn -> case singInstance sn of SingInstance -> OS $ n @+ m
     _ -> bugInGHC
+
