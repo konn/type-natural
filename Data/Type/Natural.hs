@@ -225,6 +225,20 @@ deriving instance Show (a :<: b)
 --------------------------------------------------
 -- * Total orderings on natural numbers.
 --------------------------------------------------
+propToBoolLeq :: forall n m. Leq n m -> LeqTrueInstance n m
+propToBoolLeq _ = unsafeCoerce (Dict :: Dict ())
+{-# INLINE propToBoolLeq #-}
+
+boolToClassLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> LeqInstance n m
+boolToClassLeq _ = unsafeCoerce (Dict :: Dict ())
+{-# INLINE boolToClassLeq #-}
+
+propToClassLeq :: Leq n m -> LeqInstance n m
+propToClassLeq _ = unsafeCoerce (Dict :: Dict ())
+{-# INLINE propToClassLeq #-}
+
+{-
+-- | Below is the "proof" of the correctness of above:
 propToBoolLeq :: Leq n m -> LeqTrueInstance n m
 propToBoolLeq (ZeroLeq _) = Dict
 propToBoolLeq (SuccLeqSucc leq) = case propToBoolLeq leq of Dict -> Dict
@@ -232,13 +246,6 @@ propToBoolLeq (SuccLeqSucc leq) = case propToBoolLeq leq of Dict -> Dict
  "propToBoolLeq/unsafeCoerce" forall (x :: Leq n m) .
   propToBoolLeq x = unsafeCoerce (Dict :: Dict ()) :: Dict ((n :<<= m) ~ True)
  #-}
-
-type LeqInstance n m = Dict (n :<= m)
-
-boolToPropLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> Leq n m
-boolToPropLeq SZ     m      = ZeroLeq m
-boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
-boolToPropLeq _      _      = bugInGHC
 
 boolToClassLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> LeqInstance n m
 boolToClassLeq SZ     _      = Dict
@@ -256,6 +263,14 @@ propToClassLeq (SuccLeqSucc leq) = case propToClassLeq leq of Dict -> Dict
  "propToClassLeq/unsafeCoerce" forall (x :: Leq n m) .
   propToClassLeq x = unsafeCoerce (Dict :: Dict ()) :: Dict (n :<= m)
  #-}
+-}
+
+type LeqInstance n m = Dict (n :<= m)
+
+boolToPropLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> Leq n m
+boolToPropLeq SZ     m      = ZeroLeq m
+boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
+boolToPropLeq _      _      = bugInGHC
 
 leqRefl :: SNat n -> Leq n n
 leqRefl SZ = ZeroLeq sZ
