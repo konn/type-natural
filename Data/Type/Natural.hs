@@ -17,7 +17,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*),
                           (:-:), (:-), (%:-), (%-),
                           -- ** Type-level predicate & judgements
-                          Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance, leqRefl, leqSucc,
+                          Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
                           LeqTrueInstance, propToBoolLeq,
                           -- * Conversion functions
@@ -30,10 +30,13 @@ module Data.Type.Natural (-- * Re-exported modules.
                           multAssociative, multComm, multZL, multZR, multOneL, multOneR,
                           plusMultDistr, multPlusDistr, multCongL, multCongR,
                           sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent,
-                          eqSuccMinus, plusMinusEqL, plusMinusEqR, plusLeqL, plusLeqR,
-                          zAbsorbsMinR, zAbsorbsMinL, minLeqL, minLeqR, plusSR,
-                          leqRhs, leqLhs, leqTrans, minComm, leqAnitsymmetric,
-                          maxZL, maxComm, maxZR, maxLeqL, maxLeqR, plusMonotone,
+                          eqSuccMinus, plusMinusEqL, plusMinusEqR,
+                          zAbsorbsMinR, zAbsorbsMinL, plusSR,
+                          leqRhs, leqLhs, minComm, maxZL, maxComm, maxZR,
+                          -- * Properties of ordering 'Leq'
+                          leqRefl, leqSucc, leqTrans, plusMonotone, plusLeqL, plusLeqR,
+                          minLeqL, minLeqR, leqAnitsymmetric, maxLeqL, maxLeqR,
+                          leqSnZAbsurd, leqnZElim, leqSnLeq, leqPred, leqSnnAbsurd,
                           -- * Useful type synonyms and constructors
                           zero, one, two, three, four, five, six, seven, eight, nine, ten, eleven,
                           twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty,
@@ -272,14 +275,6 @@ boolToPropLeq SZ     m      = ZeroLeq m
 boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
 boolToPropLeq _      _      = bugInGHC
 
-leqRefl :: SNat n -> Leq n n
-leqRefl SZ = ZeroLeq sZ
-leqRefl (SS n) = SuccLeqSucc $ leqRefl n
-
-leqSucc :: SNat n -> Leq n (S n)
-leqSucc SZ = ZeroLeq sOne
-leqSucc (SS n) = SuccLeqSucc $ leqSucc n
-
 leqRhs :: Leq n m -> SNat m
 leqRhs (ZeroLeq m) = m
 leqRhs (SuccLeqSucc leq) = sS $ leqRhs leq
@@ -287,15 +282,6 @@ leqRhs (SuccLeqSucc leq) = sS $ leqRhs leq
 leqLhs :: Leq n m -> SNat n
 leqLhs (ZeroLeq _) = sZ
 leqLhs (SuccLeqSucc leq) = sS $ leqLhs leq
-
-leqTrans :: Leq n m -> Leq m l -> Leq n l
-leqTrans (ZeroLeq _) leq = ZeroLeq $ leqRhs leq
-leqTrans (SuccLeqSucc nLeqm) (SuccLeqSucc mLeql) = SuccLeqSucc $ leqTrans nLeqm mLeql
-leqTrans _ _ = error "impossible!"
-
-instance Preorder Leq where
-  reflexivity = leqRefl
-  transitivity = leqTrans
 
 --------------------------------------------------
 -- * Properties
@@ -339,13 +325,6 @@ plusSR n m =
     === (n %+ m) %+ sOne `because` sAndPlusOne (n %+ m)
     === n %+ (m %+ sOne) `because` symmetry (plusAssociative n m sOne)
     === n %+ sS m        `because` plusCongL n (symmetry $ sAndPlusOne m)
-
-plusMonotone :: Leq n m -> Leq l k -> Leq (n :+: l) (m :+: k)
-plusMonotone (ZeroLeq m) (ZeroLeq k) = ZeroLeq (m %+ k)
-plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
-  case plusSR m (leqRhs leq) of
-    Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
-plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
 
 plusCongL :: SNat n -> m :=: m' -> n :+ m :=: n :+ m'
 plusCongL _ Refl = Refl
@@ -399,15 +378,6 @@ eqSuccMinus (SS n) (SS m) =
     =~= sS (sS n %:- sS m)
 eqSuccMinus _ _ = bugInGHC
 
-plusLeqL :: SNat n -> SNat m -> Leq n (n :+: m)
-plusLeqL SZ     m = case plusZR m of Refl -> ZeroLeq m
-plusLeqL (SS n) m = SuccLeqSucc $ plusLeqL n m
-
-plusLeqR :: SNat n -> SNat m -> Leq m (n :+: m)
-plusLeqR n m =
-  case plusCommutative n m of
-    Refl -> plusLeqL m n
-
 plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :=: n
 plusMinusEqL SZ     m = minusNilpotent m
 plusMinusEqL (SS n) m =
@@ -427,24 +397,11 @@ zAbsorbsMinL :: SNat n -> Min Z n :=: Z
 zAbsorbsMinL SZ     = Refl
 zAbsorbsMinL (SS n) = case zAbsorbsMinL n of Refl -> Refl
 
-minLeqL :: SNat n -> SNat m -> Leq (Min n m) n
-minLeqL SZ m = case zAbsorbsMinL m of Refl -> ZeroLeq sZ
-minLeqL n SZ = case zAbsorbsMinR n of Refl -> ZeroLeq n
-minLeqL (SS n) (SS m) = SuccLeqSucc (minLeqL n m)
-
-minLeqR :: SNat n -> SNat m -> Leq (Min n m) m
-minLeqR n m = case minComm n m of Refl -> minLeqL m n
-
 minComm :: SNat n -> SNat m -> Min n m :=: Min m n
 minComm SZ     SZ = Refl
 minComm SZ     (SS _) = Refl
 minComm (SS _) SZ = Refl
 minComm (SS n) (SS m) = case minComm n m of Refl -> Refl
-
-leqAnitsymmetric :: Leq n m -> Leq m n -> n :=: m
-leqAnitsymmetric (ZeroLeq _) (ZeroLeq _) = Refl
-leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = eqPreservesS $ leqAnitsymmetric leq1 leq2
-leqAnitsymmetric _ _ = bugInGHC
 
 maxZL :: SNat n -> Max Z n :=: n
 maxZL SZ = Refl
@@ -458,16 +415,6 @@ maxComm (SS n) (SS m) = case maxComm n m of Refl -> Refl
 
 maxZR :: SNat n -> Max n Z :=: n
 maxZR n = transitivity (maxComm n sZ) (maxZL n)
-
-maxLeqL :: SNat n -> SNat m -> Leq n (Max n m)
-maxLeqL SZ m = ZeroLeq (sMax sZ m)
-maxLeqL n SZ = case maxZR n of
-                 Refl -> leqRefl n
-maxLeqL (SS n) (SS m) = SuccLeqSucc $ maxLeqL n m
-
-maxLeqR :: SNat n -> SNat m -> Leq m (Max n m)
-maxLeqR n m = case maxComm n m of
-                Refl -> maxLeqL m n
 
 newtype MultPlusDistr l m n =
     MultPlusDistr { unMultPlusDistr :: l :* (m :+ n) :=: l :* m :+ l :* n}
@@ -559,6 +506,93 @@ multComm (SS n) m =
     === m %* (n %+ sOne)     `because` symmetry (multPlusDistr m n sOne)
     === m %* sS n            `because` multCongL m (symmetry $ sAndPlusOne n)
 
+
+--------------------------------------------------
+-- * Properties of 'Leq'
+--------------------------------------------------
+
+leqRefl :: SNat n -> Leq n n
+leqRefl SZ = ZeroLeq sZ
+leqRefl (SS n) = SuccLeqSucc $ leqRefl n
+
+leqSucc :: SNat n -> Leq n (S n)
+leqSucc SZ = ZeroLeq sOne
+leqSucc (SS n) = SuccLeqSucc $ leqSucc n
+
+leqTrans :: Leq n m -> Leq m l -> Leq n l
+leqTrans (ZeroLeq _) leq = ZeroLeq $ leqRhs leq
+leqTrans (SuccLeqSucc nLeqm) (SuccLeqSucc mLeql) = SuccLeqSucc $ leqTrans nLeqm mLeql
+leqTrans _ _ = error "impossible!"
+
+instance Preorder Leq where
+  reflexivity = leqRefl
+  transitivity = leqTrans
+
+plusMonotone :: Leq n m -> Leq l k -> Leq (n :+: l) (m :+: k)
+plusMonotone (ZeroLeq m) (ZeroLeq k) = ZeroLeq (m %+ k)
+plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
+  case plusSR m (leqRhs leq) of
+    Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
+plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
+
+plusLeqL :: SNat n -> SNat m -> Leq n (n :+: m)
+plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ plusZL m) m
+plusLeqL (SS n) m =
+  start (sS n)
+    =<= sS (n %+ m) `because` SuccLeqSucc (plusLeqL n m)
+    =~= sS n %+ m
+
+plusLeqR :: SNat n -> SNat m -> Leq m (n :+: m)
+plusLeqR n m =
+  case plusCommutative n m of
+    Refl -> plusLeqL m n
+
+minLeqL :: SNat n -> SNat m -> Leq (Min n m) n
+minLeqL SZ m = case zAbsorbsMinL m of Refl -> ZeroLeq sZ
+minLeqL n SZ = case zAbsorbsMinR n of Refl -> ZeroLeq n
+minLeqL (SS n) (SS m) = SuccLeqSucc (minLeqL n m)
+
+minLeqR :: SNat n -> SNat m -> Leq (Min n m) m
+minLeqR n m = case minComm n m of Refl -> minLeqL m n
+
+leqAnitsymmetric :: Leq n m -> Leq m n -> n :=: m
+leqAnitsymmetric (ZeroLeq _) (ZeroLeq _) = Refl
+leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = eqPreservesS $ leqAnitsymmetric leq1 leq2
+leqAnitsymmetric _ _ = bugInGHC
+
+maxLeqL :: SNat n -> SNat m -> Leq n (Max n m)
+maxLeqL SZ m = ZeroLeq (sMax sZ m)
+maxLeqL n SZ = case maxZR n of
+                 Refl -> leqRefl n
+maxLeqL (SS n) (SS m) = SuccLeqSucc $ maxLeqL n m
+
+maxLeqR :: SNat n -> SNat m -> Leq m (Max n m)
+maxLeqR n m = case maxComm n m of
+                Refl -> maxLeqL m n
+
+leqSnZAbsurd :: Leq (S n) Z -> a
+leqSnZAbsurd _ = error "cannot be occured"
+
+leqnZElim :: Leq n Z -> n :=: Z
+leqnZElim (ZeroLeq SZ) = Refl
+
+leqSnLeq :: Leq (S n) m -> Leq n m
+leqSnLeq (SuccLeqSucc leq) =
+  let n = leqLhs leq
+      m = sS $ leqRhs leq
+  in start n
+       =<= sS n   `because` leqSucc n
+       =<= m      `because` SuccLeqSucc leq
+
+leqPred :: Leq (S n) (S m) -> Leq n m
+leqPred (SuccLeqSucc leq) = leq
+
+leqSnnAbsurd :: Leq (S n) n -> a
+leqSnnAbsurd (SuccLeqSucc leq) =
+  case leqLhs leq of
+    SS _ -> leqSnnAbsurd leq
+    _    -> bugInGHC "cannot be occured"
+  
 --------------------------------------------------
 -- * Conversion functions.
 --------------------------------------------------
