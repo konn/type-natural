@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds, EmptyDataDecls, FlexibleContexts, FlexibleInstances #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, TemplateHaskell #-}
 {-# LANGUAGE GADTs, KindSignatures, PolyKinds, StandaloneDeriving           #-}
 {-# LANGUAGE TypeFamilies, TypeOperators                                    #-}
 -- | Set-theoretic ordinal arithmetic
@@ -9,12 +9,18 @@ module Data.Type.Ordinal
          -- * Conversion from cardinals to ordinals.
          sNatToOrd', sNatToOrd, ordToInt, ordToSNat,
          ordToSNat', CastedOrdinal(..),
-         unsafeFromInt,
+         unsafeFromInt, inclusion, inclusion',
          -- * Ordinal arithmetics
-         (@+), enumOrdinal
+         (@+), enumOrdinal,
+         -- * Quasi Quote
+         od
        ) where
 import Data.Type.Monomorphic
+import Unsafe.Coerce
+import Language.Haskell.TH.Quote
+import Language.Haskell.TH
 import Data.Type.Natural hiding (promote)
+import Proof.Equational (coerce)
 import Data.Constraint
 
 -- | Set-theoretic (finite) ordinals:
@@ -116,26 +122,38 @@ ordToInt (OS n) = 1 + ordToInt n
 
 -- | Inclusion function for ordinals.
 inclusion' :: (n :<<= m) ~ True => SNat m -> Ordinal n -> Ordinal m
+inclusion' _ = unsafeCoerce
+{-# INLINE inclusion' #-}
+{-
+-- The "proof" of the correctness of the above
+inclusion' :: (n :<<= m) ~ True => SNat m -> Ordinal n -> Ordinal m
 inclusion' (SS SZ) OZ = OZ
 inclusion' (SS (SS _)) OZ = OZ
 inclusion' (SS (SS n)) (OS m) = OS $ inclusion' (sS n) m
 inclusion' _ _ = bugInGHC
+-}
 
 -- | Inclusion function for ordinals with codomain inferred.
-inclusion :: ((n :<<= m) ~ True, SingRep m) => Ordinal n -> Ordinal m
-inclusion = inclusion' sing
+inclusion :: ((n :<<= m) ~ True) => Ordinal n -> Ordinal m
+inclusion on = unsafeCoerce on
+{-# INLINE inclusion #-}
 
 -- | Ordinal addition.
 (@+) :: forall n m. (SingRep n, SingRep m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
 OZ @+ n =
   let sn = sing :: SNat n
       sm = sing :: SNat m
-  in case singInstance (sn %+ sm) of
-       SingInstance ->
-         case propToBoolLeq (plusLeqR sn sm) of
-           Dict -> inclusion n
+  in case propToBoolLeq (plusLeqR sn sm) of
+      Dict -> inclusion n
 OS n @+ m =
   case sing :: SNat n of
     SS sn -> case singInstance sn of SingInstance -> OS $ n @+ m
     _ -> bugInGHC
 
+-- | Quasiquoter for ordinals
+od :: QuasiQuoter
+od = QuasiQuoter { quoteExp = foldr appE (conE 'OZ) . flip replicate (conE 'OS) . read
+                 , quoteType = error "No type quoter for Ordinals"
+                 , quotePat = foldr (\a b -> conP a [b]) (conP 'OZ []) . flip replicate 'OS . read
+                 , quoteDec = error "No declaration quoter for Ordinals"
+                 }
