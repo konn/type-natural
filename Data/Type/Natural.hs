@@ -450,14 +450,6 @@ maxComm (SS n) (SS m) = case maxComm n m of Refl -> Refl
 maxZR :: SNat n -> Max n Z :=: n
 maxZR n = transitivity (maxComm n sZ) (maxZL n)
 
-newtype MultPlusDistr l m n =
-    MultPlusDistr { unMultPlusDistr :: l :* (m :+ n) :=: l :* m :+ l :* n}
-
-instance Proposition (MultPlusDistr l m) where
-  type OriginalProp (MultPlusDistr l m) n = l :* (m :+ n) :=: l :* m :+ l :* n
-  wrap = MultPlusDistr
-  unWrap = unMultPlusDistr
-
 multPlusDistr :: SNat n -> SNat m -> SNat l -> n :* (m :+ l) :=: n :* m :+ n :* l
 multPlusDistr SZ     _ _ = Refl
 multPlusDistr (SS n) m l = 
