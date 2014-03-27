@@ -51,7 +51,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           sN15, sN16, sN17, sN18, sN19, sN20
                          ) where
 import           Data.Singletons
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 781
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 import Data.Singletons.TH
 #endif
 import           Data.Type.Monomorphic
