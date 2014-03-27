@@ -31,4 +31,4 @@ library
   if impl(ghc < 7.8)
     build-depends:     singletons               == 0.8.*
   else
-    build-depends:     singletons               >= 0.8     && < 0.11
+    build-depends:     singletons               >= 0.10    && < 0.11
