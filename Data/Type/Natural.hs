@@ -27,11 +27,12 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- * Properties of natural numbers
                           succCongEq, plusCongR, plusCongL, succPlusL, succPlusR,
                           plusZR, plusZL, eqPreservesS, plusAssociative,
-                          multAssociative, multComm, multZL, multZR, multOneL, multOneR,
+                          multAssociative, multComm, multZL, multZR, multOneL,
+                          multOneR, snEqZAbsurd, succInjective, plusInjectiveL, plusInjectiveR,
                           plusMultDistr, multPlusDistr, multCongL, multCongR,
                           sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent,
                           eqSuccMinus, plusMinusEqL, plusMinusEqR,
-                          zAbsorbsMinR, zAbsorbsMinL, plusSR,
+                          zAbsorbsMinR, zAbsorbsMinL, plusSR, plusNeutralR, plusNeutralL,
                           leqRhs, leqLhs, minComm, maxZL, maxComm, maxZR,
                           -- * Properties of ordering 'Leq'
                           leqRefl, leqSucc, leqTrans, plusMonotone, plusLeqL, plusLeqR,
@@ -302,6 +303,23 @@ plusZL _ = Refl
 succCongEq :: n :=: m -> S n :=: S m
 succCongEq Refl = Refl
 
+snEqZAbsurd :: S n :=: Z -> a
+snEqZAbsurd _ = bugInGHC "impossible!"
+
+succInjective :: S n :=: S m -> n :=: m
+succInjective Refl = Refl
+
+plusInjectiveL :: SNat n -> SNat m -> SNat l -> n :+ m :=: n :+ l -> m :=: l
+plusInjectiveL SZ     _ _ Refl = Refl
+plusInjectiveL (SS n) m l eq   = plusInjectiveL n m l $ succInjective eq
+
+plusInjectiveR :: SNat n -> SNat m -> SNat l -> n :+ l :=: m :+ l -> n :=: m
+plusInjectiveR n m l eq = plusInjectiveL l n m $
+  start (l %:+ n)
+    === n %:+ l   `because` plusCommutative l n
+    === m %:+ l   `because` eq
+    === l %:+ m   `because` plusCommutative m l 
+
 sAndPlusOne :: SNat n -> S n :=: n :+: One
 sAndPlusOne SZ = Refl
 sAndPlusOne (SS n) =
@@ -506,6 +524,18 @@ multComm (SS n) m =
     === m %* (n %+ sOne)     `because` symmetry (multPlusDistr m n sOne)
     === m %* sS n            `because` multCongL m (symmetry $ sAndPlusOne n)
 
+plusNeutralR :: SNat n -> SNat m -> n :+ m :=: n -> m :=: Z
+plusNeutralR SZ m eq =
+  start m
+    =~= sZ %:+ m
+    === sZ       `because` eq
+plusNeutralR (SS n) m eq = plusNeutralR n m $ succInjective eq
+
+plusNeutralL :: SNat n -> SNat m -> n :+ m :=: m -> n :=: Z
+plusNeutralL n m eq = plusNeutralR m n $
+  start (m %:+ n)
+    === n %:+ m   `because` plusCommutative m n
+    === m         `because` eq
 
 --------------------------------------------------
 -- * Properties of 'Leq'
