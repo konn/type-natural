@@ -36,7 +36,7 @@ data Ordinal n where
 instance Read (Ordinal Z) where
   readsPrec _ _ = []
 
-instance SingRep n => Num (Ordinal n) where
+instance SingI n => Num (Ordinal n) where
   _ + _ = error "Finite ordinal is not closed under addition."
   _ - _ = error "Ordinal subtraction is not defined"
   negate OZ = OZ
@@ -53,32 +53,32 @@ deriving instance Show (Ordinal n)
 deriving instance Eq (Ordinal n)
 deriving instance Ord (Ordinal n)
 
-instance SingRep n => Enum (Ordinal n) where
+instance SingI n => Enum (Ordinal n) where
   fromEnum = ordToInt
   toEnum   = unsafeFromInt
   enumFrom = enumFromOrd
   enumFromTo = enumFromToOrd
 
-enumFromToOrd :: forall n. SingRep n => Ordinal n -> Ordinal n -> [Ordinal n]
+enumFromToOrd :: forall n. SingI n => Ordinal n -> Ordinal n -> [Ordinal n]
 enumFromToOrd ok ol =
   let k = ordToInt ok
       l = ordToInt ol
   in take (l - k + 1) $ enumFromOrd ok
 
-enumFromOrd :: forall n. SingRep n => Ordinal n -> [Ordinal n]
+enumFromOrd :: forall n. SingI n => Ordinal n -> [Ordinal n]
 enumFromOrd ord = drop (ordToInt ord) $ enumOrdinal (sing :: SNat n)
 
 enumOrdinal :: SNat n -> [Ordinal n]
 enumOrdinal SZ = []
 enumOrdinal (SS n) = OZ : map OS (enumOrdinal n)
 
-instance SingRep n => Bounded (Ordinal (S n)) where
+instance SingI n => Bounded (Ordinal (S n)) where
   minBound = OZ
   maxBound =
     case propToBoolLeq $ leqRefl (sing :: SNat n) of
       Dict -> sNatToOrd (sing :: SNat n)
 
-unsafeFromInt :: forall n. SingRep n => Int -> Ordinal n
+unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n = 
     case promote n of
       Monomorphic sn ->
@@ -93,7 +93,7 @@ sNatToOrd' (SS n) (SS m) = OS $ sNatToOrd' n m
 sNatToOrd' _ _ = bugInGHC
 
 -- | 'sNatToOrd'' with @n@ inferred.
-sNatToOrd :: (SingRep n, (S m :<<= n) ~ True) => SNat m -> Ordinal n
+sNatToOrd :: (SingI n, (S m :<<= n) ~ True) => SNat m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
 
 data CastedOrdinal n where
@@ -139,7 +139,7 @@ inclusion on = unsafeCoerce on
 {-# INLINE inclusion #-}
 
 -- | Ordinal addition.
-(@+) :: forall n m. (SingRep n, SingRep m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
+(@+) :: forall n m. (SingI n, SingI m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
 OZ @+ n =
   let sn = sing :: SNat n
       sm = sing :: SNat m
