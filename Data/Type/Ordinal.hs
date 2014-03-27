@@ -1,7 +1,7 @@
-{-# LANGUAGE DataKinds, EmptyDataDecls, FlexibleContexts, FlexibleInstances #-}
-{-# LANGUAGE ScopedTypeVariables, TemplateHaskell #-}
-{-# LANGUAGE GADTs, KindSignatures, PolyKinds, StandaloneDeriving           #-}
-{-# LANGUAGE TypeFamilies, TypeOperators                                    #-}
+{-# LANGUAGE CPP, DataKinds, EmptyDataDecls, FlexibleContexts         #-}
+{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures, PolyKinds      #-}
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies, TypeOperators                              #-}
 -- | Set-theoretic ordinal arithmetic
 module Data.Type.Ordinal
        ( -- * Data-types
@@ -15,13 +15,16 @@ module Data.Type.Ordinal
          -- * Quasi Quote
          od
        ) where
-import Data.Type.Monomorphic
-import Unsafe.Coerce
-import Language.Haskell.TH.Quote
-import Language.Haskell.TH
-import Data.Type.Natural hiding (promote)
-import Proof.Equational (coerce)
 import Data.Constraint
+import Data.Type.Monomorphic
+import Data.Type.Natural         hiding (promote)
+import Language.Haskell.TH
+import Language.Haskell.TH.Quote
+import Proof.Equational          (coerce)
+import Unsafe.Coerce
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+import Data.Singletons.Prelude
+#endif
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -79,7 +82,7 @@ instance SingI n => Bounded (Ordinal (S n)) where
       Dict -> sNatToOrd (sing :: SNat n)
 
 unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
-unsafeFromInt n = 
+unsafeFromInt n =
     case promote n of
       Monomorphic sn ->
         case sS sn %:<<= (sing :: SNat n) of
