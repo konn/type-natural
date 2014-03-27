@@ -3,3 +3,6 @@
 #*#
 dist
 *_flymake.hs
+.cabal-sandbox
+cabal.sandbox.config
+TAGS
