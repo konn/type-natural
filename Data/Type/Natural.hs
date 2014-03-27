@@ -11,6 +11,8 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- | Singleton type for 'Nat'.
                           SNat, Sing (SZ, SS),
                           -- ** Smart constructors
+                          -- | WARNING: Smart constructors are deprecated as of singletons 0.10,
+                          -- so these are provided only for backward compatibility.
                           sZ, sS,
                           -- ** Arithmetic functions and their singletons.
                           min, Min, sMin, max, Max, sMax,
@@ -190,6 +192,17 @@ singletons [d|
  n19 = nineteen
  n20 = twenty
  |]
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+sZ :: SNat Z
+sZ = SZ
+
+sS :: SNat n -> SNat (S n)
+sS = SS
+
+{-# DEPRECATED sZ, sS "Smart constructors are no longer needed in singletons; Use `SS` or `SZ` instead." #-}
+#endif
+
 
 --------------------------------------------------
 -- ** Type-level predicate & judgements.
