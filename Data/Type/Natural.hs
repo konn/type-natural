@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP, DataKinds, FlexibleContexts, FlexibleInstances, GADTs #-}
 {-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude   #-}
-{-# LANGUAGE PolyKinds, RankNTypes, TemplateHaskell, TypeFamilies       #-}
+{-# LANGUAGE PolyKinds, RankNTypes, TemplateHaskell, TypeFamilies, ScopedTypeVariables       #-}
 {-# LANGUAGE TypeOperators, UndecidableInstances, StandaloneDeriving    #-}
 -- | Type level peano natural number, some arithmetic functions and their singletons.
 module Data.Type.Natural (-- * Re-exported modules.
@@ -54,7 +54,9 @@ module Data.Type.Natural (-- * Re-exported modules.
                          ) where
 import           Data.Singletons
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-import Data.Singletons.TH
+import Data.Singletons.TH      (singletons)
+import Data.Singletons.Prelude hiding ((:<=), SOrd(..), MaxSym1, MaxSym0, MaxSym2
+                                      , MinSym1, MinSym0, MinSym2, Max, Min)
 #endif
 import           Data.Type.Monomorphic
 import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord ((<)),
