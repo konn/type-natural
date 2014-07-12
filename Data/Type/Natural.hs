@@ -229,7 +229,7 @@ data Leq (n :: Nat) (m :: Nat) where
 
 type LeqTrueInstance a b = Dict ((a :<<= b) ~ True)
 
-(%-) :: (n :<<= m) ~ True => SNat n -> SNat m -> SNat (n :-: m)
+(%-) :: (m :<<= n) ~ True => SNat n -> SNat m -> SNat (n :-: m)
 n   %- SZ    = n
 SS n %- SS m = n %- m
 _    %- _    = error "impossible!"
