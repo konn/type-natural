@@ -83,9 +83,9 @@ instance SingI n => Bounded (Ordinal (S n)) where
 
 unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n =
-    case promote n of
+    case (promote n :: Monomorphic (Sing :: Nat -> *)) of
       Monomorphic sn ->
-        case sS sn %:<<= (sing :: SNat n) of
+        case SS sn %:<<= (sing :: SNat n) of
           STrue -> sNatToOrd' (sing :: SNat n) sn
           SFalse -> error "Bound over!"
 
@@ -104,10 +104,10 @@ data CastedOrdinal n where
 
 -- | Convert @Ordinal n@ into @SNat m@ with the proof of @S m :<<= n@.
 ordToSNat' :: Ordinal n -> CastedOrdinal n
-ordToSNat' OZ = CastedOrdinal sZ
+ordToSNat' OZ = CastedOrdinal SZ
 ordToSNat' (OS on) =
   case ordToSNat' on of
-    CastedOrdinal m -> CastedOrdinal (sS m)
+    CastedOrdinal m -> CastedOrdinal (SS m)
 
 -- | Convert @Ordinal n@ into monomorphic @SNat@
 ordToSNat :: Ordinal n -> Monomorphic (Sing :: Nat -> *)
