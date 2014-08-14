@@ -11,7 +11,7 @@ before_install:
 
 install:
   - cabal-1.20 update
-  - cabal-1.20 install --only-dependencies --enable-tests --enable-benchmarks
+  - cabal-1.20 install --only-dependencies --enable-tests --enable-benchmarks -j2
 
 script:
   - cabal-1.20 configure --enable-tests --enable-benchmarks -v2  # -v2 provides useful information for debugging
