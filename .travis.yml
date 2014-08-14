@@ -31,11 +31,3 @@ script:
 matrix:
   allow_failures:
     - env: GHCVER=head
-
-deploy:
-  provider: hackage
-  username: HiromiIshii
-  password:
-    secure: nqc3xireJSvZATxFcxnLYPSko0kQCNHN+iA7oXQojNa/PcGCR9PvnagTtOLMCO6zJJGLOYkC66NeLelUPyEvHwPfprtyIfdBQf+PwZHoKdjlApHGe+g/1AnZ08A1gWuE+g8fwTCKCuvsEGhHz6hVo5VBRm2EjPgUY8glDSCcHyQ=
-  on:
-    repo: konn/type-natural
