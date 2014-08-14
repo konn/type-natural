@@ -8,29 +8,27 @@ before_install:
   - travis_retry sudo apt-get update
   - travis_retry sudo apt-get install cabal-install-1.20 ghc-$GHCVER happy
   - export PATH=/opt/ghc/$GHCVER/bin:$PATH
-
 install:
   - cabal-1.20 update
   - cabal-1.20 install --only-dependencies --enable-tests --enable-benchmarks -j2
 
 script:
-  - cabal-1.20 configure --enable-tests --enable-benchmarks -v2  # -v2 provides useful information for debugging
-  - cabal-1.20 build   # this builds all libraries and executables (including tests/benchmarks)
+  - cabal-1.20 configure --enable-tests --enable-benchmarks -v2
+  - cabal-1.20 build
   - cabal-1.20 test
   - cabal-1.20 check
-  - cabal-1.20 sdist   # tests that a source-distribution can be generated
- 
-  # The following scriptlet checks that the resulting source distribution can be built & installed
-  - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ;
-    cd dist/;
-    if [ -f "$SRC_TGZ" ]; then
-       cabal-1.20 install "$SRC_TGZ";
-    else
-       echo "expected '$SRC_TGZ' not found";
-       exit 1;
-    fi
- 
+  - cabal-1.20 sdist
+  - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ; cd dist/;
+    if [ -f "$SRC_TGZ" ]; then cabal-1.20 install "$SRC_TGZ"; else echo "expected '$SRC_TGZ'
+    not found"; exit 1; fi
 
 matrix:
   allow_failures:
-   - env: GHCVER=head
+    - env: GHCVER=head
+deploy:
+  provider: hackage
+  username: HiromiIshii
+  password:
+    secure: nqc3xireJSvZATxFcxnLYPSko0kQCNHN+iA7oXQojNa/PcGCR9PvnagTtOLMCO6zJJGLOYkC66NeLelUPyEvHwPfprtyIfdBQf+PwZHoKdjlApHGe+g/1AnZ08A1gWuE+g8fwTCKCuvsEGhHz6hVo5VBRm2EjPgUY8glDSCcHyQ=
+  on:
+    repo: konn/type-natural
