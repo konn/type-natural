@@ -83,7 +83,7 @@ instance SingI n => Bounded (Ordinal (S n)) where
 
 unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n =
-    case promote n of
+    case (promote n :: Monomorphic (Sing :: Nat -> *)) of
       Monomorphic sn ->
         case sS sn %:<<= (sing :: SNat n) of
           STrue -> sNatToOrd' (sing :: SNat n) sn
