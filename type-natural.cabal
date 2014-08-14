@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.2.1.1
+version:             0.2.1.2
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
 homepage:            https://github.com/konn/type-natural
@@ -30,4 +30,4 @@ library
   if impl(ghc < 7.8)
     build-depends:     singletons               == 0.8.*
   else
-    build-depends:     singletons               >= 0.10    && < 1.1
+    build-depends:     singletons               >= 0.10    && < 1.0
