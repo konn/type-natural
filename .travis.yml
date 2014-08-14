@@ -8,6 +8,7 @@ before_install:
   - travis_retry sudo apt-get update
   - travis_retry sudo apt-get install cabal-install-1.20 ghc-$GHCVER happy
   - export PATH=/opt/ghc/$GHCVER/bin:$PATH
+  - sudo ln -s `which cabal-1.20` /usr/bin
 install:
   - cabal-1.20 update
   - cabal-1.20 install --only-dependencies --enable-tests --enable-benchmarks -j2
@@ -18,13 +19,19 @@ script:
   - cabal-1.20 test
   - cabal-1.20 check
   - cabal-1.20 sdist
-  - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ; cd dist/;
-    if [ -f "$SRC_TGZ" ]; then cabal-1.20 install "$SRC_TGZ"; else echo "expected '$SRC_TGZ'
-    not found"; exit 1; fi
+  - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ; 
+    cd dist/;
+    if [ -f "$SRC_TGZ" ]; then 
+      cabal-1.20 install "$SRC_TGZ"; 
+    else 
+      echo "expected '$SRC_TGZ' not found"; 
+      exit 1; 
+    fi
 
 matrix:
   allow_failures:
     - env: GHCVER=head
+
 deploy:
   provider: hackage
   username: HiromiIshii
@@ -32,3 +39,4 @@ deploy:
     secure: nqc3xireJSvZATxFcxnLYPSko0kQCNHN+iA7oXQojNa/PcGCR9PvnagTtOLMCO6zJJGLOYkC66NeLelUPyEvHwPfprtyIfdBQf+PwZHoKdjlApHGe+g/1AnZ08A1gWuE+g8fwTCKCuvsEGhHz6hVo5VBRm2EjPgUY8glDSCcHyQ=
   on:
     repo: konn/type-natural
+    env: GHCVER=7.8.3
