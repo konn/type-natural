@@ -8,6 +8,9 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- * Natural Numbers
                           -- | Peano natural numbers. It will be promoted to the type-level natural number.
                           Nat(..),
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          SSym0, SSym1, ZSym0,
+#endif
                           -- | Singleton type for 'Nat'.
                           SNat, Sing (SZ, SS),
                           -- ** Smart constructors
@@ -16,10 +19,29 @@ module Data.Type.Natural (-- * Re-exported modules.
                           sZ, sS,
                           -- ** Arithmetic functions and their singletons.
                           min, Min, sMin, max, Max, sMax,
-                          (:+:), (:+), (%+), (%:+), (:*:), (:*), (%:*), (%*),
-                          (:-:), (:-), (%:-), (%-),
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          MinSym0, MinSym1, MinSym2,
+                          MaxSym0, MaxSym1, MaxSym2,
+#endif
+                          (:+:), (:+),
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          (:+$), (:+$$), (:+$$$),
+#endif
+                          (%+), (%:+), (:*:),
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          (:*), (:*$), (:*$$), (:*$$$),
+#endif
+                          (%:*), (%*), (:-:), (:-),
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          (:-$), (:-$$), (:-$$$),
+#endif
+                          (%:-), (%-),
                           -- ** Type-level predicate & judgements
-                          Leq(..), (:<=), (:<<=), (%:<<=), LeqInstance,
+                          Leq(..), (:<=), (:<<=),
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          (:<<=$),(:<<=$$),(:<<=$$$), 
+#endif
+                          (%:<<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
                           LeqTrueInstance, propToBoolLeq,
                           -- * Conversion functions
@@ -45,6 +67,12 @@ module Data.Type.Natural (-- * Re-exported modules.
                           twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty,
                           Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
                           Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty,
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+                          ZeroSym0, OneSym0, TwoSym0, ThreeSym0, FourSym0, FiveSym0, SixSym0,
+                          SevenSym0, EightSym0, NineSym0, TenSym0, ElevenSym0, TwelveSym0,
+                          ThirteenSym0, FourteenSym0, FifteenSym0, SixteenSym0, SeventeenSym0,
+                          EighteenSym0, NineteenSym0, TwentySym0,
+#endif
                           sZero, sOne, sTwo, sThree, sFour, sFive, sSix, sSeven, sEight, sNine, sTen, sEleven,
                           sTwelve, sThirteen, sFourteen, sFifteen, sSixteen, sSeventeen, sEighteen, sNineteen, sTwenty,
                           n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20,
@@ -67,49 +95,7 @@ import Data.Constraint hiding ((:-))
 import Language.Haskell.TH.Quote
 import Unsafe.Coerce
 import Language.Haskell.TH
-
---------------------------------------------------
--- * Natural numbers and its singleton type
---------------------------------------------------
-singletons [d|
- data Nat = Z | S Nat
-            deriving (Show, Eq, Ord)
- |]
-
---------------------------------------------------
--- ** Arithmetic functions.
---------------------------------------------------
-
-singletons [d|
- -- | Minimum function.
- min :: Nat -> Nat -> Nat
- min Z     Z     = Z
- min Z     (S _) = Z
- min (S _) Z     = Z
- min (S m) (S n) = S (min m n)
-
- -- | Maximum function.
- max :: Nat -> Nat -> Nat
- max Z     Z     = Z
- max Z     (S n) = S n
- max (S n) Z     = S n
- max (S n) (S m) = S (max n m)
- |]
-
-singletons [d|
- (+) :: Nat -> Nat -> Nat
- Z   + n = n
- S m + n = S (m + n)
-
- (-) :: Nat -> Nat -> Nat
- n   - Z   = n
- S n - S m = n - m
- Z   - S _ = Z
-
- (*) :: Nat -> Nat -> Nat
- Z   * _ = Z
- S n * m = n * m + m
- |]
+import Data.Type.Natural.Definitions
 
 instance P.Num Nat where
   n - m = n - m
@@ -122,78 +108,9 @@ instance P.Num Nat where
   fromInteger n | n P.< 0   = error "negative integer"
                 | otherwise = S $ P.fromInteger (n P.- 1)
 
-infixl 6 :-:, %:-, -
-
-type n :-: m = n :- m
-infixl 6 :+:, %+, %:+, :+
-
-type n :+: m = n :+ m
-
--- | Addition for singleton numbers.
-(%+) :: SNat n -> SNat m -> SNat (n :+: m)
-(%+) = (%:+)
-
-infixl 7 :*:, %*, %:*, :*
-
--- | Type-level multiplication.
-type n :*: m = n :* m
-
--- | Multiplication for singleton numbers.
-(%*) :: SNat n -> SNat m -> SNat (n :*: m)
-(%*) = (%:*)
-
 --------------------------------------------------
 -- ** Convenient synonyms
 --------------------------------------------------
-singletons [d|
- zero, one, two, three, four, five, six, seven, eight, nine, ten :: Nat           
- eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty :: Nat           
- zero      = Z
- one       = S zero
- two       = S one
- three     = S two
- four      = S three
- five      = S four
- six       = S five
- seven     = S six
- eight     = S seven
- nine      = S eight
- ten       = S nine
- eleven    = S ten
- twelve    = S eleven
- thirteen  = S twelve
- fourteen  = S thirteen
- fifteen   = S fourteen
- sixteen   = S fifteen
- seventeen = S sixteen
- eighteen  = S seventeen
- nineteen  = S eighteen
- twenty    = S nineteen
- n0, n1, n2, n3, n4, n5, n6, n7, n8, n9 :: Nat
- n10, n11, n12, n13, n14, n15, n16, n17 :: Nat
- n18, n19, n20 :: Nat
- n0  = zero
- n1  = one
- n2  = two
- n3  = three
- n4  = four
- n5  = five
- n6  = six
- n7  = seven
- n8  = eight
- n9  = nine
- n10 = ten
- n11 = eleven
- n12 = twelve
- n13 = thirteen
- n14 = fourteen
- n15 = fifteen
- n16 = sixteen
- n17 = seventeen
- n18 = eighteen
- n19 = nineteen
- n20 = twenty
- |]
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 sZ :: SNat Z
@@ -213,14 +130,6 @@ sS = SS
 class (n :: Nat) :<= (m :: Nat)
 instance Z :<= n
 instance (n :<= m) => S n :<= S m
-
--- | Boolean-valued type-level comparison function.
-singletons [d|
- (<<=) :: Nat -> Nat -> Bool
- Z   <<= _   = True
- S _ <<= Z   = False
- S n <<= S m = n <<= m
- |]
 
 -- | Comparison via GADTs.
 data Leq (n :: Nat) (m :: Nat) where
