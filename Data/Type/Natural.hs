@@ -27,9 +27,9 @@ module Data.Type.Natural (-- * Re-exported modules.
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:+$), (:+$$), (:+$$$),
 #endif
-                          (%+), (%:+), (:*:),
+                          (%+), (%:+), (:*), (:*:),
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-                          (:*), (:*$), (:*$$), (:*$$$),
+                          (:*$), (:*$$), (:*$$$),
 #endif
                           (%:*), (%*), (:-:), (:-),
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
