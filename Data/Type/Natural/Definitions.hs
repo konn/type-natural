@@ -1,22 +1,27 @@
-{-# LANGUAGE CPP, DataKinds, FlexibleContexts, FlexibleInstances, GADTs #-}
-{-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude   #-}
-{-# LANGUAGE PolyKinds, RankNTypes, TemplateHaskell, TypeFamilies, ScopedTypeVariables       #-}
-{-# LANGUAGE TypeOperators, UndecidableInstances, StandaloneDeriving    #-}
+{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures             #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, PolyKinds  #-}
+{-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving  #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances                                 #-}
 module Data.Type.Natural.Definitions where
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
+                                Min, MinSym0, MinSym1, MinSym2, SOrd (..))
 import Data.Singletons.TH      (singletons)
-import Data.Singletons.Prelude hiding ((:<=), SOrd(..), MaxSym1, MaxSym0, MaxSym2
-                                      , MinSym1, MinSym0, MinSym2, Max, Min)
 #endif
+import           Data.Constraint           hiding ((:-))
 import           Data.Type.Monomorphic
-import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord ((<)),
-                                   Show (..), error, id, otherwise, ($), (.), undefined)
-import qualified Prelude          as P
+import           Data.Typeable             (Typeable)
+import           Language.Haskell.TH
+import           Language.Haskell.TH.Quote
+import           Prelude                   (Bool (..), Eq (..), Int,
+                                            Integral (..), Ord ((<)), Show (..),
+                                            error, id, otherwise, undefined,
+                                            ($), (.))
+import qualified Prelude                   as P
 import           Proof.Equational
-import Data.Constraint hiding ((:-))
-import Language.Haskell.TH.Quote
-import Unsafe.Coerce
-import Language.Haskell.TH
+import           Unsafe.Coerce
 
 --------------------------------------------------
 -- * Natural numbers and its singleton type
@@ -25,6 +30,11 @@ singletons [d|
  data Nat = Z | S Nat
             deriving (Show, Eq, Ord)
  |]
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+deriving instance Typeable 'S
+deriving instance Typeable 'Z
+#endif
 
 --------------------------------------------------
 -- ** Arithmetic functions.
@@ -82,8 +92,8 @@ type n :*: m = n :* m
 (%*) = (%:*)
 
 singletons [d|
- zero, one, two, three, four, five, six, seven, eight, nine, ten :: Nat           
- eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty :: Nat           
+ zero, one, two, three, four, five, six, seven, eight, nine, ten :: Nat
+ eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty :: Nat
  zero      = Z
  one       = S zero
  two       = S one
