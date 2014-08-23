@@ -2,6 +2,9 @@
 {-# LANGUAGE FlexibleInstances, GADTs, KindSignatures, PolyKinds      #-}
 {-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies, TypeOperators                              #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+{-# LANGUAGE EmptyCase, LambdaCase #-}
+#endif
 -- | Set-theoretic ordinal arithmetic
 module Data.Type.Ordinal
        ( -- * Data-types
@@ -12,7 +15,9 @@ module Data.Type.Ordinal
          unsafeFromInt, inclusion, inclusion',
          -- * Ordinal arithmetics
          (@+), enumOrdinal,
-         -- * Quasi Quote
+         -- * Elimination rules for @'Ordinal' 'Z'@.
+         absurdOrd, vacuousOrd, vacuousOrdM,
+         -- * Quasi Quoter
          od
        ) where
 import Data.Constraint
@@ -25,6 +30,7 @@ import Unsafe.Coerce
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 import Data.Singletons.Prelude
 #endif
+import Control.Monad (liftM)
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -85,7 +91,7 @@ unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n =
     case (promote n :: Monomorphic (Sing :: Nat -> *)) of
       Monomorphic sn ->
-        case sS sn %:<<= (sing :: SNat n) of
+        case SS sn %:<<= (sing :: SNat n) of
           STrue -> sNatToOrd' (sing :: SNat n) sn
           SFalse -> error "Bound over!"
 
@@ -152,6 +158,30 @@ OS n @+ m =
   case sing :: SNat n of
     SS sn -> case singInstance sn of SingInstance -> OS $ n @+ m
     _ -> bugInGHC
+
+-- | Since @Ordinal Z@ is logically not inhabited, we can coerce it to any value.
+--
+-- Since 0.2.3.0
+absurdOrd :: Ordinal Z -> a
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+absurdOrd cs = case cs of {}
+#else
+absurdOrd _ = error "Impossible!"
+#endif
+
+-- | 'absurdOrd' for the value in 'Functor'.
+-- 
+--   Since 0.2.3.0
+vacuousOrd :: Functor f => f (Ordinal Z) -> f a
+vacuousOrd = fmap absurdOrd
+
+-- | 'absurdOrd' for the value in 'Monad'.
+--   This function will become uneccesary once 'Applicative' (and hence 'Functor')
+--   become the superclass of 'Monad'.
+-- 
+--   Since 0.2.3.0
+vacuousOrdM :: Monad m => m (Ordinal Z) -> m a
+vacuousOrdM = liftM absurdOrd
 
 -- | Quasiquoter for ordinals
 od :: QuasiQuoter
