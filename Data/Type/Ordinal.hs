@@ -110,10 +110,10 @@ data CastedOrdinal n where
 
 -- | Convert @Ordinal n@ into @SNat m@ with the proof of @S m :<<= n@.
 ordToSNat' :: Ordinal n -> CastedOrdinal n
-ordToSNat' OZ = CastedOrdinal sZ
+ordToSNat' OZ = CastedOrdinal SZ
 ordToSNat' (OS on) =
   case ordToSNat' on of
-    CastedOrdinal m -> CastedOrdinal (sS m)
+    CastedOrdinal m -> CastedOrdinal (SS m)
 
 -- | Convert @Ordinal n@ into monomorphic @SNat@
 ordToSNat :: Ordinal n -> Monomorphic (Sing :: Nat -> *)
@@ -138,7 +138,7 @@ inclusion' _ = unsafeCoerce
 inclusion' :: (n :<<= m) ~ True => SNat m -> Ordinal n -> Ordinal m
 inclusion' (SS SZ) OZ = OZ
 inclusion' (SS (SS _)) OZ = OZ
-inclusion' (SS (SS n)) (OS m) = OS $ inclusion' (sS n) m
+inclusion' (SS (SS n)) (OS m) = OS $ inclusion' (SS n) m
 inclusion' _ _ = bugInGHC
 -}
 
