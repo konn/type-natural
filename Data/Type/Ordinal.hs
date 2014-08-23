@@ -31,8 +31,6 @@ import Unsafe.Coerce
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 import Data.Singletons.Prelude
 import Data.Typeable (Typeable)
-#else
-import Data.Typeable (Typeable1)
 #endif
 import Control.Monad (liftM)
 
@@ -46,9 +44,8 @@ data Ordinal n where
   OS :: Ordinal n -> Ordinal (S n)
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+-- | Since 0.2.3.0  
 deriving instance Typeable Ordinal
-#else
-deriving instance Typeable1 Ordinal
 #endif
 -- | Parsing always fails, because there are no inhabitant.
 instance Read (Ordinal Z) where
