@@ -97,9 +97,13 @@ unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n =
     case (promote n :: Monomorphic (Sing :: Nat -> *)) of
       Monomorphic sn ->
-        case SS sn %:<<= (sing :: SNat n) of
-          STrue -> sNatToOrd' (sing :: SNat n) sn
-          SFalse -> error "Bound over!"
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
+        case singInstance sn of
+          SingInstance ->
+#endif
+           case SS sn %:<<= (sing :: SNat n) of
+             STrue -> sNatToOrd' (sing :: SNat n) sn
+             SFalse -> error "Bound over!"
 
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
 sNatToOrd' :: (S m :<<= n) ~ True => SNat n -> SNat m -> Ordinal n
@@ -119,7 +123,12 @@ ordToSNat' :: Ordinal n -> CastedOrdinal n
 ordToSNat' OZ = CastedOrdinal SZ
 ordToSNat' (OS on) =
   case ordToSNat' on of
-    CastedOrdinal m -> CastedOrdinal (SS m)
+    CastedOrdinal m ->
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707      
+      case singInstance m of
+        SingInstance ->
+#endif
+          CastedOrdinal (SS m)
 
 -- | Convert @Ordinal n@ into monomorphic @SNat@
 ordToSNat :: Ordinal n -> Monomorphic (Sing :: Nat -> *)
