@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP, DataKinds, EmptyDataDecls, FlexibleContexts         #-}
 {-# LANGUAGE FlexibleInstances, GADTs, KindSignatures, PolyKinds      #-}
 {-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
@@ -30,6 +31,7 @@ import Unsafe.Coerce
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 import Data.Singletons.Prelude
 #endif
+import Data.Typeable (Typeable)
 import Control.Monad (liftM)
 
 -- | Set-theoretic (finite) ordinals:
@@ -41,6 +43,11 @@ data Ordinal n where
   OZ :: Ordinal (S n)
   OS :: Ordinal n -> Ordinal (S n)
 
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+deriving instance Typeable Ordinal
+#else
+deriving instance Typeable1 Ordinal
+#endif
 -- | Parsing always fails, because there are no inhabitant.
 instance Read (Ordinal Z) where
   readsPrec _ _ = []
