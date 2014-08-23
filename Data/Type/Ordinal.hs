@@ -30,8 +30,10 @@ import Proof.Equational          (coerce)
 import Unsafe.Coerce
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 import Data.Singletons.Prelude
-#endif
 import Data.Typeable (Typeable)
+#else
+import Data.Typeable (Typeable1)
+#endif
 import Control.Monad (liftM)
 
 -- | Set-theoretic (finite) ordinals:
