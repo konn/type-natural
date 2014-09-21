@@ -69,6 +69,10 @@ singletons [d|
  (*) :: Nat -> Nat -> Nat
  Z   * _ = Z
  S n * m = n * m + m
+
+ (**) :: Nat -> Nat -> Nat
+ n ** Z = S Z
+ n ** S m = (n ** m) * n
  |]
 
 infixl 6 :-:, %:-, -
@@ -90,6 +94,13 @@ type n :*: m = n :* m
 -- | Multiplication for singleton numbers.
 (%*) :: SNat n -> SNat m -> SNat (n :*: m)
 (%*) = (%:*)
+
+-- | Type-level exponentiation.
+type n :**: m = n :** m
+
+-- | Exponentiation for singleton numbers.
+(%**) :: SNat n -> SNat m -> SNat (n :**: m)
+(%**) = (%:**)
 
 singletons [d|
  zero, one, two, three, four, five, six, seven, eight, nine, ten :: Nat
