@@ -16,7 +16,7 @@ import           Data.Typeable             (Typeable)
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
 import           Prelude                   (Bool (..), Eq (..), Int,
-                                            Integral (..), Ord ((<)), Show (..),
+                                            Integral, Ord ((<),(<=)), Show (..),
                                             error, id, otherwise, undefined,
                                             ($), (.))
 import qualified Prelude                   as P
@@ -74,6 +74,20 @@ singletons [d|
  n ^ Z = S Z
  n ^ S m = (n ^ m) ^ n
  |]
+
+-- | Integer/floored division for natural numbers.
+div :: Nat -> Nat -> Nat
+div m Z = S m -- For totality.
+div m n = div' m m (n - S Z)
+ where
+   div' Z _ _ = Z
+   div' fin res by
+     | res <= by = Z
+     | otherwise = S $ div' (fin - S Z) (res - S by) by
+
+-- | Modulo for natural numbers.
+mod :: Nat -> Nat -> Nat
+mod n m = n - (m * div n m)
 
 infixl 6 :-:, %:-, -
 

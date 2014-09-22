@@ -33,6 +33,7 @@ module Data.Type.Natural (-- * Re-exported modules.
 #endif
                           (%:*), (%*), (:-:), (:-),
                           (:^:), (:^), (%:^), (%^),
+                          mod, div,
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:-$), (:-$$), (:-$$$),
 #endif
@@ -92,7 +93,7 @@ import Data.Singletons.Prelude hiding ((:<=), SOrd(..), MaxSym1, MaxSym0, MaxSym
                                       , MinSym1, MinSym0, MinSym2, Max, Min)
 #endif
 import           Data.Type.Monomorphic
-import           Prelude          (Int, Bool (..), Eq (..), Integral (..), Ord ((<)),
+import           Prelude          (Int, Bool (..), Eq (..), Integral, Ord ((<)),
                                    Show (..), error, id, otherwise, ($), (.), undefined)
 import qualified Prelude          as P
 import           Proof.Equational
