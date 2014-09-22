@@ -32,7 +32,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           (:*$), (:*$$), (:*$$$),
 #endif
                           (%:*), (%*), (:-:), (:-),
-                          (:**:), (:**), (%:**), (%**),
+                          (:^:), (:^), (%:^), (%^),
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:-$), (:-$$), (:-$$$),
 #endif
