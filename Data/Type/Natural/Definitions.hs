@@ -165,16 +165,13 @@ singletons [d|
 
 singletons [d|
  div' :: Nat -> Nat -> Nat -> Nat
- div' fin res by
-   | fin == Z = Z
-   | res <<= by = Z
-   | otherwise = S $ div' (fin - S Z) (res - S by) by
+ div' Z _ _ = Z
+ div' (S fin) res by = if res <<= by then Z else S (div' fin (res - S by) by)
 
  -- | Integer/floored division for natural numbers.
  div :: Nat -> Nat -> Nat
- div m n
-   | n == Z = S m -- For totality.
-   | otherwise = div' m m (n - S Z)
+ div m Z = S m -- For totality.
+ div m (S n) = div' m m n
 
  -- | Modulo for natural numbers.
  mod :: Nat -> Nat -> Nat
