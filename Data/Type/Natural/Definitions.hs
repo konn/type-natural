@@ -75,19 +75,6 @@ singletons [d|
  n ^ S m = (n ^ m) ^ n
  |]
 
--- | Integer/floored division for natural numbers.
-div :: Nat -> Nat -> Nat
-div m Z = S m -- For totality.
-div m n = div' m m (n - S Z)
- where
-   div' Z _ _ = Z
-   div' fin res by
-     | res <= by = Z
-     | otherwise = S $ div' (fin - S Z) (res - S by) by
-
--- | Modulo for natural numbers.
-mod :: Nat -> Nat -> Nat
-mod n m = n - (m * div n m)
 
 infixl 6 :-:, %:-, -
 
@@ -174,4 +161,22 @@ singletons [d|
  Z   <<= _   = True
  S _ <<= Z   = False
  S n <<= S m = n <<= m
+ |]
+
+singletons [d|
+ div' :: Nat -> Nat -> Nat -> Nat
+ div' fin res by
+   | fin == Z = Z
+   | res <<= by = Z
+   | otherwise = S $ div' (fin - S Z) (res - S by) by
+
+ -- | Integer/floored division for natural numbers.
+ div :: Nat -> Nat -> Nat
+ div m n
+   | n == Z = S m -- For totality.
+   | otherwise = div' m m (n - S Z)
+
+ -- | Modulo for natural numbers.
+ mod :: Nat -> Nat -> Nat
+ mod n m = n - (m * div n m)
  |]
