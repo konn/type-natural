@@ -72,7 +72,7 @@ singletons [d|
 
  (^) :: Nat -> Nat -> Nat
  n ^ Z = S Z
- n ^ S m = (n ^ m) ^ n
+ n ^ S m = (n ^ m) * n
  |]
 
 
