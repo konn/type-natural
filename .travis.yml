@@ -10,11 +10,12 @@ deploy:
   provider: hackage
   username: HiromiIshii
   password:
-    secure: HrqK0GRSl3gmmxD1XlsUN6JwWGZ5pVnq1yCSv418Lkq2YXS386XcQyYrujvX5Ywvl43/If6pJ58Iw4x6SJer0JkktbSdmATMq9uVXTGeEoRWsqGevGTHqWGmCCQdveWS+bqlYbIacOLjZlXLLHSyB3aIR1xVyYXTXDGP99ncsJA=
+    secure: Yrrwoeh7ExqZp85v0cBEbRv4qJSn07t+xtKVOTVTZBpe3lEnzvThE8JneCV9gskZrprhSWev9izdTxpFwDZH/LJUsSVIOapsDxjlsUQKW3U7BpQrfalSgMAPhRX/YMevTwqssDD2jltqSddhWFM0lgtZ586j0lsH6PMl4wI5Rg8=
   on:
-    all_branches: true
+    repo: konn/type-natural
     tags: true
-    condition: "$GHCVER = 7.8.4"
+    condition: $GHCVER = 7.8.4
+    all_branches: true
 before_install:
 - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
 - travis_retry sudo apt-get update
