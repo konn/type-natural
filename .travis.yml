@@ -2,20 +2,12 @@ env:
   matrix:
   - CABALVER=1.18 GHCVER=7.6.3
   - CABALVER=1.18 GHCVER=7.8.4
+  - CABALVER=1.22 GHCVER=7.10.1
   - CABALVER=head GHCVER=head
 matrix:
   allow_failures:
   - env: CABALVER=head GHCVER=head
-deploy:
-  provider: hackage
-  username: HiromiIshii
-  password:
-    secure: Yrrwoeh7ExqZp85v0cBEbRv4qJSn07t+xtKVOTVTZBpe3lEnzvThE8JneCV9gskZrprhSWev9izdTxpFwDZH/LJUsSVIOapsDxjlsUQKW3U7BpQrfalSgMAPhRX/YMevTwqssDD2jltqSddhWFM0lgtZ586j0lsH6PMl4wI5Rg8=
-  on:
-    repo: konn/type-natural
-    tags: true
-    condition: $GHCVER = 7.8.4
-    all_branches: true
+
 before_install:
 - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
 - travis_retry sudo apt-get update
