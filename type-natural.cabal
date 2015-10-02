@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.2.3.2
+version:             0.3.0.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
 homepage:            https://github.com/konn/type-natural
@@ -21,13 +21,14 @@ source-repository head
 
 library
   exposed-modules:     Data.Type.Natural, Data.Type.Ordinal
-  other-modules:       Data.Type.Natural.Definitions
+  other-modules:       Data.Type.Natural.Definitions,
+                       Data.Type.Natural.Core
   build-depends:       base                     >= 4       && < 5
                ,       equational-reasoning     == 0.2.*
                ,       monomorphic              >= 0.0.3
                ,       template-haskell         >= 2.8     && < 2.11
                ,       constraints              >= 0.3     && < 0.5
-  if impl(ghc < 7.8)
-    build-depends:     singletons               == 0.8.*
+  if impl(ghc < 7.10)
+    build-depends:     singletons               == 1.*
   else
-    build-depends:     singletons               >= 1.0    && < 1.2
+    build-depends:     singletons               == 2.0.*

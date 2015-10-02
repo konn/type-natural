@@ -4,10 +4,24 @@
 {-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving  #-}
 {-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances                                 #-}
-module Data.Type.Natural.Definitions where
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 708
+{-# LANGUAGE InstanceSigs #-}
+#endif
+module Data.Type.Natural.Definitions
+       (module Data.Type.Natural.Definitions,
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
+        module Data.Singletons.Prelude
+#endif
+       ) where
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+import Data.Singletons.TH      (singletons)
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
+import Data.Singletons.Prelude
+import Prelude (Num(..), Ord(..))
+#else
 import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
-                                Min, MinSym0, MinSym1, MinSym2, SOrd (..))
+                                Min, MinSym0, MinSym1, MinSym2. SOrd(..))
+#endif
 import Data.Singletons.TH      (singletons)
 #endif
 import           Data.Constraint           hiding ((:-))
@@ -28,7 +42,7 @@ import           Unsafe.Coerce
 --------------------------------------------------
 singletons [d|
  data Nat = Z | S Nat
-            deriving (Show, Eq, Ord)
+            deriving (Show, Eq)
  |]
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
@@ -39,6 +53,33 @@ deriving instance Typeable 'Z
 --------------------------------------------------
 -- ** Arithmetic functions.
 --------------------------------------------------
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 710
+instance P.Num Nat where
+  n - m = n - m
+  n + m = n + m
+  n * m = n * m
+  abs = id
+  signum Z = Z
+  signum _ = S Z
+  fromInteger 0             = Z
+  fromInteger n | n P.< 0   = error "negative integer"
+                | otherwise = S $ P.fromInteger (n P.- 1)
+
+instance P.Ord Nat where
+   Z   <= _   = True
+   S _ <= Z   = False
+   S n <= S m = n <= m
+
+   min Z     Z     = Z
+   min Z     (S _) = Z
+   min (S _) Z     = Z
+   min (S m) (S n) = S (min m n)
+
+   max Z     Z     = Z
+   max Z     (S n) = S n
+   max (S n) Z     = S n
+   max (S n) (S m) = S (max n m)
 
 singletons [d|
  -- | Minimum function.
@@ -55,7 +96,46 @@ singletons [d|
  max (S n) Z     = S n
  max (S n) (S m) = S (max n m)
  |]
+#else
+singletons [d|
+  instance P.Ord Nat where
+     Z   <= _   = True
+     S _ <= Z   = False
+     S n <= S m = n <= m
 
+     min Z     Z     = Z
+     min Z     (S _) = Z
+     min (S _) Z     = Z
+     min (S m) (S n) = S (min m n)
+
+     max Z     Z     = Z
+     max Z     (S n) = S n
+     max (S n) Z     = S n
+     max (S n) (S m) = S (max n m)
+ |]
+#endif
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
+singletons [d|
+  instance P.Num Nat where
+    Z   + n = n
+    S m + n = S (m + n)
+
+    n   - Z   = n
+    S n - S m = n - m
+    Z   - S _ = Z
+
+    Z   * _ = Z
+    S n * m = n * m + m
+
+    abs n = n
+
+    signum Z = Z
+    signum (S n) = S Z
+
+    fromInteger n = if n == 0 then Z else S (fromInteger (n-1))
+ |]
+#else
 singletons [d|
  (+) :: Nat -> Nat -> Nat
  Z   + n = n
@@ -69,24 +149,31 @@ singletons [d|
  (*) :: Nat -> Nat -> Nat
  Z   * _ = Z
  S n * m = n * m + m
+ |]
 
+infixl 6 %:-, -
+
+infixl 6 %:+, :+
+
+infixl 7 :*:, %:*, :*
+#endif
+
+type n :-: m = n :- m
+type n :+: m = n :+ m
+
+infixl 6 :-:, :+:
+
+singletons [d|
  (**) :: Nat -> Nat -> Nat
  n ** Z = S Z
  n ** S m = (n ** m) * n
  |]
 
-infixl 6 :-:, %:-, -
-
-type n :-: m = n :- m
-infixl 6 :+:, %+, %:+, :+
-
-type n :+: m = n :+ m
 
 -- | Addition for singleton numbers.
 (%+) :: SNat n -> SNat m -> SNat (n :+: m)
 (%+) = (%:+)
-
-infixl 7 :*:, %*, %:*, :*
+infixl 6 %+
 
 -- | Type-level multiplication.
 type n :*: m = n :* m
@@ -94,6 +181,7 @@ type n :*: m = n :* m
 -- | Multiplication for singleton numbers.
 (%*) :: SNat n -> SNat m -> SNat (n :*: m)
 (%*) = (%:*)
+infixl 7 %*
 
 -- | Type-level exponentiation.
 type n :**: m = n :** m
