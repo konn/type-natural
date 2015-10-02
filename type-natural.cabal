@@ -28,7 +28,9 @@ library
                ,       monomorphic              >= 0.0.3
                ,       template-haskell         >= 2.8     && < 2.11
                ,       constraints              >= 0.3     && < 0.5
+  if impl(ghc < 7.8)
+    build-depends:     singletons               == 0.8.*
   if impl(ghc < 7.10)
     build-depends:     singletons               == 1.*
-  else
+  else 
     build-depends:     singletons               == 2.0.*
