@@ -14,15 +14,15 @@ module Data.Type.Natural.Definitions
 #endif
        ) where
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-import Data.Singletons.TH      (singletons)
+import Data.Singletons.TH (singletons)
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
 import Data.Singletons.Prelude
-import Prelude (Num(..), Ord(..))
+import Prelude                 (Num (..), Ord (..))
 #else
 import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
-                                Min, MinSym0, MinSym1, MinSym2. SOrd(..))
+                                Min, MinSym0, MinSym1, MinSym2, SOrd (..))
 #endif
-import Data.Singletons.TH      (singletons)
+import Data.Singletons.TH (singletons)
 #endif
 import           Data.Constraint           hiding ((:-))
 import           Data.Type.Monomorphic
