@@ -71,21 +71,10 @@ singletons [d|
  max (S n) (S m) = S (max n m)
  |]
 
-instance P.Num Nat where
-  n - m = n - m
-  n + m = n + m
-  n * m = n * m
-  abs = id
-  signum Z = Z
-  signum _ = S Z
-  fromInteger 0             = Z
-  fromInteger n | n P.< 0   = error "negative integer"
-                | otherwise = S $ P.fromInteger (n P.- 1)
-
 instance P.Ord Nat where
   Z   <= _   = True
   S _ <= Z   = False
-  S n <= S m = n <= m
+  S n <= S m = n P.<= m
 
   min = min
   max = max
@@ -149,6 +138,18 @@ infixl 6 %:-, -
 infixl 6 %:+, :+
 
 infixl 7 :*:, %:*, :*
+
+instance P.Num Nat where
+  n - m = n - m
+  n + m = n + m
+  n * m = n * m
+  abs = id
+  signum Z = Z
+  signum _ = S Z
+  fromInteger 0             = Z
+  fromInteger n | n P.< 0   = error "negative integer"
+                | otherwise = S $ P.fromInteger (n P.- 1)
+
 #endif
 
 type n :-: m = n :- m
