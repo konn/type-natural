@@ -55,32 +55,6 @@ deriving instance Typeable 'Z
 --------------------------------------------------
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 710
-instance P.Num Nat where
-  n - m = n - m
-  n + m = n + m
-  n * m = n * m
-  abs = id
-  signum Z = Z
-  signum _ = S Z
-  fromInteger 0             = Z
-  fromInteger n | n P.< 0   = error "negative integer"
-                | otherwise = S $ P.fromInteger (n P.- 1)
-
-instance P.Ord Nat where
-   Z   <= _   = True
-   S _ <= Z   = False
-   S n <= S m = n <= m
-
-   min Z     Z     = Z
-   min Z     (S _) = Z
-   min (S _) Z     = Z
-   min (S m) (S n) = S (min m n)
-
-   max Z     Z     = Z
-   max Z     (S n) = S n
-   max (S n) Z     = S n
-   max (S n) (S m) = S (max n m)
-
 singletons [d|
  -- | Minimum function.
  min :: Nat -> Nat -> Nat
@@ -95,7 +69,27 @@ singletons [d|
  max Z     (S n) = S n
  max (S n) Z     = S n
  max (S n) (S m) = S (max n m)
- |]
+
+instance P.Num Nat where
+  n - m = n - m
+  n + m = n + m
+  n * m = n * m
+  abs = id
+  signum Z = Z
+  signum _ = S Z
+  fromInteger 0             = Z
+  fromInteger n | n P.< 0   = error "negative integer"
+                | otherwise = S $ P.fromInteger (n P.- 1)
+
+instance P.Ord Nat where
+  Z   <= _   = True
+  S _ <= Z   = False
+  S n <= S m = n <= m
+
+  min = min
+  max = max
+
+|]
 #else
 singletons [d|
   instance P.Ord Nat where
