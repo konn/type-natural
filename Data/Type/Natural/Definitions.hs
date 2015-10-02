@@ -137,7 +137,7 @@ infixl 6 %:-, -
 
 infixl 6 %:+, :+
 
-infixl 7 :*:, %:*, :*
+infixl 7 %:*, :*
 
 instance P.Num Nat where
   n - m = n - m
@@ -171,6 +171,7 @@ infixl 6 %+
 
 -- | Type-level multiplication.
 type n :*: m = n :* m
+infixl 7 :*:
 
 -- | Multiplication for singleton numbers.
 (%*) :: SNat n -> SNat m -> SNat (n :*: m)
