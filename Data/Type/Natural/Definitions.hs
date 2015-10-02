@@ -69,6 +69,7 @@ singletons [d|
  max Z     (S n) = S n
  max (S n) Z     = S n
  max (S n) (S m) = S (max n m)
+ |]
 
 instance P.Num Nat where
   n - m = n - m
@@ -88,8 +89,6 @@ instance P.Ord Nat where
 
   min = min
   max = max
-
-|]
 #else
 singletons [d|
   instance P.Ord Nat where
