@@ -5,4 +5,4 @@ extra-deps:
 - equational-reasoning-0.2.0.6
 - monomorphic-0.0.3.3
 - singletons-2.0.0.1
-resolver: lts-3.5
+resolver: lts-5.4

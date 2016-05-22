@@ -13,7 +13,7 @@ maintainer:          konn.jinro_at_gmail.com
 copyright:           (C) Hiromi ISHII 2013-2014
 category:            Math
 build-type:          Simple
-cabal-version:       >=1.8
+cabal-version:       >= 1.10
 tested-with:         GHC == 7.8.3, GHC == 7.8.4,
                      GHC == 7.10.2
 
@@ -23,18 +23,36 @@ source-repository head
 
 
 library
-  exposed-modules:     Data.Type.Natural, Data.Type.Ordinal
-  other-modules:       Data.Type.Natural.Definitions,
-                       Data.Type.Natural.Core
-  build-depends:       base                     >= 4       && < 5
-               ,       equational-reasoning     == 0.2.*
-               ,       monomorphic              >= 0.0.3
-               ,       template-haskell         >= 2.8     && < 2.11
-               ,       constraints              >= 0.3     && < 0.5
+  ghc-options:         -Wall -O2 -fno-warn-orphans
+  exposed-modules:     Data.Type.Natural
+                     , Data.Type.Ordinal
+                     , Data.Type.Natural.Coercion
+  other-modules:       Data.Type.Natural.Definitions
+                     , Data.Type.Natural.Core
+  build-depends:       base                      >= 4       && < 5
+                     , equational-reasoning      == 0.2.*
+                     , monomorphic               >= 0.0.3
+                     , template-haskell          >= 2.8     && < 2.11
+                     , constraints               >= 0.3     && < 0.9
+                     , ghc-typelits-natnormalise == 0.4.*
   if impl(ghc < 7.8)
-    build-depends:     singletons               == 0.8.*
+    build-depends:     singletons                == 0.8.*
   else
     if impl(ghc < 7.10)
-      build-depends:     singletons               == 1.*
+      build-depends:   singletons                == 1.*
     else 
-      build-depends:     singletons               == 2.0.*
+      build-depends:   singletons                == 2.0.*
+
+  default-language:    Haskell2010
+  default-extensions:  DataKinds
+                       PolyKinds
+                       ConstraintKinds
+                       GADTs
+                       ScopedTypeVariables
+                       TemplateHaskell
+                       TypeFamilies
+                       TypeOperators
+                       MultiParamTypeClasses
+                       UndecidableInstances
+                       FlexibleContexts
+                       FlexibleInstances
