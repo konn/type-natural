@@ -22,20 +22,12 @@ import Prelude                 (Num (..), Ord (..))
 import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
                                 Min, MinSym0, MinSym1, MinSym2, SOrd (..))
 #endif
-import Data.Singletons.TH (singletons)
 #endif
-import           Data.Constraint           hiding ((:-))
-import           Data.Type.Monomorphic
-import           Data.Typeable             (Typeable)
-import           Language.Haskell.TH
-import           Language.Haskell.TH.Quote
-import           Prelude                   (Bool (..), Eq (..), Int,
-                                            Integral (..), Ord ((<)), Show (..),
-                                            error, id, otherwise, undefined,
-                                            ($), (.))
-import qualified Prelude                   as P
-import           Proof.Equational
-import           Unsafe.Coerce
+import           Data.Typeable (Typeable)
+import           Prelude       (Bool (..), Eq (..), Show (..))
+import qualified Prelude       as P
+
+
 
 --------------------------------------------------
 -- * Natural numbers and its singleton type

@@ -1,33 +1,21 @@
-{-# LANGUAGE CPP, DataKinds, FlexibleContexts, FlexibleInstances, GADTs     #-}
-{-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude       #-}
-{-# LANGUAGE PolyKinds, RankNTypes, ScopedTypeVariables, StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators                   #-}
-{-# LANGUAGE UndecidableInstances                                           #-}
+{-# LANGUAGE CPP, DataKinds, FlexibleContexts, FlexibleInstances, GADTs #-}
+{-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude   #-}
+{-# LANGUAGE PolyKinds, RankNTypes, ScopedTypeVariables                 #-}
+{-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies          #-}
+{-# LANGUAGE TypeOperators, UndecidableInstances                        #-}
 module Data.Type.Natural.Core where
 import Data.Singletons
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
-                                Min, MinSym0, MinSym1, MinSym2, SOrd (..))
-import Data.Singletons.TH      (singletons)
+
 #endif
-import           Data.Constraint           hiding ((:-))
-import           Data.Type.Monomorphic
-import           Language.Haskell.TH
-import           Language.Haskell.TH.Quote
-import           Prelude                   (Bool (..), Eq (..), Int,
-                                            Integral (..), Ord ((<)), Show (..),
-                                            error, id, otherwise, undefined,
-                                            ($), (.))
-import qualified Prelude                   as P
-import           Proof.Equational
-import           Unsafe.Coerce
+import Data.Constraint hiding ((:-))
+import Prelude         (Bool (..), Eq (..), Show (..), error, ($))
+import Unsafe.Coerce
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
 import Data.Type.Natural.Definitions hiding ((:<=))
-import Prelude                       (Num (..))
 #else
 import Data.Type.Natural.Definitions
 #endif
-
 
 --------------------------------------------------
 -- ** Convenient synonyms

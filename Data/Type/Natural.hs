@@ -1,8 +1,8 @@
-{-# LANGUAGE CPP, DataKinds, FlexibleContexts, FlexibleInstances, GADTs     #-}
-{-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude       #-}
-{-# LANGUAGE PolyKinds, RankNTypes, ScopedTypeVariables, StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators                   #-}
-{-# LANGUAGE UndecidableInstances                                           #-}
+{-# LANGUAGE CPP, DataKinds, FlexibleContexts, FlexibleInstances, GADTs #-}
+{-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude   #-}
+{-# LANGUAGE PolyKinds, RankNTypes, ScopedTypeVariables                 #-}
+{-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies          #-}
+{-# LANGUAGE TypeOperators, UndecidableInstances                        #-}
 -- | Type level peano natural number, some arithmetic functions and their singletons.
 module Data.Type.Natural (-- * Re-exported modules.
                           module Data.Singletons,
@@ -90,23 +90,21 @@ import Data.Singletons
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
                                 Min, MinSym0, MinSym1, MinSym2, SOrd (..))
-import Data.Singletons.TH      (singletons)
 #endif
 import           Data.Constraint           hiding ((:-))
 import           Data.Type.Monomorphic
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
 import           Prelude                   (Bool (..), Eq (..), Int,
-                                            Integral (..), Ord ((<)), Show (..),
-                                            error, id, otherwise, undefined,
-                                            ($), (.))
+                                            Integral (..), Ord ((<)), error,
+                                            otherwise, ($), (.))
 import qualified Prelude                   as P
 import           Proof.Equational
-import           Unsafe.Coerce
+
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
 import Data.Type.Natural.Definitions hiding ((:<=))
 -- import Data.Type.Natural.Proofs.GHC710
-import Prelude (Num (..), Ord (..))
+import Prelude (Ord (..))
 #else
 import Data.Type.Natural.Definitions
 -- import Data.Type.Natural.Proofs.GHC708
