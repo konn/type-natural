@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds, GADTs, PolyKinds, RankNTypes, TypeFamilies #-}
-{-# LANGUAGE TypeOperators, UndecidableInstances                   #-}
+{-# LANGUAGE TypeOperators, UndecidableInstances, ConstraintKinds  #-}
 {-# OPTIONS_GHC -fwarn-incomplete-patterns -Wall #-}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 -- | Coercion between Peano Numerals @'Data.Type.Natural.Nat'@ and builtin naturals @'GHC.TypeLits.Nat'@
 module Data.Type.Natural.Coercion
@@ -16,6 +17,7 @@ module Data.Type.Natural.Coercion
          fromPeanoSuccCong, toPeanoSuccCong,
          fromPeanoPlusCong, toPeanoPlusCong,
          fromPeanoMultCong, toPeanoMultCong,
+         fromPeanoMonotone, toPeanoMonotone
        )
        where
 import Data.Promotion.Prelude.Enum (Succ)
@@ -32,6 +34,10 @@ import           Proof.Equational             ((:=:), (:~:) (Refl), coerce)
 import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
 import           Unsafe.Coerce                (unsafeCoerce)
+import Data.Singletons.Prelude.Bool (Sing(..))
+import Data.Singletons (bugInGHC)
+import Data.Singletons.Decide (Void)
+import Data.Void (absurd)
 
 type family FromPeano (n :: PN.Nat) :: TL.Nat where
   FromPeano 'Z = 0
@@ -188,3 +194,69 @@ toPeanoMultCong sn sm =
         === sToPeano (sSucc psn) %:* sToPeano sm
             `because` PN.multCongR (sToPeano sm) (sym (toPeanoSuccCong psn))
 
+infix 4 %:<=?
+(%:<=?) :: Sing n -> Sing m -> Sing (n TL.<=? m)
+sn %:<=? sm =
+  case viewNat sn of
+    IsZero -> STrue
+    IsSucc pn -> case viewNat sm of
+      IsZero -> SFalse
+      IsSucc pm ->
+        case pn %:<=? pm of
+          STrue  -> STrue
+          SFalse -> SFalse
+
+natLeqSuccEq :: Sing n -> Sing m -> ((n TL.+ 1) TL.<=? (m TL.+ 1)) :~: (n TL.<=? m)
+natLeqSuccEq _ _ = Refl
+
+leqqCong :: n :=: m -> l :=: z -> (n TL.<=? l) :~: (m TL.<=? z)
+leqqCong Refl Refl = Refl
+
+leqCong :: n :=: m -> l :=: z -> (n PN.:<<= l) :~: (m PN.:<<= z)
+leqCong Refl Refl = Refl
+
+fromPeanoMonotone :: ((n PN.:<<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n TL.<=? FromPeano m) :=: 'True
+fromPeanoMonotone SZ _ = Refl
+fromPeanoMonotone (SS n) (SS m) =
+   start (sFromPeano (SS n) %:<=? sFromPeano (SS m))
+     === (sSucc (sFromPeano n) %:<=? sSucc (sFromPeano m))
+      `because` leqqCong  (fromPeanoSuccCong n) (fromPeanoSuccCong m)
+     === (sFromPeano n %:<=? sFromPeano m)
+      `because` natLeqSuccEq (sFromPeano n) (sFromPeano m)
+     === STrue
+      `because` fromPeanoMonotone n m
+fromPeanoMonotone _ _ = bugInGHC
+
+natLeqZero :: (n TL.<= 0) => Sing n -> n :~: 0
+natLeqZero _ = Refl
+
+natSuccPred :: ((n :~: 0) -> Void) -> Succ (Pred n) :=: n
+natSuccPred _ = Refl
+
+myLeqPred :: Sing n -> Sing m -> ('S n PN.:<<= 'S m) :=: (n PN.:<<= m)
+myLeqPred SZ _ = Refl
+myLeqPred (SS _) (SS _) = Refl
+myLeqPred (SS _) SZ = Refl
+
+toPeanoCong :: a :=: b -> ToPeano a :=: ToPeano b
+toPeanoCong Refl = Refl
+
+toPeanoMonotone :: (n TL.<= m)
+                => Sing n -> Sing m -> ((ToPeano n) PN.:<<= (ToPeano m)) :~: 'True
+toPeanoMonotone sn sm =
+  case sn %~ (sing :: Sing 0) of
+    Proved Refl -> Refl
+    Disproved nPos -> case sm %~ (sing :: Sing 0) of
+      Proved Refl -> absurd $ nPos $ natLeqZero sm
+      Disproved mPos ->
+        let pn = sPred sn
+            pm = sPred sm
+        in start (sToPeano sn PN.%:<<= sToPeano sm)
+             === (sToPeano (sSucc pn) PN.%:<<= sToPeano (sSucc pm))
+                 `because` leqCong (toPeanoCong $ sym $ natSuccPred nPos)
+                                   (toPeanoCong $ sym $ natSuccPred mPos)
+             === (SS (sToPeano pn) PN.%:<<= SS (sToPeano pm))
+                 `because` leqCong (toPeanoSuccCong pn) (toPeanoSuccCong pm)
+             === (sToPeano pn PN.%:<<= sToPeano pm)
+                 `because` myLeqPred (sToPeano pn) (sToPeano pm)
+             === STrue `because` toPeanoMonotone pn pm

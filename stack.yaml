@@ -1,6 +1,11 @@
 flags: {}
 packages:
 - '.'
+- location:
+    git: git@github.com:konn/ghc-typelits-presburger.git
+    commit: 44c75cd679c1782e68824b67e192bfdb32abb5b0
+  extra-dep: true
+
 extra-deps: 
 - equational-reasoning-0.2.0.6
 - monomorphic-0.0.3.3
