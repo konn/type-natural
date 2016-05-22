@@ -105,7 +105,7 @@ singletons [d|
     abs n = n
 
     signum Z = Z
-    signum (S n) = S Z
+    signum (S _) = S Z
 
     fromInteger n = if n == 0 then Z else S (fromInteger (n-1))
  |]
@@ -151,7 +151,7 @@ infixl 6 :-:, :+:
 
 singletons [d|
  (**) :: Nat -> Nat -> Nat
- n ** Z = S Z
+ _ ** Z = S Z
  n ** S m = (n ** m) * n
  |]
 
