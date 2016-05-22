@@ -148,26 +148,26 @@ instance Monomorphicable (Sing :: Nat -> *) where
 --------------------------------------------------
 -- * Properties
 --------------------------------------------------
-plusZR :: SNat n -> n :+: Z :=: n
+plusZR :: SNat n -> n :+: 'Z :=: n
 plusZR SZ     = Refl
 plusZR (SS n) =
  start (SS n %+ SZ)
    =~= SS (n %+ SZ)
    === SS n          `because` cong' SS (plusZR n)
 
-eqPreservesS :: n :=: m -> S n :=: S m
+eqPreservesS :: n :=: m -> 'S n :=: 'S m
 eqPreservesS Refl = Refl
 
-plusZL :: SNat n -> Z :+: n :=: n
+plusZL :: SNat n -> 'Z :+: n :=: n
 plusZL _ = Refl
 
-succCongEq :: n :=: m -> S n :=: S m
+succCongEq :: n :=: m -> 'S n :=: 'S m
 succCongEq Refl = Refl
 
-snEqZAbsurd :: S n :=: Z -> a
+snEqZAbsurd :: 'S n :=: 'Z -> a
 snEqZAbsurd _ = bugInGHC "impossible!"
 
-succInjective :: S n :=: S m -> n :=: m
+succInjective :: 'S n :=: 'S m -> n :=: m
 succInjective Refl = Refl
 
 plusInjectiveL :: SNat n -> SNat m -> SNat l -> n :+ m :=: n :+ l -> m :=: l
@@ -181,7 +181,7 @@ plusInjectiveR n m l eq = plusInjectiveL l n m $
     === m %:+ l   `because` eq
     === l %:+ m   `because` plusCommutative m l
 
-sAndPlusOne :: SNat n -> S n :=: n :+: One
+sAndPlusOne :: SNat n -> 'S n :=: n :+: One
 sAndPlusOne SZ = Refl
 sAndPlusOne (SS n) =
   start (SS (SS n))
@@ -198,7 +198,7 @@ plusAssociative (SS n) m l =
     =~= SS (n %+ m) %+ l
     =~= (SS n %+ m) %+ l
 
-plusSR :: SNat n -> SNat m -> S (n :+: m) :=: n :+: S m
+plusSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
 plusSR n m =
   start (SS (n %+ m))
     === (n %+ m) %+ sOne `because` sAndPlusOne (n %+ m)
@@ -211,10 +211,10 @@ plusCongL _ Refl = Refl
 plusCongR :: SNat n -> m :=: m' -> m :+ n :=: m' :+ n
 plusCongR _ Refl = Refl
 
-succPlusL :: SNat n -> SNat m -> S n :+ m :=: S (n :+ m)
+succPlusL :: SNat n -> SNat m -> 'S n :+ m :=: 'S (n :+ m)
 succPlusL _ _ = Refl
 
-succPlusR :: SNat n -> SNat m -> n :+ S m :=: S (n :+ m)
+succPlusR :: SNat n -> SNat m -> n :+ 'S m :=: 'S (n :+ m)
 succPlusR SZ     _ = Refl
 succPlusR (SS n) m =
   start (SS n %+ SS m)
@@ -247,8 +247,8 @@ plusCommutative (SS n) m =
     === m %+ (n %+ sOne) `because` symmetry (plusAssociative m n sOne)
     === m %+ SS n        `because` plusCongL m (symmetry $ sAndPlusOne n)
 
-eqSuccMinus :: ((m :<<= n) ~ True)
-            => SNat n -> SNat m -> (S n :-: m) :=: (S (n :-: m))
+eqSuccMinus :: ((m :<<= n) ~ 'True)
+            => SNat n -> SNat m -> ('S n :-: m) :=: ('S (n :-: m))
 eqSuccMinus _      SZ     = Refl
 eqSuccMinus (SS n) (SS m) =
   start (SS (SS n) %:- SS m)
@@ -266,13 +266,13 @@ plusMinusEqL (SS n) m =
 plusMinusEqR :: SNat n -> SNat m -> (m :+: n) :-: m :=: n
 plusMinusEqR n m = transitivity (minusCongEq (plusCommutative m n) m) (plusMinusEqL n m)
 
-zAbsorbsMinR :: SNat n -> Min n Z :=: Z
+zAbsorbsMinR :: SNat n -> Min n 'Z :=: 'Z
 zAbsorbsMinR SZ     = Refl
 zAbsorbsMinR (SS n) =
   case zAbsorbsMinR n of
     Refl -> Refl
 
-zAbsorbsMinL :: SNat n -> Min Z n :=: Z
+zAbsorbsMinL :: SNat n -> Min 'Z n :=: 'Z
 zAbsorbsMinL SZ     = Refl
 zAbsorbsMinL (SS n) = case zAbsorbsMinL n of Refl -> Refl
 
@@ -282,7 +282,7 @@ minComm SZ     (SS _) = Refl
 minComm (SS _) SZ = Refl
 minComm (SS n) (SS m) = case minComm n m of Refl -> Refl
 
-maxZL :: SNat n -> Max Z n :=: n
+maxZL :: SNat n -> Max 'Z n :=: n
 maxZL SZ = Refl
 maxZL (SS _) = Refl
 
@@ -292,7 +292,7 @@ maxComm SZ (SS _) = Refl
 maxComm (SS _) SZ = Refl
 maxComm (SS n) (SS m) = case maxComm n m of Refl -> Refl
 
-maxZR :: SNat n -> Max n Z :=: n
+maxZR :: SNat n -> Max n 'Z :=: n
 maxZR n = transitivity (maxComm n SZ) (maxZL n)
 
 multPlusDistr :: forall n m l. SNat n -> SNat m -> SNat l -> n :* (m :+ l) :=: (n :* m) :+ (n :* l)
@@ -378,14 +378,14 @@ multComm (SS n) m =
     === m %* (n %+ sOne)     `because` symmetry (multPlusDistr m n sOne)
     === m %* SS n            `because` multCongL m (symmetry $ sAndPlusOne n)
 
-plusNeutralR :: SNat n -> SNat m -> n :+ m :=: n -> m :=: Z
+plusNeutralR :: SNat n -> SNat m -> n :+ m :=: n -> m :=: 'Z
 plusNeutralR SZ m eq =
   start m
     =~= SZ %:+ m
     === SZ       `because` eq
 plusNeutralR (SS n) m eq = plusNeutralR n m $ succInjective eq
 
-plusNeutralL :: SNat n -> SNat m -> n :+ m :=: m -> n :=: Z
+plusNeutralL :: SNat n -> SNat m -> n :+ m :=: m -> n :=: 'Z
 plusNeutralL n m eq = plusNeutralR m n $
   start (m %:+ n)
     === n %:+ m   `because` plusCommutative m n
@@ -399,7 +399,7 @@ leqRefl :: SNat n -> Leq n n
 leqRefl SZ = ZeroLeq SZ
 leqRefl (SS n) = SuccLeqSucc $ leqRefl n
 
-leqSucc :: SNat n -> Leq n (S n)
+leqSucc :: SNat n -> Leq n ('S n)
 leqSucc SZ = ZeroLeq sOne
 leqSucc (SS n) = SuccLeqSucc $ leqSucc n
 
@@ -454,28 +454,31 @@ maxLeqR :: SNat n -> SNat m -> Leq m (Max n m)
 maxLeqR n m = case maxComm n m of
                 Refl -> maxLeqL m n
 
-leqSnZAbsurd :: Leq (S n) Z -> a
+leqSnZAbsurd :: Leq ('S n) 'Z -> a
 leqSnZAbsurd _ = error "cannot be occured"
 
-leqnZElim :: Leq n Z -> n :=: Z
+leqnZElim :: Leq n 'Z -> n :=: 'Z
 leqnZElim (ZeroLeq SZ) = Refl
 
-leqSnLeq :: Leq (S n) m -> Leq n m
+leqSnLeq :: Leq ('S n) m -> Leq n m
 leqSnLeq (SuccLeqSucc leq) =
   let n = leqLhs leq
       m = SS $ leqRhs leq
   in start n
        =<= SS n   `because` leqSucc n
        =<= m      `because` SuccLeqSucc leq
+leqSnLeq _ = bugInGHC
 
-leqPred :: Leq (S n) (S m) -> Leq n m
+leqPred :: Leq ('S n) ('S m) -> Leq n m
 leqPred (SuccLeqSucc leq) = leq
+leqPred _ = bugInGHC
 
-leqSnnAbsurd :: Leq (S n) n -> a
+leqSnnAbsurd :: Leq ('S n) n -> a
 leqSnnAbsurd (SuccLeqSucc leq) =
   case leqLhs leq of
     SS _ -> leqSnnAbsurd leq
     _    -> bugInGHC "cannot be occured"
+leqSnnAbsurd _ = bugInGHC
 
 --------------------------------------------------
 -- * Quasi Quoter

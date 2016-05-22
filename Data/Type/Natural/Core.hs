@@ -22,10 +22,10 @@ import Data.Type.Natural.Definitions
 --------------------------------------------------
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-sZ :: SNat Z
+sZ :: SNat 'Z
 sZ = SZ
 
-sS :: SNat n -> SNat (S n)
+sS :: SNat n -> SNat ('S n)
 sS = SS
 
 {-# DEPRECATED sZ, sS "Smart constructors are no longer needed in singletons; Use `SS` or `SZ` instead." #-}
@@ -36,17 +36,17 @@ sS = SS
 --------------------------------------------------
 -- | Comparison via type-class.
 class (n :: Nat) :<= (m :: Nat)
-instance Z :<= n
-instance (n :<= m) => S n :<= S m
+instance 'Z :<= n
+instance (n :<= m) => 'S n :<= 'S m
 
 -- | Comparison via GADTs.
 data Leq (n :: Nat) (m :: Nat) where
   ZeroLeq     :: SNat m -> Leq Zero m
-  SuccLeqSucc :: Leq n m -> Leq (S n) (S m)
+  SuccLeqSucc :: Leq n m -> Leq ('S n) ('S m)
 
-type LeqTrueInstance a b = Dict ((a :<<= b) ~ True)
+type LeqTrueInstance a b = Dict ((a :<<= b) ~ 'True)
 
-(%-) :: (m :<<= n) ~ True => SNat n -> SNat m -> SNat (n :-: m)
+(%-) :: (m :<<= n) ~ 'True => SNat n -> SNat m -> SNat (n :-: m)
 n   %- SZ    = n
 SS n %- SS m = n %- m
 _    %- _    = error "impossible!"
@@ -56,8 +56,8 @@ deriving instance Show (SNat n)
 deriving instance Eq (SNat n)
 
 data (a :: Nat) :<: (b :: Nat) where
-  ZeroLtSucc :: Zero :<: S m
-  SuccLtSucc :: n :<: m -> S n :<: S m
+  ZeroLtSucc :: Zero :<: 'S m
+  SuccLtSucc :: n :<: m -> 'S n :<: 'S m
 
 deriving instance Show (a :<: b)
 
@@ -68,7 +68,7 @@ propToBoolLeq :: forall n m. Leq n m -> LeqTrueInstance n m
 propToBoolLeq _ = unsafeCoerce (Dict :: Dict ())
 {-# INLINE propToBoolLeq #-}
 
-boolToClassLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> LeqInstance n m
+boolToClassLeq :: (n :<<= m) ~ 'True => SNat n -> SNat m -> LeqInstance n m
 boolToClassLeq _ = unsafeCoerce (Dict :: Dict ())
 {-# INLINE boolToClassLeq #-}
 
@@ -106,7 +106,7 @@ propToClassLeq (SuccLeqSucc leq) = case propToClassLeq leq of Dict -> Dict
 
 type LeqInstance n m = Dict (n :<= m)
 
-boolToPropLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> Leq n m
+boolToPropLeq :: (n :<<= m) ~ 'True => SNat n -> SNat m -> Leq n m
 boolToPropLeq SZ     m      = ZeroLeq m
 boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
 boolToPropLeq _      _      = bugInGHC
