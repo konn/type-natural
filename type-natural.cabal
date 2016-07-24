@@ -29,19 +29,13 @@ library
   other-modules:       Data.Type.Natural.Definitions
                      , Data.Type.Natural.Core
   build-depends:       base                      >= 4       && < 5
-                     , equational-reasoning      == 0.2.*
+                     , equational-reasoning      == 0.3.*
                      , monomorphic               >= 0.0.3
-                     , template-haskell          >= 2.8     && < 2.11
+                     , template-haskell          >= 2.8     && < 3
                      , constraints               >= 0.3     && < 0.9
                      , ghc-typelits-natnormalise == 0.4.*
                      , ghc-typelits-presburger   == 0.1.*
-  if impl(ghc < 7.8)
-    build-depends:     singletons                == 0.8.*
-  else
-    if impl(ghc < 7.10)
-      build-depends:   singletons                == 1.*
-    else 
-      build-depends:   singletons                == 2.0.*
+                     , singletons                >= 2.0 && < 2.3
 
   default-language:    Haskell2010
   default-extensions:  DataKinds
