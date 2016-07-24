@@ -18,16 +18,15 @@ module Data.Type.Ordinal
          -- * Quasi Quoter
          od
        ) where
+import Control.Monad             (liftM)
 import Data.Constraint
+import Data.Singletons.Prelude
 import Data.Type.Monomorphic
-import Data.Type.Natural         hiding (promote)
+import Data.Type.Natural
+import Data.Typeable             (Typeable)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
-import Proof.Equational          (coerce)
 import Unsafe.Coerce
-import Data.Singletons.Prelude
-import Data.Typeable (Typeable)
-import Control.Monad (liftM)
 
 -- | Set-theoretic (finite) ordinals:
 --
