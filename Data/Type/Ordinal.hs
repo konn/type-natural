@@ -32,15 +32,15 @@ import Unsafe.Coerce
 --
 -- > n = {0, 1, ..., n-1}
 --
--- So, @Ordinal n@ has exactly n inhabitants. So especially @Ordinal Z@ is isomorphic to @Void@.
+-- So, @Ordinal n@ has exactly n inhabitants. So especially @Ordinal 'Z@ is isomorphic to @Void@.
 data Ordinal n where
-  OZ :: Ordinal (S n)
-  OS :: Ordinal n -> Ordinal (S n)
+  OZ :: Ordinal ('S n)
+  OS :: Ordinal n -> Ordinal ('S n)
 
--- | Since 0.2.3.0  
+-- | Since 0.2.3.0
 deriving instance Typeable Ordinal
 -- | Parsing always fails, because there are no inhabitant.
-instance Read (Ordinal Z) where
+instance Read (Ordinal 'Z) where
   readsPrec _ _ = []
 
 instance SingI n => Num (Ordinal n) where
@@ -55,7 +55,7 @@ instance SingI n => Num (Ordinal n) where
   signum = error "What does Ordinal sign mean?"
   fromInteger = unsafeFromInt . fromInteger
 
-deriving instance Read (Ordinal n) => Read (Ordinal (S n))
+deriving instance Read (Ordinal n) => Read (Ordinal ('S n))
 deriving instance Show (Ordinal n)
 deriving instance Eq (Ordinal n)
 deriving instance Ord (Ordinal n)
@@ -79,7 +79,7 @@ enumOrdinal :: SNat n -> [Ordinal n]
 enumOrdinal SZ = []
 enumOrdinal (SS n) = OZ : map OS (enumOrdinal n)
 
-instance SingI n => Bounded (Ordinal (S n)) where
+instance SingI n => Bounded (Ordinal ('S n)) where
   minBound = OZ
   maxBound =
     case propToBoolLeq $ leqRefl (sing :: SNat n) of
@@ -94,19 +94,19 @@ unsafeFromInt n =
              SFalse -> error "Bound over!"
 
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
-sNatToOrd' :: (S m :<<= n) ~ True => SNat n -> SNat m -> Ordinal n
+sNatToOrd' :: ('S m :<<= n) ~ 'True => SNat n -> SNat m -> Ordinal n
 sNatToOrd' (SS _) SZ = OZ
 sNatToOrd' (SS n) (SS m) = OS $ sNatToOrd' n m
 sNatToOrd' _ _ = bugInGHC
 
 -- | 'sNatToOrd'' with @n@ inferred.
-sNatToOrd :: (SingI n, (S m :<<= n) ~ True) => SNat m -> Ordinal n
+sNatToOrd :: (SingI n, ('S m :<<= n) ~ 'True) => SNat m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
 
 data CastedOrdinal n where
-  CastedOrdinal :: (S m :<<= n) ~ True => SNat m -> CastedOrdinal n
+  CastedOrdinal :: ('S m :<<= n) ~ 'True => SNat m -> CastedOrdinal n
 
--- | Convert @Ordinal n@ into @SNat m@ with the proof of @S m :<<= n@.
+-- | Convert @Ordinal n@ into @SNat m@ with the proof of @'S m :<<= n@.
 ordToSNat' :: Ordinal n -> CastedOrdinal n
 ordToSNat' OZ = CastedOrdinal SZ
 ordToSNat' (OS on) =
@@ -129,12 +129,12 @@ ordToInt OZ = 0
 ordToInt (OS n) = 1 + ordToInt n
 
 -- | Inclusion function for ordinals.
-inclusion' :: (n :<<= m) ~ True => SNat m -> Ordinal n -> Ordinal m
+inclusion' :: (n :<<= m) ~ 'True => SNat m -> Ordinal n -> Ordinal m
 inclusion' _ = unsafeCoerce
 {-# INLINE inclusion' #-}
 {-
 -- The "proof" of the correctness of the above
-inclusion' :: (n :<<= m) ~ True => SNat m -> Ordinal n -> Ordinal m
+inclusion' :: (n :<<= m) ~ 'True => SNat m -> Ordinal n -> Ordinal m
 inclusion' (SS SZ) OZ = OZ
 inclusion' (SS (SS _)) OZ = OZ
 inclusion' (SS (SS n)) (OS m) = OS $ inclusion' (SS n) m
@@ -142,7 +142,7 @@ inclusion' _ _ = bugInGHC
 -}
 
 -- | Inclusion function for ordinals with codomain inferred.
-inclusion :: ((n :<<= m) ~ True) => Ordinal n -> Ordinal m
+inclusion :: ((n :<<= m) ~ 'True) => Ordinal n -> Ordinal m
 inclusion on = unsafeCoerce on
 {-# INLINE inclusion #-}
 
@@ -158,24 +158,24 @@ OS n @+ m =
     SS sn -> case singInstance sn of SingInstance -> OS $ n @+ m
     _ -> bugInGHC
 
--- | Since @Ordinal Z@ is logically not inhabited, we can coerce it to any value.
+-- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 --
 -- Since 0.2.3.0
 absurdOrd :: Ordinal 'Z -> a
 absurdOrd cs = case cs of {}
 
 -- | 'absurdOrd' for the value in 'Functor'.
--- 
+--
 --   Since 0.2.3.0
-vacuousOrd :: Functor f => f (Ordinal Z) -> f a
+vacuousOrd :: Functor f => f (Ordinal 'Z) -> f a
 vacuousOrd = fmap absurdOrd
 
 -- | 'absurdOrd' for the value in 'Monad'.
 --   This function will become uneccesary once 'Applicative' (and hence 'Functor')
 --   become the superclass of 'Monad'.
--- 
+--
 --   Since 0.2.3.0
-vacuousOrdM :: Monad m => m (Ordinal Z) -> m a
+vacuousOrdM :: Monad m => m (Ordinal 'Z) -> m a
 vacuousOrdM = liftM absurdOrd
 
 -- | Quasiquoter for ordinals
