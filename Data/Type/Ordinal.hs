@@ -1,11 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE CPP, DataKinds, EmptyDataDecls, FlexibleContexts         #-}
-{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures, PolyKinds      #-}
-{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies, TypeOperators                              #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
-{-# LANGUAGE EmptyCase, LambdaCase #-}
-#endif
+{-# LANGUAGE DataKinds, DeriveDataTypeable, EmptyCase, EmptyDataDecls   #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures #-}
+{-# LANGUAGE LambdaCase, PolyKinds, ScopedTypeVariables                 #-}
+{-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies          #-}
+{-# LANGUAGE TypeOperators                                              #-}
 -- | Set-theoretic ordinal arithmetic
 module Data.Type.Ordinal
        ( -- * Data-types
@@ -28,10 +25,8 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 import Proof.Equational          (coerce)
 import Unsafe.Coerce
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 import Data.Singletons.Prelude
 import Data.Typeable (Typeable)
-#endif
 import Control.Monad (liftM)
 
 -- | Set-theoretic (finite) ordinals:
@@ -43,10 +38,8 @@ data Ordinal n where
   OZ :: Ordinal (S n)
   OS :: Ordinal n -> Ordinal (S n)
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 -- | Since 0.2.3.0  
 deriving instance Typeable Ordinal
-#endif
 -- | Parsing always fails, because there are no inhabitant.
 instance Read (Ordinal Z) where
   readsPrec _ _ = []
@@ -97,10 +90,6 @@ unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n =
     case (promote n :: Monomorphic (Sing :: Nat -> *)) of
       Monomorphic sn ->
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
-        case singInstance sn of
-          SingInstance ->
-#endif
            case SS sn %:<<= (sing :: SNat n) of
              STrue -> sNatToOrd' (sing :: SNat n) sn
              SFalse -> error "Bound over!"
@@ -124,11 +113,7 @@ ordToSNat' OZ = CastedOrdinal SZ
 ordToSNat' (OS on) =
   case ordToSNat' on of
     CastedOrdinal m ->
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707      
-      case singInstance m of
-        SingInstance ->
-#endif
-          CastedOrdinal (SS m)
+      CastedOrdinal (SS m)
 
 -- | Convert @Ordinal n@ into monomorphic @SNat@
 ordToSNat :: Ordinal n -> Monomorphic (Sing :: Nat -> *)
@@ -177,12 +162,8 @@ OS n @+ m =
 -- | Since @Ordinal Z@ is logically not inhabited, we can coerce it to any value.
 --
 -- Since 0.2.3.0
-absurdOrd :: Ordinal Z -> a
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+absurdOrd :: Ordinal 'Z -> a
 absurdOrd cs = case cs of {}
-#else
-absurdOrd _ = error "Impossible!"
-#endif
 
 -- | 'absurdOrd' for the value in 'Functor'.
 -- 
