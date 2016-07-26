@@ -36,13 +36,13 @@ module Data.Type.Natural (-- * Re-exported modules.
                           nat, snat,
                           -- * Properties of natural numbers
                           succCongEq, plusCongR, plusCongL, succPlusL, succPlusR,
-                          pluSZR, pluSZL, eqPreserveSS, plusAssociative,
+                          plusZR, plusZL, eqPreserveSS, plusAssociative,
                           multAssociative, multComm, multZL, multZR, multOneL,
                           multOneR, snEqZAbsurd, succInjective, plusInjectiveL, plusInjectiveR,
                           plusMultDistr, multPlusDistr, multCongL, multCongR,
                           sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent,
                           eqSuccMinus, plusMinusEqL, plusMinusEqR,
-                          zAbsorbsMinR, zAbsorbsMinL, pluSSR, plusNeutralR, plusNeutralL,
+                          zAbsorbsMinR, zAbsorbsMinL, plusSR, plusNeutralR, plusNeutralL,
                           leqRhs, leqLhs, minComm, maxZL, maxComm, maxZR,
                           -- * Properties of ordering 'Leq'
                           leqRefl, leqSucc, leqTrans, plusMonotone, plusLeqL, plusLeqR,
@@ -114,18 +114,18 @@ instance Monomorphicable (Sing :: Nat -> *) where
 --------------------------------------------------
 -- * Properties
 --------------------------------------------------
-pluSZR :: SNat n -> n :+: 'Z :=: n
-pluSZR SZ     = Refl
-pluSZR (SS n) =
+plusZR :: SNat n -> n :+: 'Z :=: n
+plusZR SZ     = Refl
+plusZR (SS n) =
  start (SS n %+ SZ)
    =~= SS (n %+ SZ)
-   === SS n          `because` cong' SS (pluSZR n)
+   === SS n          `because` cong' SS (plusZR n)
 
 eqPreserveSS :: n :=: m -> 'S n :=: 'S m
 eqPreserveSS Refl = Refl
 
-pluSZL :: SNat n -> 'Z :+: n :=: n
-pluSZL _ = Refl
+plusZL :: SNat n -> 'Z :+: n :=: n
+plusZL _ = Refl
 
 succCongEq :: n :=: m -> 'S n :=: 'S m
 succCongEq Refl = Refl
@@ -164,8 +164,8 @@ plusAssociative (SS n) m l =
     =~= SS (n %+ m) %+ l
     =~= (SS n %+ m) %+ l
 
-pluSSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
-pluSSR n m =
+plusSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
+plusSR n m =
   start (SS (n %+ m))
     === (n %+ m) %+ sOne `because` sAndPlusOne (n %+ m)
     === n %+ (m %+ sOne) `because` symmetry (plusAssociative n m sOne)
@@ -386,12 +386,12 @@ instance Preorder Leq where
 plusMonotone :: Leq n m -> Leq l k -> Leq (n :+: l) (m :+: k)
 plusMonotone (ZeroLeq m) (ZeroLeq k) = ZeroLeq (m %+ k)
 plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
-  case pluSSR m (leqRhs leq) of
+  case plusSR m (leqRhs leq) of
     Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
 plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
 
 plusLeqL :: SNat n -> SNat m -> Leq n (n :+: m)
-plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ pluSZL m) m
+plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ plusZL m) m
 plusLeqL (SS n) m =
   start (SS n)
     =<= SS (n %+ m) `because` SuccLeqSucc (plusLeqL n m)
