@@ -1,22 +1,16 @@
-# For more information, see: https://github.com/commercialhaskell/stack/blob/master/doc/yaml_configuration.md
-
-# Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
 resolver: nightly-2016-07-19
 skip-ghc-check: true
-
-# Local packages, usually specified by relative directory name
 packages:
 - '.'
 - location:
-    git: git@github.com:konn/ghc-typelits-presburger.git
+    git: https://github.com/konn/ghc-typelits-presburger.git
     commit: 9753a88eeed90f5ae70b9e42bb33bb15ee564130
   extra-dep: true
 - location:
-    git: git@github.com:konn/equational-reasoning-in-haskell.git
+    git: https://github.com/konn/equational-reasoning-in-haskell.git
     commit: b0c47234b4f02b9dc1ccc15c9b13054f2625b7e3
   extra-dep: true
 
-# Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
 - monomorphic-0.0.3.3
 - equational-reasoning-0.3.0.0
@@ -24,5 +18,4 @@ extra-deps:
 - ghc-typelits-natnormalise-0.4.6
 - th-desugar-1.6
 
-# Override default flag values for local packages and extra-deps
 flags: {}

@@ -2,11 +2,11 @@ resolver: nightly-2016-07-19
 packages:
 - '.'
 - location:
-    git: git@github.com:konn/ghc-typelits-presburger.git
+    git: https://github.com/konn/ghc-typelits-presburger.git
     commit: 9753a88eeed90f5ae70b9e42bb33bb15ee564130
   extra-dep: true
 - location:
-    git: git@github.com:konn/equational-reasoning-in-haskell.git
+    git: https://github.com/konn/equational-reasoning-in-haskell.git
     commit: b0c47234b4f02b9dc1ccc15c9b13054f2625b7e3
   extra-dep: true
 
