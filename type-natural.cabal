@@ -28,6 +28,7 @@ library
   exposed-modules:     Data.Type.Natural
                      , Data.Type.Ordinal
                      , Data.Type.Natural.Builtin
+                     , Data.Type.Natural.Class
   other-modules:       Data.Type.Natural.Definitions
                      , Data.Type.Natural.Core
                      , Data.Type.Natural.Compat

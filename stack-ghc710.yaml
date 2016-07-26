@@ -1,4 +1,4 @@
-resolver: nightly-2016-07-19
+flags: {}
 packages:
 - '.'
 - location:
@@ -10,10 +10,10 @@ packages:
     commit: b0c47234b4f02b9dc1ccc15c9b13054f2625b7e3
   extra-dep: true
 
-extra-deps:
+extra-deps: 
 - monomorphic-0.0.3.3
-- singletons-2.2
+- singletons-2.1
 - th-desugar-1.6
 - ghc-typelits-natnormalise-0.4.6
-
-flags: {}
+# - equational-reasoning-0.3.0.0
+resolver: lts-6.8
