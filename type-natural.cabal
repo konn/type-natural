@@ -23,11 +23,14 @@ source-repository head
 
 library
   ghc-options:         -Wall -O2 -fno-warn-orphans
+  if impl(ghc >= 8.0.0)
+    ghc-options:       -Wno-redundant-constraints
   exposed-modules:     Data.Type.Natural
                      , Data.Type.Ordinal
-                     , Data.Type.Natural.Coercion
+                     , Data.Type.Natural.Builtin
   other-modules:       Data.Type.Natural.Definitions
                      , Data.Type.Natural.Core
+                     , Data.Type.Natural.Compat
   build-depends:       base                      >= 4       && < 5
                      , equational-reasoning      == 0.4.*
                      , monomorphic               >= 0.0.3

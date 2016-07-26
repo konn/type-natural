@@ -1,6 +1,5 @@
-{-# LANGUAGE ConstraintKinds, DataKinds, GADTs, PolyKinds, RankNTypes #-}
-{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances        #-}
-{-# OPTIONS_GHC -fwarn-incomplete-patterns -Wall #-}
+{-# LANGUAGE ConstraintKinds, CPP, DataKinds, GADTs, PolyKinds, RankNTypes #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances             #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 -- | Coercion between Peano Numerals @'Data.Type.Natural.Nat'@ and builtin naturals @'GHC.TypeLits.Nat'@
@@ -28,9 +27,12 @@ module Data.Type.Natural.Builtin
          plusMultDistr, multPlusDistr
        )
        where
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+import Data.Type.Natural.Compat
+#endif
+
 import Data.Promotion.Prelude.Enum (Succ)
 import           Data.Singletons              (Sing, SingI, sing)
-import           Data.Singletons              (bugInGHC)
 import           Data.Singletons.Decide       (Decision (..), (%~))
 import           Data.Singletons.Decide       (Void)
 import           Data.Singletons.Prelude.Bool (Sing (..))
@@ -235,7 +237,9 @@ fromPeanoMonotone (SS n) (SS m) =
       `because` natLeqSuccEq (sFromPeano n) (sFromPeano m)
      === STrue
       `because` fromPeanoMonotone n m
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 fromPeanoMonotone _ _ = bugInGHC
+#endif
 
 natLeqZero :: (n TL.<= 0) => Sing n -> n :~: 0
 natLeqZero _ = Refl

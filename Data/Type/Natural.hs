@@ -2,47 +2,31 @@
 {-# LANGUAGE KindSignatures, MultiParamTypeClasses, NoImplicitPrelude   #-}
 {-# LANGUAGE PolyKinds, RankNTypes, ScopedTypeVariables                 #-}
 {-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies          #-}
-{-# LANGUAGE TypeOperators, UndecidableInstances                        #-}
+{-# LANGUAGE TypeOperators, UndecidableInstances, EmptyCase, LambdaCase #-}
 -- | Type level peano natural number, some arithmetic functions and their singletons.
 module Data.Type.Natural (-- * Re-exported modules.
                           module Data.Singletons,
                           -- * Natural Numbers
                           -- | Peano natural numbers. It will be promoted to the type-level natural number.
                           Nat(..),
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           SSym0, SSym1, ZSym0,
-#endif
                           -- | Singleton type for 'Nat'.
                           SNat, Sing (SZ, SS),
-                          -- ** Smart constructors
-                          -- | WARNING: Smart constructors are deprecated as of singletons 0.10,
-                          -- so these are provided only for backward compatibility.
-                          sZ, sS,
                           -- ** Arithmetic functions and their singletons.
                           min, Min, sMin, max, Max, sMax,
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           MinSym0, MinSym1, MinSym2,
                           MaxSym0, MaxSym1, MaxSym2,
-#endif
                           (:+:), (:+),
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:+$), (:+$$), (:+$$$),
-#endif
                           (%+), (%:+), (:*), (:*:),
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:*$), (:*$$), (:*$$$),
-#endif
                           (%:*), (%*), (:-:), (:-),
                           (:**:), (:**), (%:**), (%**),
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:-$), (:-$$), (:-$$$),
-#endif
                           (%:-), (%-),
                           -- ** Type-level predicate & judgements
                           Leq(..), (:<=), (:<<=),
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           (:<<=$),(:<<=$$),(:<<=$$$),
-#endif
                           (%:<<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
                           LeqTrueInstance, propToBoolLeq,
@@ -52,13 +36,13 @@ module Data.Type.Natural (-- * Re-exported modules.
                           nat, snat,
                           -- * Properties of natural numbers
                           succCongEq, plusCongR, plusCongL, succPlusL, succPlusR,
-                          plusZR, plusZL, eqPreservesS, plusAssociative,
+                          pluSZR, pluSZL, eqPreserveSS, plusAssociative,
                           multAssociative, multComm, multZL, multZR, multOneL,
                           multOneR, snEqZAbsurd, succInjective, plusInjectiveL, plusInjectiveR,
                           plusMultDistr, multPlusDistr, multCongL, multCongR,
                           sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent,
                           eqSuccMinus, plusMinusEqL, plusMinusEqR,
-                          zAbsorbsMinR, zAbsorbsMinL, plusSR, plusNeutralR, plusNeutralL,
+                          zAbsorbsMinR, zAbsorbsMinL, pluSSR, plusNeutralR, plusNeutralL,
                           leqRhs, leqLhs, minComm, maxZL, maxComm, maxZR,
                           -- * Properties of ordering 'Leq'
                           leqRefl, leqSucc, leqTrans, plusMonotone, plusLeqL, plusLeqR,
@@ -69,47 +53,34 @@ module Data.Type.Natural (-- * Re-exported modules.
                           twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty,
                           Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
                           Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty,
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
                           ZeroSym0, OneSym0, TwoSym0, ThreeSym0, FourSym0, FiveSym0, SixSym0,
                           SevenSym0, EightSym0, NineSym0, TenSym0, ElevenSym0, TwelveSym0,
                           ThirteenSym0, FourteenSym0, FifteenSym0, SixteenSym0, SeventeenSym0,
                           EighteenSym0, NineteenSym0, TwentySym0,
-#endif
                           sZero, sOne, sTwo, sThree, sFour, sFive, sSix, sSeven, sEight, sNine, sTen, sEleven,
                           sTwelve, sThirteen, sFourteen, sFifteen, sSixteen, sSeventeen, sEighteen, sNineteen, sTwenty,
                           n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20,
                           N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, N10, N11, N12, N13, N14, N15, N16, N17, N18, N19, N20,
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 
                           N0Sym0, N1Sym0, N2Sym0, N3Sym0, N4Sym0, N5Sym0, N6Sym0, N7Sym0, N8Sym0, N9Sym0, N10Sym0, N11Sym0, N12Sym0, N13Sym0, N14Sym0, N15Sym0, N16Sym0, N17Sym0, N18Sym0, N19Sym0, N20Sym0,
-#endif
                           sN0, sN1, sN2, sN3, sN4, sN5, sN6, sN7, sN8, sN9, sN10, sN11, sN12, sN13, sN14,
                           sN15, sN16, sN17, sN18, sN19, sN20
                          ) where
-import Data.Singletons
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
-                                Min, MinSym0, MinSym1, MinSym2, SOrd (..))
-#endif
+import Data.Type.Natural.Compat
+import Data.Type.Natural.Core
+import Data.Type.Natural.Definitions hiding ((:<=))
+
 import           Data.Constraint           hiding ((:-))
+import           Data.Singletons
 import           Data.Type.Monomorphic
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
 import           Prelude                   (Bool (..), Eq (..), Int,
                                             Integral (..), Ord ((<)), error,
                                             otherwise, ($), (.))
+import           Prelude                   (Ord (..))
 import qualified Prelude                   as P
 import           Proof.Equational
-
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
-import Data.Type.Natural.Definitions hiding ((:<=))
--- import Data.Type.Natural.Proofs.GHC710
-import Prelude (Ord (..))
-#else
-import Data.Type.Natural.Definitions
--- import Data.Type.Natural.Proofs.GHC708
-#endif
-import Data.Type.Natural.Core
 
 --------------------------------------------------
 -- * Conversion functions.
@@ -137,35 +108,30 @@ instance Monomorphicable (Sing :: Nat -> *) where
   demote  (Monomorphic sn) = sNatToInt sn
   promote n
       | n < 0     = error "negative integer!"
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 708
-      | n == 0    = Monomorphic sZ
-      | otherwise = withPolymorhic (n P.- 1) $ \sn -> Monomorphic $ sS sn
-#else
       | n == 0    = Monomorphic SZ
       | otherwise = withPolymorhic (n P.- 1) $ \sn -> Monomorphic $ SS sn
-#endif
 
 --------------------------------------------------
 -- * Properties
 --------------------------------------------------
-plusZR :: SNat n -> n :+: 'Z :=: n
-plusZR SZ     = Refl
-plusZR (SS n) =
+pluSZR :: SNat n -> n :+: 'Z :=: n
+pluSZR SZ     = Refl
+pluSZR (SS n) =
  start (SS n %+ SZ)
    =~= SS (n %+ SZ)
-   === SS n          `because` cong' SS (plusZR n)
+   === SS n          `because` cong' SS (pluSZR n)
 
-eqPreservesS :: n :=: m -> 'S n :=: 'S m
-eqPreservesS Refl = Refl
+eqPreserveSS :: n :=: m -> 'S n :=: 'S m
+eqPreserveSS Refl = Refl
 
-plusZL :: SNat n -> 'Z :+: n :=: n
-plusZL _ = Refl
+pluSZL :: SNat n -> 'Z :+: n :=: n
+pluSZL _ = Refl
 
 succCongEq :: n :=: m -> 'S n :=: 'S m
 succCongEq Refl = Refl
 
 snEqZAbsurd :: 'S n :=: 'Z -> a
-snEqZAbsurd _ = bugInGHC "impossible!"
+snEqZAbsurd _ = bugInGHC
 
 succInjective :: 'S n :=: 'S m -> n :=: m
 succInjective Refl = Refl
@@ -198,8 +164,8 @@ plusAssociative (SS n) m l =
     =~= SS (n %+ m) %+ l
     =~= (SS n %+ m) %+ l
 
-plusSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
-plusSR n m =
+pluSSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
+pluSSR n m =
   start (SS (n %+ m))
     === (n %+ m) %+ sOne `because` sAndPlusOne (n %+ m)
     === n %+ (m %+ sOne) `because` symmetry (plusAssociative n m sOne)
@@ -255,13 +221,16 @@ eqSuccMinus (SS n) (SS m) =
     =~= SS n %:- m
     === SS (n %:- m)       `because` eqSuccMinus n m
     =~= SS (SS n %:- SS m)
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 eqSuccMinus _ _ = bugInGHC
+#endif
+
 
 plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :=: n
 plusMinusEqL SZ     m = minusNilpotent m
 plusMinusEqL (SS n) m =
   case propToBoolLeq (plusLeqR n m) of
-    Dict -> transitivity (eqSuccMinus (n %+ m) m) (eqPreservesS $ plusMinusEqL n m)
+    Dict -> transitivity (eqSuccMinus (n %+ m) m) (eqPreserveSS $ plusMinusEqL n m)
 
 plusMinusEqR :: SNat n -> SNat m -> (m :+: n) :-: m :=: n
 plusMinusEqR n m = transitivity (minusCongEq (plusCommutative m n) m) (plusMinusEqL n m)
@@ -406,7 +375,9 @@ leqSucc (SS n) = SuccLeqSucc $ leqSucc n
 leqTrans :: Leq n m -> Leq m l -> Leq n l
 leqTrans (ZeroLeq _) leq = ZeroLeq $ leqRhs leq
 leqTrans (SuccLeqSucc nLeqm) (SuccLeqSucc mLeql) = SuccLeqSucc $ leqTrans nLeqm mLeql
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 leqTrans _ _ = error "impossible!"
+#endif
 
 instance Preorder Leq where
   reflexivity = leqRefl
@@ -415,12 +386,12 @@ instance Preorder Leq where
 plusMonotone :: Leq n m -> Leq l k -> Leq (n :+: l) (m :+: k)
 plusMonotone (ZeroLeq m) (ZeroLeq k) = ZeroLeq (m %+ k)
 plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
-  case plusSR m (leqRhs leq) of
+  case pluSSR m (leqRhs leq) of
     Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
 plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
 
 plusLeqL :: SNat n -> SNat m -> Leq n (n :+: m)
-plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ plusZL m) m
+plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ pluSZL m) m
 plusLeqL (SS n) m =
   start (SS n)
     =<= SS (n %+ m) `because` SuccLeqSucc (plusLeqL n m)
@@ -441,8 +412,10 @@ minLeqR n m = case minComm n m of Refl -> minLeqL m n
 
 leqAnitsymmetric :: Leq n m -> Leq m n -> n :=: m
 leqAnitsymmetric (ZeroLeq _) (ZeroLeq _) = Refl
-leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = eqPreservesS $ leqAnitsymmetric leq1 leq2
-leqAnitsymmetric _ _ = bugInGHC
+leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = eqPreserveSS $ leqAnitsymmetric leq1 leq2
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+leqAnitsymmetric _ _ = error "impossible!"
+#endif
 
 maxLeqL :: SNat n -> SNat m -> Leq n (Max n m)
 maxLeqL SZ m = ZeroLeq (sMax SZ m)
@@ -455,7 +428,7 @@ maxLeqR n m = case maxComm n m of
                 Refl -> maxLeqL m n
 
 leqSnZAbsurd :: Leq ('S n) 'Z -> a
-leqSnZAbsurd _ = error "cannot be occured"
+leqSnZAbsurd = \case {}
 
 leqnZElim :: Leq n 'Z -> n :=: 'Z
 leqnZElim (ZeroLeq SZ) = Refl
@@ -467,18 +440,24 @@ leqSnLeq (SuccLeqSucc leq) =
   in start n
        =<= SS n   `because` leqSucc n
        =<= m      `because` SuccLeqSucc leq
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 leqSnLeq _ = bugInGHC
+#endif
 
 leqPred :: Leq ('S n) ('S m) -> Leq n m
 leqPred (SuccLeqSucc leq) = leq
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 leqPred _ = bugInGHC
+#endif
 
 leqSnnAbsurd :: Leq ('S n) n -> a
 leqSnnAbsurd (SuccLeqSucc leq) =
   case leqLhs leq of
     SS _ -> leqSnnAbsurd leq
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
     _    -> bugInGHC "cannot be occured"
 leqSnnAbsurd _ = bugInGHC
+#endif
 
 --------------------------------------------------
 -- * Quasi Quoter

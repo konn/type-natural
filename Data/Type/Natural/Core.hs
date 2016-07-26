@@ -4,32 +4,14 @@
 {-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies          #-}
 {-# LANGUAGE TypeOperators, UndecidableInstances                        #-}
 module Data.Type.Natural.Core where
-import Data.Singletons
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+import Data.Type.Natural.Compat
 #endif
-import Data.Constraint hiding ((:-))
-import Prelude         (Bool (..), Eq (..), Show (..), error, ($))
-import Unsafe.Coerce
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
+
+import Data.Constraint               hiding ((:-))
 import Data.Type.Natural.Definitions hiding ((:<=))
-#else
-import Data.Type.Natural.Definitions
-#endif
-
---------------------------------------------------
--- ** Convenient synonyms
---------------------------------------------------
-
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-sZ :: SNat 'Z
-sZ = SZ
-
-sS :: SNat n -> SNat ('S n)
-sS = SS
-
-{-# DEPRECATED sZ, sS "Smart constructors are no longer needed in singletons; Use `SS` or `SZ` instead." #-}
-#endif
+import Prelude                       (Bool (..), Eq (..), Show (..), ($))
+import Unsafe.Coerce
 
 --------------------------------------------------
 -- ** Type-level predicate & judgements.
@@ -49,7 +31,9 @@ type LeqTrueInstance a b = Dict ((a :<<= b) ~ 'True)
 (%-) :: (m :<<= n) ~ 'True => SNat n -> SNat m -> SNat (n :-: m)
 n   %- SZ    = n
 SS n %- SS m = n %- m
-_    %- _    = error "impossible!"
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+_    %- _    = bugInGHC
+#endif
 
 infixl 6 %-
 deriving instance Show (SNat n)
@@ -81,27 +65,15 @@ propToClassLeq _ = unsafeCoerce (Dict :: Dict ())
 propToBoolLeq :: Leq n m -> LeqTrueInstance n m
 propToBoolLeq (ZeroLeq _) = Dict
 propToBoolLeq (SuccLeqSucc leq) = case propToBoolLeq leq of Dict -> Dict
-{-# RULES
- "propToBoolLeq/unsafeCoerce" forall (x :: Leq n m) .
-  propToBoolLeq x = unsafeCoerce (Dict :: Dict ()) :: Dict ((n :<<= m) ~ True)
- #-}
 
 boolToClassLeq :: (n :<<= m) ~ True => SNat n -> SNat m -> LeqInstance n m
 boolToClassLeq SZ     _      = Dict
 boolToClassLeq (SS n) (SS m) = case boolToClassLeq n m of Dict -> Dict
 boolToClassLeq _ _ = bugInGHC
-{-# RULES
- "boolToClassLeq/unsafeCoerce" forall (n :: SNat n) (m :: SNat m).
-  boolToClassLeq n m = unsafeCoerce (Dict :: Dict ()) :: Dict (n :<= m)
- #-}
 
 propToClassLeq :: Leq n m -> LeqInstance n m
 propToClassLeq (ZeroLeq _) = Dict
 propToClassLeq (SuccLeqSucc leq) = case propToClassLeq leq of Dict -> Dict
-{-# RULES
- "propToClassLeq/unsafeCoerce" forall (x :: Leq n m) .
-  propToClassLeq x = unsafeCoerce (Dict :: Dict ()) :: Dict (n :<= m)
- #-}
 -}
 
 type LeqInstance n m = Dict (n :<= m)
@@ -109,12 +81,14 @@ type LeqInstance n m = Dict (n :<= m)
 boolToPropLeq :: (n :<<= m) ~ 'True => SNat n -> SNat m -> Leq n m
 boolToPropLeq SZ     m      = ZeroLeq m
 boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
-boolToPropLeq _      _      = bugInGHC
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+boolToPropLeq _      _     = bugInGHC
+#endif
 
 leqRhs :: Leq n m -> SNat m
 leqRhs (ZeroLeq m) = m
-leqRhs (SuccLeqSucc leq) = sS $ leqRhs leq
+leqRhs (SuccLeqSucc leq) = SS $ leqRhs leq
 
 leqLhs :: Leq n m -> SNat n
-leqLhs (ZeroLeq _) = sZ
-leqLhs (SuccLeqSucc leq) = sS $ leqLhs leq
+leqLhs (ZeroLeq _) = SZ
+leqLhs (SuccLeqSucc leq) = SS $ leqLhs leq

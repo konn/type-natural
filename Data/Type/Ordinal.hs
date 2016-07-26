@@ -1,8 +1,7 @@
-{-# LANGUAGE DataKinds, DeriveDataTypeable, EmptyCase, EmptyDataDecls   #-}
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures #-}
-{-# LANGUAGE LambdaCase, PolyKinds, ScopedTypeVariables                 #-}
-{-# LANGUAGE StandaloneDeriving, TemplateHaskell, TypeFamilies          #-}
-{-# LANGUAGE TypeOperators                                              #-}
+{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, EmptyCase, EmptyDataDecls   #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures      #-}
+{-# LANGUAGE LambdaCase, PolyKinds, ScopedTypeVariables, StandaloneDeriving  #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators                    #-}
 -- | Set-theoretic ordinal arithmetic
 module Data.Type.Ordinal
        ( -- * Data-types
@@ -18,6 +17,10 @@ module Data.Type.Ordinal
          -- * Quasi Quoter
          od
        ) where
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+import Data.Type.Natural.Compat
+#endif
+
 import Control.Monad             (liftM)
 import Data.Constraint
 import Data.Singletons.Prelude
@@ -97,7 +100,9 @@ unsafeFromInt n =
 sNatToOrd' :: ('S m :<<= n) ~ 'True => SNat n -> SNat m -> Ordinal n
 sNatToOrd' (SS _) SZ = OZ
 sNatToOrd' (SS n) (SS m) = OS $ sNatToOrd' n m
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 sNatToOrd' _ _ = bugInGHC
+#endif
 
 -- | 'sNatToOrd'' with @n@ inferred.
 sNatToOrd :: (SingI n, ('S m :<<= n) ~ 'True) => SNat m -> Ordinal n
@@ -156,7 +161,9 @@ OZ @+ n =
 OS n @+ m =
   case sing :: SNat n of
     SS sn -> case singInstance sn of SingInstance -> OS $ n @+ m
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
     _ -> bugInGHC
+#endif
 
 -- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 --
