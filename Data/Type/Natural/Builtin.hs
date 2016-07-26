@@ -1,11 +1,13 @@
-{-# LANGUAGE DataKinds, GADTs, PolyKinds, RankNTypes, TypeFamilies #-}
-{-# LANGUAGE TypeOperators, UndecidableInstances, ConstraintKinds  #-}
+{-# LANGUAGE ConstraintKinds, DataKinds, GADTs, PolyKinds, RankNTypes #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances        #-}
 {-# OPTIONS_GHC -fwarn-incomplete-patterns -Wall #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 -- | Coercion between Peano Numerals @'Data.Type.Natural.Nat'@ and builtin naturals @'GHC.TypeLits.Nat'@
-module Data.Type.Natural.Coercion
-       ( -- * Coercion between builtin type-level natural and peano numerals
+module Data.Type.Natural.Builtin
+       ( -- * Sysnonym to avoid confusion
+         Peano,
+         -- * Coercion between builtin type-level natural and peano numerals
          FromPeano, ToPeano, sFromPeano, sToPeano,
          -- * Properties of @'FromPeano'@ and @'ToPeano'@.
          fromPeanoInjective, toPeanoInjective,
@@ -17,27 +19,35 @@ module Data.Type.Natural.Coercion
          fromPeanoSuccCong, toPeanoSuccCong,
          fromPeanoPlusCong, toPeanoPlusCong,
          fromPeanoMultCong, toPeanoMultCong,
-         fromPeanoMonotone, toPeanoMonotone
+         fromPeanoMonotone, toPeanoMonotone,
+         -- * Peano and commutative ring axioms for built-in @'GHC.TypeLits.Nat'@
+         plusZR, plusZL, plusSuccR, plusSuccL,
+         multZR, multZL, multSuccR, multSuccL,
+         inductionNat,
+         plusComm, multComm, plusAssoc, multAssoc,
+         plusMultDistr, multPlusDistr
        )
        where
 import Data.Promotion.Prelude.Enum (Succ)
-
 import           Data.Singletons              (Sing, SingI, sing)
+import           Data.Singletons              (bugInGHC)
 import           Data.Singletons.Decide       (Decision (..), (%~))
+import           Data.Singletons.Decide       (Void)
+import           Data.Singletons.Prelude.Bool (Sing (..))
 import           Data.Singletons.Prelude.Enum (Pred, sPred, sSucc)
 import           Data.Singletons.Prelude.Num  (SNum (..))
 import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
 import           Data.Type.Natural            (plusCongR, succCongEq)
 import qualified Data.Type.Natural            as PN
+import           Data.Void                    (absurd)
 import qualified GHC.TypeLits                 as TL
 import           Proof.Equational             ((:=:), (:~:) (Refl), coerce)
 import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
 import           Unsafe.Coerce                (unsafeCoerce)
-import Data.Singletons.Prelude.Bool (Sing(..))
-import Data.Singletons (bugInGHC)
-import Data.Singletons.Decide (Void)
-import Data.Void (absurd)
+
+-- | Type synonym for @'PN.Nat'@ to avoid confusion with built-in @'TL.Nat'@.
+type Peano = PN.Nat
 
 type family FromPeano (n :: PN.Nat) :: TL.Nat where
   FromPeano 'Z = 0
@@ -263,3 +273,52 @@ toPeanoMonotone sn sm =
              === (sToPeano pn PN.%:<<= sToPeano pm)
                  `because` myLeqPred (sToPeano pn) (sToPeano pm)
              === STrue `because` toPeanoMonotone pn pm
+
+-- | Induction scheme for built-in @'TL.Nat'@.
+inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m TL.+ 1)) -> Sing n -> p n
+inductionNat base step snat =
+  case viewNat snat of
+    IsZero -> base
+    IsSucc sl -> step (inductionNat base step sl)
+
+plusZR :: Sing n -> n TL.+ 0 :~: n
+plusZR _ = Refl
+
+plusZL :: Sing n -> 0 TL.+ n :~: n
+plusZL _ = Refl
+
+plusSuccL :: Sing n -> Sing m -> (Succ n) TL.+ m :~: Succ (n TL.+ m)
+plusSuccL _ _ =  Refl
+
+plusSuccR :: Sing n -> Sing m -> n TL.+ (Succ m) :~: Succ (n TL.+ m)
+plusSuccR _ _ =  Refl
+
+multZL :: Sing n -> 0 TL.* n :~: 0
+multZL _ = Refl
+
+multZR :: Sing n -> n TL.* 0 :~: 0
+multZR _ = Refl
+
+multSuccL :: Sing n -> Sing m -> Succ n TL.* m :~: (n TL.* m) TL.+ m
+multSuccL _ _ = Refl
+
+multSuccR :: Sing n -> Sing m -> n TL.* Succ m :~: (n TL.* m) TL.+ n
+multSuccR _ _ = Refl
+
+plusComm :: Sing n -> Sing m -> (n TL.+ m) :~: (m TL.+ n)
+plusComm _ _ = Refl
+
+multComm :: Sing n -> Sing m -> (n TL.* m) :~: (m TL.* n)
+multComm _ _ = Refl
+
+plusAssoc :: Sing n -> Sing m -> Sing l -> (n TL.+ m) TL.+ l :~: n TL.+ (m TL.+ l)
+plusAssoc _ _ _ = Refl
+
+multAssoc :: Sing n -> Sing m -> Sing l -> (n TL.* m) TL.* l :~: n TL.* (m TL.* l)
+multAssoc _ _ _ = Refl
+
+plusMultDistr :: Sing n -> Sing m -> Sing l -> (n TL.+ m) TL.* l :~: n TL.* l TL.+  m TL.* l
+plusMultDistr _ _ _ = Refl
+
+multPlusDistr :: Sing n -> Sing m -> Sing l -> n TL.* (m TL.+ l) :~: n TL.* m TL.+  n TL.* l
+multPlusDistr _ _ _ = Refl
