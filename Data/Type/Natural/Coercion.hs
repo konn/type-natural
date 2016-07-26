@@ -64,10 +64,10 @@ sFromPeano (SS sn) = sSucc (sFromPeano sn)
 toPeanoInjective :: ToPeano n :=: ToPeano m -> n :=: m
 toPeanoInjective Refl = Refl
 
-trustMe :: a :=: b
-trustMe = unsafeCoerce (Refl :: () :=: ())
-{-# WARNING trustMe
-    "Used unproven type-equalities; This may cause disastrous result..." #-}
+-- trustMe :: a :=: b
+-- trustMe = unsafeCoerce (Refl :: () :=: ())
+-- {-# WARNING trustMe
+--     "Used unproven type-equalities; This may cause disastrous result..." #-}
 
 toPeanoSuccCong :: Sing n -> ToPeano (Succ n) :=: 'S (ToPeano n)
 toPeanoSuccCong _ = unsafeCoerce (Refl :: () :=: ())
@@ -230,6 +230,9 @@ fromPeanoMonotone _ _ = bugInGHC
 natLeqZero :: (n TL.<= 0) => Sing n -> n :~: 0
 natLeqZero _ = Refl
 
+-- | Currently, ghc-typelits-natnormalise reduces @(0 - 1) + 1@ to @0@,
+--   which is contradictory to current GHC's behaviour.
+--   So our assumption @((n :~: 0) -> Void)@ is simply disregarded.
 natSuccPred :: ((n :~: 0) -> Void) -> Succ (Pred n) :=: n
 natSuccPred _ = Refl
 
