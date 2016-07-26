@@ -3,11 +3,11 @@ packages:
 - '.'
 - location:
     git: git@github.com:konn/ghc-typelits-presburger.git
-    commit: 44c75cd679c1782e68824b67e192bfdb32abb5b0
+    commit: 9753a88eeed90f5ae70b9e42bb33bb15ee564130
   extra-dep: true
 - location:
     git: git@github.com:konn/equational-reasoning-in-haskell.git
-    commit: 90f2fa37a0bcc8d0bb524a66f160c5e327d12fef
+    commit: 323bca8a9d52a1de361bd18d7f9b0856718d5712
   extra-dep: true
 
 extra-deps: 

@@ -7,10 +7,19 @@ skip-ghc-check: true
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
+- location:
+    git: git@github.com:konn/ghc-typelits-presburger.git
+    commit: 9753a88eeed90f5ae70b9e42bb33bb15ee564130
+  extra-dep: true
+- location:
+    git: git@github.com:konn/equational-reasoning-in-haskell.git
+    commit: 323bca8a9d52a1de361bd18d7f9b0856718d5712
+  extra-dep: true
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
 - monomorphic-0.0.3.3
+- equational-reasoning-0.3.0.0
 - singletons-2.2
 - ghc-typelits-natnormalise-0.4.6
 - th-desugar-1.6

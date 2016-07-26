@@ -29,7 +29,7 @@ library
   other-modules:       Data.Type.Natural.Definitions
                      , Data.Type.Natural.Core
   build-depends:       base                      >= 4       && < 5
-                     , equational-reasoning      == 0.3.*
+                     , equational-reasoning      == 0.4.*
                      , monomorphic               >= 0.0.3
                      , template-haskell          >= 2.8     && < 3
                      , constraints               >= 0.3     && < 0.9
