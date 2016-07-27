@@ -1,31 +1,19 @@
-{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures             #-}
-{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, PolyKinds  #-}
-{-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving  #-}
-{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators         #-}
-{-# LANGUAGE UndecidableInstances                                 #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ > 708
-{-# LANGUAGE InstanceSigs #-}
-#endif
+{-# LANGUAGE DataKinds, DeriveDataTypeable, FlexibleContexts        #-}
+{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, PolyKinds    #-}
+{-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving    #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators           #-}
+{-# LANGUAGE UndecidableInstances                                   #-}
 module Data.Type.Natural.Definitions
        (module Data.Type.Natural.Definitions,
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
         module Data.Singletons.Prelude
-#endif
        ) where
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
-import Data.Singletons.TH (singletons)
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
-import Data.Singletons.Prelude
-import Prelude                 (Num (..), Ord (..))
-#else
-import Data.Singletons.Prelude hiding ((:<=), Max, MaxSym0, MaxSym1, MaxSym2,
-                                Min, MinSym0, MinSym1, MinSym2, SOrd (..))
-#endif
-#endif
-import           Data.Typeable (Typeable)
-import           Prelude       (Bool (..), Eq (..), Show (..))
-import qualified Prelude       as P
+import           Data.Singletons.Prelude
+import           Data.Singletons.TH      (singletons)
+import           Data.Typeable           (Typeable)
+import           Prelude                 (Num (..), Ord (..))
+import           Prelude                 (Bool (..), Eq (..), Show (..))
+import qualified Prelude                 as P
 
 
 
@@ -37,40 +25,13 @@ singletons [d|
             deriving (Show, Eq)
  |]
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 deriving instance Typeable 'S
 deriving instance Typeable 'Z
-#endif
 
 --------------------------------------------------
 -- ** Arithmetic functions.
 --------------------------------------------------
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 710
-singletons [d|
- -- | Minimum function.
- min :: Nat -> Nat -> Nat
- min Z     Z     = Z
- min Z     (S _) = Z
- min (S _) Z     = Z
- min (S m) (S n) = S (min m n)
-
- -- | Maximum function.
- max :: Nat -> Nat -> Nat
- max Z     Z     = Z
- max Z     (S n) = S n
- max (S n) Z     = S n
- max (S n) (S m) = S (max n m)
- |]
-
-instance P.Ord Nat where
-  Z   <= _   = True
-  S _ <= Z   = False
-  S n <= S m = n P.<= m
-
-  min = min
-  max = max
-#else
 singletons [d|
   instance P.Ord Nat where
      Z   <= _   = True
@@ -87,9 +48,7 @@ singletons [d|
      max (S n) Z     = S n
      max (S n) (S m) = S (max n m)
  |]
-#endif
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 710
 singletons [d|
   instance P.Num Nat where
     Z   + n = n
@@ -109,40 +68,6 @@ singletons [d|
 
     fromInteger n = if n == 0 then Z else S (fromInteger (n-1))
  |]
-#else
-singletons [d|
- (+) :: Nat -> Nat -> Nat
- Z   + n = n
- S m + n = S (m + n)
-
- (-) :: Nat -> Nat -> Nat
- n   - Z   = n
- S n - S m = n - m
- Z   - S _ = Z
-
- (*) :: Nat -> Nat -> Nat
- Z   * _ = Z
- S n * m = n * m + m
- |]
-
-infixl 6 %:-, -
-
-infixl 6 %:+, :+
-
-infixl 7 %:*, :*
-
-instance P.Num Nat where
-  n - m = n - m
-  n + m = n + m
-  n * m = n * m
-  abs = id
-  signum Z = Z
-  signum _ = S Z
-  fromInteger 0             = Z
-  fromInteger n | n P.< 0   = error "negative integer"
-                | otherwise = S $ P.fromInteger (n P.- 1)
-
-#endif
 
 type n :-: m = n :- m
 type n :+: m = n :+ m
