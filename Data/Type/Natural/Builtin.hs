@@ -39,7 +39,7 @@ import           Data.Singletons.Prelude.Bool (Sing (..))
 import           Data.Singletons.Prelude.Enum (Pred, sPred, sSucc)
 import           Data.Singletons.Prelude.Num  (SNum (..))
 import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
-import           Data.Type.Natural            (plusCongR, succCongEq)
+import           Data.Type.Natural            (plusCongR)
 import qualified Data.Type.Natural            as PN
 import           Data.Void                    (absurd)
 import qualified GHC.TypeLits                 as TL
@@ -101,7 +101,7 @@ toFromPeano (SS sn) =
   start (sToPeano (sFromPeano (SS sn)))
     =~= sToPeano (sSucc (sFromPeano sn))
     === SS (sToPeano (sFromPeano sn)) `because` toPeanoSuccCong (sFromPeano sn)
-    === SS sn                         `because` succCongEq (toFromPeano sn)
+    === SS sn                         `because` PN.succCong (toFromPeano sn)
 
 congFromPeano :: n :=: m -> FromPeano n :=: FromPeano m
 congFromPeano Refl = Refl
@@ -157,7 +157,7 @@ toPeanoPlusCong sn sm =
         === SS (sToPeano (pn %:+ sm))
             `because` toPeanoSuccCong (pn %:+ sm)
         === SS (sToPeano pn %:+ sToPeano sm)
-            `because` succCongEq (toPeanoPlusCong pn sm)
+            `because` PN.succCong (toPeanoPlusCong pn sm)
         =~= SS (sToPeano pn) %:+ sToPeano sm
         === (sToPeano (sSucc pn) %:+ sToPeano sm)
             `because` plusCongR (sToPeano sm) (sym (toPeanoSuccCong pn))

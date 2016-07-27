@@ -35,14 +35,19 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- * Quasi quotes for natural numbers
                           nat, snat,
                           -- * Properties of natural numbers
-                          succCongEq, plusCongR, plusCongL, succPlusL, succPlusR,
-                          pluSZR, pluSZL, eqPreserveSS, plusAssociative,
-                          multAssociative, multComm, multZL, multZR, multOneL,
-                          multOneR, snEqZAbsurd, succInjective, plusInjectiveL, plusInjectiveR,
-                          plusMultDistr, multPlusDistr, multCongL, multCongR,
-                          sAndPlusOne, plusCommutative, minusCongEq, minusNilpotent,
+                          succCongEq, eqPreservesS, succCong, plusCongR, plusCongL,
+                          succPlusL, plusSuccL, succPlusR, plusSuccR,
+                          plusZR, plusZL, plusAssociative, plusAssoc,
+                          multAssociative, multAssoc, multComm, multZL, multZR, multOneL,
+                          multOneR, snEqZAbsurd, succInjective, succInj,
+                          plusInjectiveL, plusInjectiveR,
+                          plusMultDistr, plusMultDistrib, multPlusDistr, multPlusDistrib,
+                          multCongL, multCongR,
+                          sAndPlusOne, succAndPlusOneR,
+                          plusComm, plusCommutative, minusCongEq, minusCongL,
+                          minusNilpotent,
                           eqSuccMinus, plusMinusEqL, plusMinusEqR,
-                          zAbsorbsMinR, zAbsorbsMinL, pluSSR, plusNeutralR, plusNeutralL,
+                          zAbsorbsMinR, zAbsorbsMinL, plusSR, plusNeutralR, plusNeutralL,
                           leqRhs, leqLhs, minComm, maxZL, maxComm, maxZR,
                           -- * Properties of ordering 'Leq'
                           leqRefl, leqSucc, leqTrans, plusMonotone, plusLeqL, plusLeqR,
@@ -114,27 +119,31 @@ instance Monomorphicable (Sing :: Nat -> *) where
 --------------------------------------------------
 -- * Properties
 --------------------------------------------------
-pluSZR :: SNat n -> n :+: 'Z :=: n
-pluSZR SZ     = Refl
-pluSZR (SS n) =
+plusZR :: SNat n -> n :+: 'Z :=: n
+plusZR SZ     = Refl
+plusZR (SS n) =
  start (SS n %+ SZ)
    =~= SS (n %+ SZ)
-   === SS n          `because` cong' SS (pluSZR n)
+   === SS n          `because` cong' SS (plusZR n)
 
-eqPreserveSS :: n :=: m -> 'S n :=: 'S m
-eqPreserveSS Refl = Refl
+plusZL :: SNat n -> 'Z :+: n :=: n
+plusZL _ = Refl
 
-pluSZL :: SNat n -> 'Z :+: n :=: n
-pluSZL _ = Refl
-
-succCongEq :: n :=: m -> 'S n :=: 'S m
-succCongEq Refl = Refl
+succCong, succCongEq, eqPreservesS :: n :=: m -> 'S n :=: 'S m
+succCong Refl = Refl
+succCongEq = succCong
+{-# DEPRECATED succCongEq "Will be removed in @0.5.0.0@. Use @'succCong'@ instead." #-}
+eqPreservesS = succCong
+{-# DEPRECATED eqPreservesS "Will be removed in @0.5.0.0@. Use @'succCong'@ instead." #-}
 
 snEqZAbsurd :: 'S n :=: 'Z -> a
 snEqZAbsurd _ = bugInGHC
 
-succInjective :: 'S n :=: 'S m -> n :=: m
-succInjective Refl = Refl
+succInj, succInjective :: 'S n :=: 'S m -> n :=: m
+succInj Refl = Refl
+succInjective = succInj
+{-# DEPRECATED succInjective "Will be removed in @0.5.0.0@. \
+                              Use @'succInj'@ instead." #-}
 
 plusInjectiveL :: SNat n -> SNat m -> SNat l -> n :+ m :=: n :+ l -> m :=: l
 plusInjectiveL SZ     _ _ Refl = Refl
@@ -147,29 +156,36 @@ plusInjectiveR n m l eq = plusInjectiveL l n m $
     === m %:+ l   `because` eq
     === l %:+ m   `because` plusCommutative m l
 
-sAndPlusOne :: SNat n -> 'S n :=: n :+: One
-sAndPlusOne SZ = Refl
-sAndPlusOne (SS n) =
+succAndPlusOneR, sAndPlusOne :: SNat n -> 'S n :=: n :+: One
+succAndPlusOneR SZ = Refl
+succAndPlusOneR (SS n) =
   start (SS (SS n))
-    === SS (n %+ sOne) `because` cong' SS (sAndPlusOne n)
+    === SS (n %+ sOne) `because` cong' SS (succAndPlusOneR n)
     =~= SS n %+ sOne
+sAndPlusOne = succAndPlusOneR
+{-# DEPRECATED sAndPlusOne "Will be removed in @0.5.0.0@. Use @'succAndPlusOneR'@ instead." #-}
 
-plusAssociative :: SNat n -> SNat m -> SNat l
+plusAssoc, plusAssociative :: SNat n -> SNat m -> SNat l
                 -> n :+: (m :+: l) :=: (n :+: m) :+: l
-plusAssociative SZ     _ _ = Refl
-plusAssociative (SS n) m l =
+plusAssoc SZ     _ _ = Refl
+plusAssoc (SS n) m l =
   start (SS n %+ (m %+ l))
     =~= SS (n %+ (m %+ l))
-    === SS ((n %+ m) %+ l)  `because` cong' SS (plusAssociative n m l)
+    === SS ((n %+ m) %+ l)  `because` cong' SS (plusAssoc n m l)
     =~= SS (n %+ m) %+ l
     =~= (SS n %+ m) %+ l
+plusAssociative = plusAssoc
+{-# DEPRECATED plusAssociative "Will be removed in @0.5.0.0@. Use @'plusAssoc'@ instead." #-}
 
-pluSSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
-pluSSR n m =
+plusSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
+plusSR n m =
   start (SS (n %+ m))
-    === (n %+ m) %+ sOne `because` sAndPlusOne (n %+ m)
-    === n %+ (m %+ sOne) `because` symmetry (plusAssociative n m sOne)
-    === n %+ SS m        `because` plusCongL n (symmetry $ sAndPlusOne m)
+    === (n %+ m) %+ sOne `because` succAndPlusOneR (n %+ m)
+    === n %+ (m %+ sOne) `because` symmetry (plusAssoc n m sOne)
+    === n %+ SS m        `because` plusCongL n (symmetry $ succAndPlusOneR m)
+
+{-# DEPRECATED plusSR "Will be removed in @0.5.0.0@. Use @'plusSuccR'@ instead." #-}
+
 
 plusCongL :: SNat n -> m :=: m' -> n :+ m :=: n :+ m'
 plusCongL _ Refl = Refl
@@ -177,19 +193,28 @@ plusCongL _ Refl = Refl
 plusCongR :: SNat n -> m :=: m' -> m :+ n :=: m' :+ n
 plusCongR _ Refl = Refl
 
-succPlusL :: SNat n -> SNat m -> 'S n :+ m :=: 'S (n :+ m)
-succPlusL _ _ = Refl
+plusSuccL, succPlusL :: SNat n -> SNat m -> 'S n :+ m :=: 'S (n :+ m)
+plusSuccL _ _ = Refl
+succPlusL = plusSuccL
+{-# DEPRECATED succPlusL "Will be removed in @0.5.0.0@. Use @'plusSuccL'@ instead." #-}
 
-succPlusR :: SNat n -> SNat m -> n :+ 'S m :=: 'S (n :+ m)
-succPlusR SZ     _ = Refl
-succPlusR (SS n) m =
+plusSuccR, succPlusR :: SNat n -> SNat m -> n :+ 'S m :=: 'S (n :+ m)
+plusSuccR SZ     _ = Refl
+plusSuccR (SS n) m =
   start (SS n %+ SS m)
     =~= SS (n %+ SS m)
-    === SS (SS (n %+ m)) `because` succCongEq (succPlusR n m)
+    === SS (SS (n %+ m)) `because` succCong (plusSuccR n m)
     =~= SS (SS n %+ m)
 
-minusCongEq :: n :=: m -> SNat l -> n :-: l :=: m :-: l
-minusCongEq Refl _ = Refl
+succPlusR = plusSuccR
+
+{-# DEPRECATED succPlusR "Will be removed in @0.5.0.0@. Use @'plusSuccR'@ instead." #-}
+
+
+minusCongEq, minusCongL :: n :=: m -> SNat l -> n :-: l :=: m :-: l
+minusCongL Refl _ = Refl
+minusCongEq = minusCongL
+{-# DEPRECATED minusCongEq "Will be removed in @0.5.0.0@. Use @'minusCongEq'@ instead." #-}
 
 minusNilpotent :: SNat n -> n :-: n :=: Zero
 minusNilpotent SZ = Refl
@@ -198,20 +223,24 @@ minusNilpotent (SS n) =
     =~= n %:- n
     === SZ     `because` minusNilpotent n
 
-plusCommutative :: SNat n -> SNat m -> n :+: m :=: m :+: n
-plusCommutative SZ SZ     = Refl
-plusCommutative SZ (SS m) =
+
+plusComm, plusCommutative :: SNat n -> SNat m -> n :+: m :=: m :+: n
+plusComm SZ SZ     = Refl
+plusComm SZ (SS m) =
   start (SZ %+ SS m)
     =~= SS m
     === SS (m %+ SZ) `because` cong' SS (plusCommutative SZ m)
     =~= SS m %+ SZ
-plusCommutative (SS n) m =
+plusComm (SS n) m =
   start (SS n %+ m)
     =~= SS (n %+ m)
     === SS (m %+ n)      `because` cong' SS (plusCommutative n m)
-    === (m %+ n) %+ sOne `because` sAndPlusOne (m %+ n)
-    === m %+ (n %+ sOne) `because` symmetry (plusAssociative m n sOne)
-    === m %+ SS n        `because` plusCongL m (symmetry $ sAndPlusOne n)
+    === (m %+ n) %+ sOne `because` succAndPlusOneR (m %+ n)
+    === m %+ (n %+ sOne) `because` symmetry (plusAssoc m n sOne)
+    === m %+ SS n        `because` plusCongL m (symmetry $ succAndPlusOneR n)
+
+plusCommutative = plusComm
+{-# DEPRECATED plusCommutative "Will be removed in @0.5.0.0@. Use @'plusComm'@ instead." #-}
 
 eqSuccMinus :: ((m :<<= n) ~ 'True)
             => SNat n -> SNat m -> ('S n :-: m) :=: ('S (n :-: m))
@@ -230,7 +259,7 @@ plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :=: n
 plusMinusEqL SZ     m = minusNilpotent m
 plusMinusEqL (SS n) m =
   case propToBoolLeq (plusLeqR n m) of
-    Dict -> transitivity (eqSuccMinus (n %+ m) m) (eqPreserveSS $ plusMinusEqL n m)
+    Dict -> transitivity (eqSuccMinus (n %+ m) m) (succCong $ plusMinusEqL n m)
 
 plusMinusEqR :: SNat n -> SNat m -> (m :+: n) :-: m :=: n
 plusMinusEqR n m = transitivity (minusCongEq (plusCommutative m n) m) (plusMinusEqL n m)
@@ -264,44 +293,50 @@ maxComm (SS n) (SS m) = case maxComm n m of Refl -> Refl
 maxZR :: SNat n -> Max n 'Z :=: n
 maxZR n = transitivity (maxComm n SZ) (maxZL n)
 
-multPlusDistr :: forall n m l. SNat n -> SNat m -> SNat l -> n :* (m :+ l) :=: (n :* m) :+ (n :* l)
-multPlusDistr SZ     _ _ = Refl
-multPlusDistr (SS (n :: SNat n')) m l =
+multPlusDistr, multPlusDistrib :: forall n m l. SNat n -> SNat m -> SNat l -> n :* (m :+ l) :=: (n :* m) :+ (n :* l)
+multPlusDistrib SZ     _ _ = Refl
+multPlusDistrib (SS (n :: SNat n')) m l =
   start (SS n %* (m %+ l))
     =~= (n %* (m %+ l)) %+ (m %+ l)
     === ((n %* m) %+ (n %* l)) %+ (m %+ l)
-        `because` plusCongR (m %+ l) (multPlusDistr n m l :: n' :* (m :+ l) :=: (n' :* m) :+ (n' :* l))
+        `because` plusCongR (m %+ l) (multPlusDistrib n m l :: n' :* (m :+ l) :=: (n' :* m) :+ (n' :* l))
     === (n %* m) %+ (n %* l) %+ (l %+ m) `because` plusCongL ((n %* m) %+ (n %* l)) (plusCommutative m l)
-    === n %* m %+ (n %*l %+ (l %+ m))    `because` symmetry (plusAssociative (n %* m) (n %* l) (l %+ m))
+    === n %* m %+ (n %*l %+ (l %+ m))    `because` symmetry (plusAssoc (n %* m) (n %* l) (l %+ m))
     === n %* l %+ (l %+ m) %+ n %* m     `because` plusCommutative (n %* m) (n %*l %+ (l %+ m))
-    === (n %* l %+ l) %+ m %+ n %* m     `because` plusCongR (n %* m) (plusAssociative (n %* l) l m)
+    === (n %* l %+ l) %+ m %+ n %* m     `because` plusCongR (n %* m) (plusAssoc (n %* l) l m)
     =~= (SS n %* l)   %+ m %+ n %* m
-    === (SS n %* l)   %+ (m %+ (n %* m)) `because` symmetry (plusAssociative (SS n %* l) m (n %* m))
+    === (SS n %* l)   %+ (m %+ (n %* m)) `because` symmetry (plusAssoc (SS n %* l) m (n %* m))
     === (SS n %* l)   %+ ((n %* m) %+ m) `because` plusCongL (SS n %* l) (plusCommutative m (n %* m))
     =~= (SS n %* l)   %+ (SS n %* m)
     === (SS n %* m)   %+ (SS n %* l)     `because` plusCommutative (SS n %* l) (SS n %* m)
+multPlusDistr = multPlusDistrib
+{-# DEPRECATED plusMultDistrib "Will be removed in @0.5.0.0@. Use @'plusMultDistirb'@ instead." #-}
 
-plusMultDistr :: SNat n -> SNat m -> SNat l -> (n :+ m) :* l :=: (n :* l) :+ (m :* l)
-plusMultDistr SZ _ _ = Refl
-plusMultDistr (SS n) m l =
+plusMultDistr, plusMultDistrib :: SNat n -> SNat m -> SNat l -> (n :+ m) :* l :=: (n :* l) :+ (m :* l)
+plusMultDistrib SZ _ _ = Refl
+plusMultDistrib (SS n) m l =
   start ((SS n %+ m) %* l)
     =~= SS (n %+ m) %* l
     =~= (n %+ m) %* l %+ l
-    === n %* l  %+  m %* l  %+  l   `because` plusCongR l (plusMultDistr n m l)
+    === n %* l  %+  m %* l  %+  l   `because` plusCongR l (plusMultDistrib n m l)
     === m %* l  %+  n %* l  %+  l   `because` plusCongR l (plusCommutative (n %* l) (m %* l))
-    === m %* l  %+ (n %* l  %+  l)  `because` symmetry (plusAssociative (m %* l) (n %*l) l)
+    === m %* l  %+ (n %* l  %+  l)  `because` symmetry (plusAssoc (m %* l) (n %*l) l)
     =~= m %* l  %+ (SS n %* l)
     === (SS n %* l)  %+  (m %* l)   `because` plusCommutative (m %* l) (SS n %* l)
 
-multAssociative :: SNat n -> SNat m -> SNat l -> n :* (m :* l) :=: (n :* m) :* l
-multAssociative SZ     _ _ = Refl
-multAssociative (SS n) m l =
+plusMultDistr = plusMultDistrib
+{-# DEPRECATED multPlusDistrib "Will be removed in @0.5.0.0@. Use @'multPlusDistirb'@ instead." #-}
+
+multAssoc, multAssociative :: SNat n -> SNat m -> SNat l -> n :* (m :* l) :=: (n :* m) :* l
+multAssoc SZ     _ _ = Refl
+multAssoc (SS n) m l =
   start (SS n %* (m %* l))
     =~= n %* (m %* l) %+ (m %* l)
-    === (n %* m) %* l %+ (m %* l) `because` plusCongR (m %* l) (multAssociative n m l)
-    === (n %* m %+ m) %* l        `because` symmetry (plusMultDistr (n %* m) m l)
+    === (n %* m) %* l %+ (m %* l) `because` plusCongR (m %* l) (multAssoc n m l)
+    === (n %* m %+ m) %* l        `because` symmetry (plusMultDistrib (n %* m) m l)
     =~= (SS n %* m) %* l
-
+multAssociative = multAssoc
+{-# DEPRECATED multAssociative "Will be removed in @0.5.0.0@. Use @'multAssoc'@ instead." #-}
 multZL :: SNat m -> Zero :* m :=: Zero
 multZL _ = Refl
 
@@ -326,7 +361,7 @@ multOneR (SS n) =
   start (SS n %* sOne)
     =~= n %* sOne %+ sOne
     === n %+ sOne         `because` plusCongR sOne (multOneR n)
-    === SS n              `because` symmetry (sAndPlusOne n)
+    === SS n              `because` symmetry (succAndPlusOneR n)
 
 multCongL :: SNat n -> m :=: l -> n :* m :=: n :* l
 multCongL _ Refl = Refl
@@ -344,8 +379,8 @@ multComm (SS n) m =
     =~= n %* m %+ m
     === m %* n %+ m          `because` plusCongR m (multComm n m)
     === m %* n %+ m %* sOne  `because` plusCongL (m %* n) (symmetry $ multOneR m)
-    === m %* (n %+ sOne)     `because` symmetry (multPlusDistr m n sOne)
-    === m %* SS n            `because` multCongL m (symmetry $ sAndPlusOne n)
+    === m %* (n %+ sOne)     `because` symmetry (multPlusDistrib m n sOne)
+    === m %* SS n            `because` multCongL m (symmetry $ succAndPlusOneR n)
 
 plusNeutralR :: SNat n -> SNat m -> n :+ m :=: n -> m :=: 'Z
 plusNeutralR SZ m eq =
@@ -386,12 +421,12 @@ instance Preorder Leq where
 plusMonotone :: Leq n m -> Leq l k -> Leq (n :+: l) (m :+: k)
 plusMonotone (ZeroLeq m) (ZeroLeq k) = ZeroLeq (m %+ k)
 plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
-  case pluSSR m (leqRhs leq) of
+  case sym $ plusSuccR m (leqRhs leq) of
     Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
 plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
 
 plusLeqL :: SNat n -> SNat m -> Leq n (n :+: m)
-plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ pluSZL m) m
+plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ plusZL m) m
 plusLeqL (SS n) m =
   start (SS n)
     =<= SS (n %+ m) `because` SuccLeqSucc (plusLeqL n m)
@@ -412,7 +447,7 @@ minLeqR n m = case minComm n m of Refl -> minLeqL m n
 
 leqAnitsymmetric :: Leq n m -> Leq m n -> n :=: m
 leqAnitsymmetric (ZeroLeq _) (ZeroLeq _) = Refl
-leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = eqPreserveSS $ leqAnitsymmetric leq1 leq2
+leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = succCong $ leqAnitsymmetric leq1 leq2
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
 leqAnitsymmetric _ _ = error "impossible!"
 #endif
