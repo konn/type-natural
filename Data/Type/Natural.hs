@@ -214,7 +214,7 @@ succPlusR = plusSuccR
 minusCongEq, minusCongL :: n :=: m -> SNat l -> n :-: l :=: m :-: l
 minusCongL Refl _ = Refl
 minusCongEq = minusCongL
-{-# DEPRECATED minusCongEq "Will be removed in @0.5.0.0@. Use @'minusCongEq'@ instead." #-}
+{-# DEPRECATED minusCongEq "Will be removed in @0.5.0.0@. Use @'minusCongL'@ instead." #-}
 
 minusNilpotent :: SNat n -> n :-: n :=: Zero
 minusNilpotent SZ = Refl
@@ -310,7 +310,7 @@ multPlusDistrib (SS (n :: SNat n')) m l =
     =~= (SS n %* l)   %+ (SS n %* m)
     === (SS n %* m)   %+ (SS n %* l)     `because` plusCommutative (SS n %* l) (SS n %* m)
 multPlusDistr = multPlusDistrib
-{-# DEPRECATED plusMultDistrib "Will be removed in @0.5.0.0@. Use @'plusMultDistirb'@ instead." #-}
+{-# DEPRECATED multPlusDistr "Will be removed in @0.5.0.0@. Use @'multPlusDistrib'@ instead." #-}
 
 plusMultDistr, plusMultDistrib :: SNat n -> SNat m -> SNat l -> (n :+ m) :* l :=: (n :* l) :+ (m :* l)
 plusMultDistrib SZ _ _ = Refl
@@ -325,7 +325,7 @@ plusMultDistrib (SS n) m l =
     === (SS n %* l)  %+  (m %* l)   `because` plusCommutative (m %* l) (SS n %* l)
 
 plusMultDistr = plusMultDistrib
-{-# DEPRECATED multPlusDistrib "Will be removed in @0.5.0.0@. Use @'multPlusDistirb'@ instead." #-}
+{-# DEPRECATED plusMultDistr "Will be removed in @0.5.0.0@. Use @'plusMultDistrib'@ instead." #-}
 
 multAssoc, multAssociative :: SNat n -> SNat m -> SNat l -> n :* (m :* l) :=: (n :* m) :* l
 multAssoc SZ     _ _ = Refl
