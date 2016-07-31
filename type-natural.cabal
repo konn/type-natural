@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.4.0.0
+version:             0.5.0.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
 homepage:            https://github.com/konn/type-natural
@@ -29,6 +29,8 @@ library
                      , Data.Type.Ordinal
                      , Data.Type.Natural.Builtin
                      , Data.Type.Natural.Class
+                     , Data.Type.Natural.Class.Arithmetic
+                     , Data.Type.Natural.Class.Order
   other-modules:       Data.Type.Natural.Definitions
                      , Data.Type.Natural.Core
                      , Data.Type.Natural.Compat
