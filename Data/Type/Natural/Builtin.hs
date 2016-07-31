@@ -358,3 +358,35 @@ instance PeanoOrder TL.Nat where
       Left Refl  -> Refl
       Right mLTn ->
         minCompareFlip n m mLTn
+
+  lneqReversed n m =
+    case flipCompare n m of
+      Refl -> case sCompare n m of
+        SEQ -> Refl
+        SLT -> Refl
+        SGT -> Refl
+
+  leqReversed n m =
+    case flipCompare n m of
+      Refl -> case sCompare n m of
+        SEQ -> Refl
+        SLT -> Refl
+        SGT -> Refl
+
+  lneqSuccLeq n m =
+    case sCompare n m of
+      SEQ ->
+        start (n %:< m)
+          =~= SFalse
+          === (sSucc n %:<= n) `because` sym (succLeqAbsurd' n)
+          === (sSucc n %:<= m) `because` sLeqCongR (sSucc n) (eqToRefl n m Refl)
+      SLT ->
+        case ltToSuccLeq n m Refl of
+          Witness ->
+            start (n %:< m)
+              =~= STrue
+              =~= (sSucc n %:<= m)
+      SGT ->
+        case sSucc n %:<= m of
+          SFalse -> Refl
+          STrue  -> eliminate $ succLeqToLT n m Witness

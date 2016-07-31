@@ -34,6 +34,10 @@ singletons [d|
      S _ <= Z   = False
      S n <= S m = n <= m
 
+     n >= m = m   <= n
+     n <  m = S n <= m
+     n >  m = m   < n
+
      min Z     Z     = Z
      min Z     (S _) = Z
      min (S _) Z     = Z

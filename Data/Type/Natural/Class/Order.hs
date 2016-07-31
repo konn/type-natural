@@ -4,7 +4,8 @@
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies, TypeInType #-}
 module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
-        FlipOrdering, sFlipOrdering,
+        FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
+        sLeqCongL, sLeqCongR, sLeqCong
        ) where
 import Data.Type.Natural.Class.Arithmetic
 
@@ -51,6 +52,15 @@ congFlipOrdering Refl = Refl
 compareCongR :: Sing (a :: k) -> b :~: c -> Compare a b :~: Compare a c
 compareCongR _ Refl = Refl
 
+sLeqCong :: a :~: b -> c :~: d -> (a :<= c) :~: (b :<= d)
+sLeqCong Refl Refl = Refl
+
+sLeqCongL :: a :~: b -> Sing c -> (a :<= c) :~: (b :<= c)
+sLeqCongL Refl _ = Refl
+
+sLeqCongR :: Sing a -> b :~: c -> (a :<= b) :~: (a :<= c)
+sLeqCongR _ Refl = Refl
+
 newtype LTSucc n = LTSucc { proofLTSucc :: Compare n (Succ n) :~: 'LT }
 newtype CmpSuccStepR (n :: nat) =
   CmpSuccStepR { proofCmpSuccStepR :: forall (m :: nat). Sing m
@@ -67,6 +77,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
               ),
               eqlCmpEQ, ltToLeq, eqToRefl,
               flipCompare, leqToCmp,
+              leqReversed, lneqSuccLeq, lneqReversed,
               (leqToMin, geqToMin | minLeqL, minLeqR, minLargest),
               (leqToMax, geqToMax | maxLeqL, maxLeqR, maxLeast) #-}
 
@@ -105,7 +116,6 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
                                       === a               `because` sym aeqb
                                       === a %:+ sZero     `because` sym (plusZeroR a)
                      in leqNeqToLT a b aLEQb aNEQb
-
 
   ltToLeq :: Sing (a :: nat) -> Sing b -> Compare a b :~: 'LT
           -> IsTrue (a :<= b)
@@ -419,6 +429,25 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   succLeqZeroAbsurd n leq =
     succNonCyclic n (leqZeroElim (sSucc n) leq)
 
+  succLeqZeroAbsurd' :: Sing n -> (S n :<= Zero nat) :~: 'False
+  succLeqZeroAbsurd' n =
+    case sSucc n %:<= sZero of
+      STrue  -> absurd $ succLeqZeroAbsurd n Witness
+      SFalse -> Refl
+
+  succLeqAbsurd :: Sing (n :: nat) -> IsTrue (S n :<= n) -> Void
+  succLeqAbsurd n snLEQn =
+    eliminate $
+      start SLT
+        === sCompare n n `because` sym (succLeqToLT n n snLEQn)
+        === SEQ          `because` eqlCmpEQ n n Refl
+
+  succLeqAbsurd' :: Sing (n :: nat) -> (S n :<= n) :~: 'False
+  succLeqAbsurd' n =
+    case sSucc n %:<= n of
+      STrue -> absurd $ succLeqAbsurd n Witness
+      SFalse -> Refl
+
   notLeqToLeq :: ((n :<= m) ~ 'False) => Sing (n :: nat) -> Sing m -> IsTrue (m :<= n)
   notLeqToLeq n m =
     case sCompare n m of
@@ -514,3 +543,17 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
         in leqTrans (sMax n m) n l
            (leqReflexive sing sing  $ geqToMax n m mLEQn)
            lLEQn
+
+  leqReversed  :: Sing (n :: nat) -> Sing m -> (n :<= m) :~: (m :>= n)
+  lneqSuccLeq  :: Sing (n :: nat) -> Sing m -> (n :< m)  :~: (Succ n :<= m)
+  lneqReversed :: Sing (n :: nat) -> Sing m -> (n :< m)  :~: (m :> n)
+
+  lneqZero :: Sing (a :: nat) -> IsTrue (Zero nat :< Succ a)
+  lneqZero n =
+    case (lneqSuccLeq sZero (sSucc n), ltToSuccLeq sZero (sSucc n) $ cmpZero n) of
+      (Refl, Witness) -> Witness
+
+  lneqSucc :: Sing (n :: nat) -> IsTrue (n :< Succ n)
+  lneqSucc n =
+    case (lneqSuccLeq n (sSucc n), ltToSuccLeq n (sSucc n) $ ltSucc n) of
+      (Refl, Witness) -> Witness

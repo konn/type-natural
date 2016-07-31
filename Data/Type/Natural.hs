@@ -323,6 +323,10 @@ instance PeanoOrder Nat where
   maxLeast SZ     (SS _) (SS _)  a _       = case a of {}
   maxLeast (SS _) _      _       _ a       = case a of {}
 
+  leqReversed _ _ = Refl
+  lneqReversed _ _ = Refl
+  lneqSuccLeq _ _ = Refl
+
 plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :=: n
 plusMinusEqL = plusMinus
 
