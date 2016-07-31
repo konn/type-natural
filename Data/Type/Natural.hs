@@ -48,7 +48,8 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- minLeqL, minLeqR, leqAnitsymmetric, maxLeqL, maxLeqR,
                           -- leqSnZAbsurd, leqnZElim, leqSnLeq, leqPred, leqSnnAbsurd,
                           -- * Properties of ordering 'Leq'
-                          leqRefl, leqSucc, leqTrans, plusMonotone, 
+                          PeanoOrder(..),
+                          reflToSEqual, sLeqReflexive, nonSLeqToLT,
                           -- * Useful type synonyms and constructors
                           zero, one, two, three, four, five, six, seven, eight, nine, ten, eleven,
                           twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, nineteen, twenty,
@@ -68,15 +69,17 @@ module Data.Type.Natural (-- * Re-exported modules.
                           sN15, sN16, sN17, sN18, sN19, sN20
                          )
        where
-import Data.Type.Natural.Class hiding (One, Zero)
+import Data.Type.Natural.Class hiding (One, Zero, sOne, sZero)
 import Data.Type.Natural.Core
 import Data.Type.Natural.Definitions hiding ((:<=))
 
 import Data.Kind
 import Data.Singletons
+import qualified Data.Singletons.Prelude.Ord as S
+import Data.Singletons.Decide
 import Data.Type.Monomorphic
 import Proof.Equational
-import Proof.Propositional
+import Proof.Propositional hiding (Not)
 import Data.Void
 import Language.Haskell.TH hiding (Type)
 import Language.Haskell.TH.Quote
@@ -192,12 +195,100 @@ succInjective = succInj
 -- eqSuccMinus _ _ = bugInGHC
 -- #endif
 
+reflToSEqual :: SNat n -> SNat m -> n :~: m -> IsTrue (n :== m)
+reflToSEqual SZ     _      Refl = Witness
+reflToSEqual (SS n) (SS m) Refl =
+  case reflToSEqual n m Refl of
+    Witness -> Witness
+reflToSEqual (SS _) SZ refl = case refl of {}
+
+sequalToRefl :: SNat n -> SNat m -> IsTrue (n :== m) -> n :~: m
+sequalToRefl SZ     SZ     Witness = Refl
+sequalToRefl SZ     (SS _) witness = case witness of {}
+sequalToRefl (SS n) (SS m) Witness = succCong $ sequalToRefl n m Witness
+sequalToRefl (SS _) SZ     witness = case witness of {}
+
+snequalToNoRefl :: SNat n -> SNat m -> IsTrue (Not (n :== m)) -> n :~: m -> Void
+snequalToNoRefl SZ     _ Witness = \case  {}
+snequalToNoRefl (SS _) _ Witness = \case  {}
+
+sequalSym :: SNat n -> SNat m -> (n :== m) :~: (m :== n)
+sequalSym SZ SZ         = Refl
+sequalSym SZ (SS _)     = Refl
+sequalSym (SS _) SZ     = Refl
+sequalSym (SS n) (SS m) =
+  case sequalSym n m of
+    Refl -> Refl
+
+sleqFlip :: SNat n -> SNat m -> (n :~: m -> Void) -> (m S.:<= n) :~: Not (n S.:<= m)
+sleqFlip SZ     SZ     neq = absurd $ neq Refl
+sleqFlip SZ     (SS _) _   = Refl
+sleqFlip (SS _) SZ     _   = Refl
+sleqFlip (SS n) (SS m) neq =
+  case sleqFlip n m (neq . succCong) of
+    Refl -> Refl
+
+sLeqReflexive :: SNat n -> SNat m -> IsTrue (n :== m) -> IsTrue (n S.:<= m)
+sLeqReflexive SZ     _      Witness = Witness
+sLeqReflexive (SS n) (SS m) Witness =
+  case sLeqReflexive n m Witness of
+    Witness -> Witness
+sLeqReflexive (SS _) SZ  witness = case witness of {}
+
+nonSLeqToLT :: (n S.:<= m) ~ 'False => SNat n -> SNat m -> Compare m n :~: 'LT
+nonSLeqToLT n m =
+  case sequalSym n m of
+    Refl -> 
+      case m %:== n of
+        STrue -> case sLeqReflexive n m Witness of {}
+        SFalse ->
+          case m %:<= n of
+            STrue  -> Refl
+            SFalse -> case sleqFlip n m $ snequalToNoRefl n m Witness of {}
+
 instance PeanoOrder Nat where
   leqZero _ = Witness
   leqSucc _      _      Witness = Witness
   viewLeq SZ     n      Witness = LeqZero n
   viewLeq (SS n) (SS m) Witness = LeqSucc n m Witness
   viewLeq (SS _) SZ     a       = case a of {}
+
+  ltToLeq n m Refl =
+    case n %:== m of
+      SFalse -> case n %:<= m of
+        STrue -> Witness
+
+  eqlCmpEQ n m Refl =
+    case n %:== m of
+      STrue  -> Refl
+      SFalse -> absurd $ snequalToNoRefl n m Witness Refl
+
+  eqToRefl n m Refl =
+    case n %:== m of
+      STrue -> sequalToRefl n m Witness
+      SFalse -> case n %:<= m of {}
+
+  leqToCmp n m Witness =
+    case n %:== m of
+      STrue  -> Left $ sequalToRefl n m Witness
+      SFalse -> Right Refl
+
+  flipCompare n m =
+    case n %:== m of
+      STrue ->  case sequalSym n m of
+        Refl -> Refl
+      SFalse ->
+        case sequalSym n m of
+          Refl -> 
+            case n %:<= m of
+              STrue ->
+                case sleqFlip n m (snequalToNoRefl n m Witness) of
+                  Refl -> case m %:<= n of
+                    SFalse -> Refl
+              SFalse ->
+                case sleqFlip n m (snequalToNoRefl n m Witness) of
+                  Refl -> case m %:<= n of
+                    STrue -> Refl
 
   minLeqL SZ SZ     = Witness
   minLeqL SZ (SS _) = Witness
@@ -428,3 +519,4 @@ snat = QuasiQuoter { quoteExp = foldr appE (conE 'SZ) . flip replicate (conE 'SS
                    , quoteType = appT (conT ''SNat) . foldr appT (conT 'Z) . flip replicate (conT 'S) . read
                    , quoteDec = error "not implemented"
                    }
+
