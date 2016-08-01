@@ -44,6 +44,8 @@ import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
 import           Proof.Propositional          (IsTrue(..), Empty(..))
 import           Unsafe.Coerce                (unsafeCoerce)
+import Data.Type.Monomorphic
+import Data.Kind
 
 -- | Type synonym for @'PN.Nat'@ to avoid confusion with built-in @'TL.Nat'@.
 type Peano = PN.Nat
@@ -390,3 +392,12 @@ instance PeanoOrder TL.Nat where
         case sSucc n %:<= m of
           SFalse -> Refl
           STrue  -> eliminate $ succLeqToLT n m Witness
+
+instance Monomorphicable (Sing :: TL.Nat -> Type) where
+  type MonomorphicRep (Sing :: TL.Nat -> Type) = Integer
+  demote  (Monomorphic sn) = fromSing sn
+  {-# INLINE demote #-}
+
+  promote n = case toSing n of SomeSing k -> Monomorphic k
+  {-# INLINE promote #-}
+

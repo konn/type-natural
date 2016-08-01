@@ -106,7 +106,7 @@ sNatToInt SZ     = 0
 sNatToInt (SS n) = sNatToInt n + 1
 
 instance Monomorphicable (Sing :: Nat -> Type) where
-  type MonomorphicRep (Sing :: Nat -> Type) = Int
+  type MonomorphicRep (Sing :: Nat -> Type) = Integer
   demote  (Monomorphic sn) = sNatToInt sn
   promote n
       | n < 0     = error "negative integer!"
