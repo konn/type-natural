@@ -122,6 +122,8 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
 
   succOneCong   :: Succ (Zero nat) :~: One nat
   succInj       :: Succ n :~: Succ (m :: nat) -> n :~: m
+  succInj'      :: proxy n -> proxy' m -> Succ n :~: Succ (m :: nat) -> n :~: m
+  succInj' _ _  = succInj
   succNonCyclic :: Sing n -> Succ n :~: Zero nat -> Void
   induction     :: p (Zero nat) -> (forall n. Sing n -> p n -> p (S n)) -> Sing k -> p k
   plusMinus :: Sing (n :: nat) -> Sing m -> n :+ m :- m :~: n
@@ -517,6 +519,9 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   multEqCancelL n m l snmEsnl =
     multEqCancelR m l n $
     multComm m (sSucc n) `trans` snmEsnl `trans` multComm (sSucc n) l
+
+  sPred' :: proxy n -> Sing (Succ n) -> Sing (n :: nat)
+  sPred' pxy sn = coerce (succInj $ succCong $ predSucc (sPred' pxy sn)) (sPred sn)
 
 refute [t| 'LT :~: 'GT |]
 refute [t| 'LT :~: 'EQ |]
