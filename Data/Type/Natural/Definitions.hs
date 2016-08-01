@@ -153,9 +153,22 @@ singletons [d|
  |]
 
 -- | Boolean-valued type-level comparison function.
-singletons [d|
- (<<=) :: Nat -> Nat -> Bool
- Z   <<= _   = True
- S _ <<= Z   = False
- S n <<= S m = n <<= m
- |]
+{-# DEPRECATED (<<=) "Use @'Ord'@ instance instead." #-}
+(<<=) :: Nat -> Nat -> Bool
+(<<=) = (<=)
+
+{-# DEPRECATED (:<<=) "Use @'(:<=)'@ from @'POrd'@ instead." #-}
+type n :<<= m = n :<= m
+
+{-# DEPRECATED (%:<<=) "Use @'(%:<=)'@ from @'POrd'@ instead." #-}
+(%:<<=) :: SNat n -> SNat m -> SBool (n :<<= m)
+(%:<<=) = (%:<=)
+
+type (:<<=$) = (:<=$)
+{-# DEPRECATED (:<<=$) "Use @(':<=$')@ instead." #-}
+
+type (:<<=$$) = (:<=$$)
+{-# DEPRECATED (:<<=$$) "Use @(':<=$$')@ instead." #-}
+
+type (:<<=$$$) n m = (:<=$$$) n m
+{-# DEPRECATED (:<<=$$$) "Use @(':<=$$$')@ instead." #-}

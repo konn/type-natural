@@ -22,14 +22,15 @@ import Data.Type.Natural.Compat
 #endif
 
 import Control.Monad             (liftM)
-import Data.Constraint
 import Data.Singletons.Prelude
 import Data.Type.Monomorphic
 import Data.Type.Natural
+import Data.Constraint(Dict(..))
 import Data.Typeable             (Typeable)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 import Unsafe.Coerce
+import qualified Data.Singletons.Prelude as S
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -92,12 +93,12 @@ unsafeFromInt :: forall n. SingI n => Int -> Ordinal n
 unsafeFromInt n =
     case (promote n :: Monomorphic (Sing :: Nat -> *)) of
       Monomorphic sn ->
-           case SS sn %:<<= (sing :: SNat n) of
+           case SS sn %:<= (sing :: SNat n) of
              STrue -> sNatToOrd' (sing :: SNat n) sn
              SFalse -> error "Bound over!"
 
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
-sNatToOrd' :: ('S m :<<= n) ~ 'True => SNat n -> SNat m -> Ordinal n
+sNatToOrd' :: ('S m S.:<= n) ~ 'True => SNat n -> SNat m -> Ordinal n
 sNatToOrd' (SS _) SZ = OZ
 sNatToOrd' (SS n) (SS m) = OS $ sNatToOrd' n m
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
@@ -105,11 +106,11 @@ sNatToOrd' _ _ = bugInGHC
 #endif
 
 -- | 'sNatToOrd'' with @n@ inferred.
-sNatToOrd :: (SingI n, ('S m :<<= n) ~ 'True) => SNat m -> Ordinal n
+sNatToOrd :: (SingI n, ('S m S.:<= n) ~ 'True) => SNat m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
 
 data CastedOrdinal n where
-  CastedOrdinal :: ('S m :<<= n) ~ 'True => SNat m -> CastedOrdinal n
+  CastedOrdinal :: ('S m S.:<= n) ~ 'True => SNat m -> CastedOrdinal n
 
 -- | Convert @Ordinal n@ into @SNat m@ with the proof of @'S m :<<= n@.
 ordToSNat' :: Ordinal n -> CastedOrdinal n
@@ -134,7 +135,7 @@ ordToInt OZ = 0
 ordToInt (OS n) = 1 + ordToInt n
 
 -- | Inclusion function for ordinals.
-inclusion' :: (n :<<= m) ~ 'True => SNat m -> Ordinal n -> Ordinal m
+inclusion' :: (n S.:<= m) ~ 'True => SNat m -> Ordinal n -> Ordinal m
 inclusion' _ = unsafeCoerce
 {-# INLINE inclusion' #-}
 {-
@@ -147,7 +148,7 @@ inclusion' _ _ = bugInGHC
 -}
 
 -- | Inclusion function for ordinals with codomain inferred.
-inclusion :: ((n :<<= m) ~ 'True) => Ordinal n -> Ordinal m
+inclusion :: ((n S.:<= m) ~ 'True) => Ordinal n -> Ordinal m
 inclusion on = unsafeCoerce on
 {-# INLINE inclusion #-}
 

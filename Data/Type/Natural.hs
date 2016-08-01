@@ -75,8 +75,8 @@ import Data.Type.Natural.Compat
 import Data.Type.Natural.Core
 import Data.Type.Natural.Definitions hiding ((:<=))
 
-import           Data.Constraint           hiding ((:-))
 import           Data.Singletons
+import qualified Data.Singletons.Prelude as S
 import           Data.Type.Monomorphic
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
@@ -86,6 +86,7 @@ import           Prelude                   (Bool (..), Eq (..), Int,
 import           Prelude                   (Ord (..))
 import qualified Prelude                   as P
 import           Proof.Equational
+import Data.Constraint (Dict(..))
 
 --------------------------------------------------
 -- * Conversion functions.
@@ -242,7 +243,7 @@ plusComm (SS n) m =
 plusCommutative = plusComm
 {-# DEPRECATED plusCommutative "Will be removed in @0.5.0.0@. Use @'plusComm'@ instead." #-}
 
-eqSuccMinus :: ((m :<<= n) ~ 'True)
+eqSuccMinus :: ((m S.:<= n) ~ 'True)
             => SNat n -> SNat m -> ('S n :-: m) :=: ('S (n :-: m))
 eqSuccMinus _      SZ     = Refl
 eqSuccMinus (SS n) (SS m) =

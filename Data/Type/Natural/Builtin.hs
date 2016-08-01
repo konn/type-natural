@@ -36,6 +36,7 @@ import           Data.Singletons              (Sing, SingI, sing)
 import           Data.Singletons.Decide       (Decision (..), (%~))
 import           Data.Singletons.Decide       (Void)
 import           Data.Singletons.Prelude.Bool (Sing (..))
+import           Data.Singletons.Prelude.Ord  (POrd(..), SOrd ((%:<=)))
 import           Data.Singletons.Prelude.Enum (Pred, sPred, sSucc)
 import           Data.Singletons.Prelude.Num  (SNum (..))
 import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
@@ -224,10 +225,10 @@ natLeqSuccEq _ _ = Refl
 leqqCong :: n :=: m -> l :=: z -> (n TL.<=? l) :~: (m TL.<=? z)
 leqqCong Refl Refl = Refl
 
-leqCong :: n :=: m -> l :=: z -> (n PN.:<<= l) :~: (m PN.:<<= z)
+leqCong :: n :=: m -> l :=: z -> (n :<= l) :~: (m :<= z)
 leqCong Refl Refl = Refl
 
-fromPeanoMonotone :: ((n PN.:<<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n TL.<=? FromPeano m) :=: 'True
+fromPeanoMonotone :: ((n :<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n TL.<=? FromPeano m) :=: 'True
 fromPeanoMonotone SZ _ = Refl
 fromPeanoMonotone (SS n) (SS m) =
    start (sFromPeano (SS n) %:<=? sFromPeano (SS m))
@@ -250,7 +251,7 @@ natLeqZero _ = Refl
 natSuccPred :: ((n :~: 0) -> Void) -> Succ (Pred n) :=: n
 natSuccPred _ = Refl
 
-myLeqPred :: Sing n -> Sing m -> ('S n PN.:<<= 'S m) :=: (n PN.:<<= m)
+myLeqPred :: Sing n -> Sing m -> ('S n :<= 'S m) :=: (n :<= m)
 myLeqPred SZ _ = Refl
 myLeqPred (SS _) (SS _) = Refl
 myLeqPred (SS _) SZ = Refl
@@ -259,7 +260,7 @@ toPeanoCong :: a :=: b -> ToPeano a :=: ToPeano b
 toPeanoCong Refl = Refl
 
 toPeanoMonotone :: (n TL.<= m)
-                => Sing n -> Sing m -> ((ToPeano n) PN.:<<= (ToPeano m)) :~: 'True
+                => Sing n -> Sing m -> ((ToPeano n) :<= (ToPeano m)) :~: 'True
 toPeanoMonotone sn sm =
   case sn %~ (sing :: Sing 0) of
     Proved Refl -> Refl
@@ -268,13 +269,13 @@ toPeanoMonotone sn sm =
       Disproved mPos ->
         let pn = sPred sn
             pm = sPred sm
-        in start (sToPeano sn PN.%:<<= sToPeano sm)
-             === (sToPeano (sSucc pn) PN.%:<<= sToPeano (sSucc pm))
+        in start (sToPeano sn %:<= sToPeano sm)
+             === (sToPeano (sSucc pn) %:<= sToPeano (sSucc pm))
                  `because` leqCong (toPeanoCong $ sym $ natSuccPred nPos)
                                    (toPeanoCong $ sym $ natSuccPred mPos)
-             === (SS (sToPeano pn) PN.%:<<= SS (sToPeano pm))
+             === (SS (sToPeano pn) %:<= SS (sToPeano pm))
                  `because` leqCong (toPeanoSuccCong pn) (toPeanoSuccCong pm)
-             === (sToPeano pn PN.%:<<= sToPeano pm)
+             === (sToPeano pn %:<= sToPeano pm)
                  `because` myLeqPred (sToPeano pn) (sToPeano pm)
              === STrue `because` toPeanoMonotone pn pm
 
