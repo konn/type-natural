@@ -616,3 +616,28 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
         (leqTrans l (sSucc l) k (leqSuccStepR l l (leqRefl l)) $
            coerce (lneqSuccLeq l k) lLNk)
 
+  maxZeroL :: Sing n -> Max (Zero nat) n :~: n
+  maxZeroL n = leqToMax sZero n (leqZero n)
+
+  maxZeroR  :: Sing n -> Max n (Zero nat) :~: n
+  maxZeroR n = geqToMax n sZero (leqZero n)
+
+  minZeroL :: Sing n -> Min (Zero nat) n :~: Zero nat
+  minZeroL n = leqToMin sZero n (leqZero n)
+
+  minZeroR  :: Sing n -> Min n (Zero nat) :~: Zero nat
+  minZeroR n = geqToMin n sZero (leqZero n)
+
+  minusSucc :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= n) -> Succ n :- m :~: Succ (n :- m)
+  minusSucc n m mLEQn =
+    case leqWitness m n mLEQn of
+      DiffNat _ k ->
+        start (sSucc n %:- m)
+          =~= sSucc (m %:+ k) %:- m
+          === (m %:+ sSucc k) %:- m  `because` minusCongL (sym $ plusSuccR m k) m
+          === (sSucc k %:+ m) %:- m  `because` minusCongL (plusComm m (sSucc k)) m
+          === sSucc k                `because` plusMinus (sSucc k) m
+          === sSucc (k %:+ m %:- m)  `because` succCong (sym $ plusMinus k m)
+          === sSucc (m %:+ k %:- m)  `because` succCong (minusCongL (plusComm k m) m)
+          =~= sSucc (n %:- m)
+

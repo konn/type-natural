@@ -25,9 +25,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           (:-$), (:-$$), (:-$$$),
                           (%:-), (%-),
                           -- ** Type-level predicate & judgements
-                          Leq(..), (:<=), (:<<=),
-                          (:<<=$),(:<<=$$),(:<<=$$$),
-                          (%:<<=), LeqInstance,
+                          Leq(..), (:<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
                           LeqTrueInstance, propToBoolLeq,
                           -- * Conversion functions
@@ -36,17 +34,11 @@ module Data.Type.Natural (-- * Re-exported modules.
                           nat, snat,
                           -- * Properties of natural numbers
                           IsPeano(..),
-                          succCongEq, plusCongR, plusCongL, succPlusL, succPlusR,
-                          eqPreservesS, plusAssociative,
-                          multAssociative, snEqZAbsurd, succInjective, plusInjectiveL, plusInjectiveR,
-                          plusMultDistr, multPlusDistr, multCongL, multCongR, multCongEq,
-                          sAndPlusOne, plusCommutative, minusCongEq,
-                          plusMinusEqL, plusMinusEqR, leqRhs, leqLhs,
-                          plusSR, plusNeutralR, plusNeutralL,
-                          -- eqSuccMinus, zAbsorbsMinR, zAbsorbsMinL,
-                          -- minComm, maxZeroL, maxComm, maxZeroR, plusLeqL, plusLeqR,
-                          -- minLeqL, minLeqR, leqAnitsymmetric, maxLeqL, maxLeqR,
-                          -- leqSnZAbsurd, leqnZElim, leqSnLeq, leqPred, leqSnnAbsurd,
+                          plusCong, plusCongR, plusCongL,
+                          snEqZAbsurd, plusInjectiveL, plusInjectiveR,
+                          multCongL, multCongR, multCong,
+                          plusMinusEqL,
+                          plusNeutralR, plusNeutralL,
                           -- * Properties of ordering 'Leq'
                           PeanoOrder(..),
                           reflToSEqual, sLeqReflexive, nonSLeqToLT,
@@ -105,8 +97,8 @@ sNatToInt :: Num n => SNat x -> n
 sNatToInt SZ     = 0
 sNatToInt (SS n) = sNatToInt n + 1
 
-instance Monomorphicable (Sing :: Nat -> Type) where
-  type MonomorphicRep (Sing :: Nat -> Type) = Integer
+instance Monomorphicable (Sing :: Nat -> *) where
+  type MonomorphicRep (Sing :: Nat -> *) = Integer
   demote  (Monomorphic sn) = sNatToInt sn
   promote n
       | n < 0     = error "negative integer!"
@@ -147,10 +139,6 @@ instance IsPeano Nat where
 snEqZAbsurd :: SingI n => 'S n :=: 'Z -> a
 snEqZAbsurd = absurd . succNonCyclic sing
 
-{-# DEPRECATED plusCommutative "use @'plusComm'@ instead." #-}
-plusCommutative :: (IsPeano nat) => Sing (n :: nat) -> Sing m -> n :+ m :~: m :+ n
-plusCommutative = plusComm
-
 plusInjectiveL :: SNat n -> SNat m -> SNat l -> n :+ m :=: n :+ l -> m :=: l
 plusInjectiveL SZ     _ _ Refl = Refl
 plusInjectiveL (SS n) m l eq   = plusInjectiveL n m l $ succInj eq
@@ -162,38 +150,6 @@ plusInjectiveR n m l eq = plusInjectiveL l n m $
     === m %:+ l   `because` eq
     === l %:+ m   `because` plusComm m l
 
-{-# DEPRECATED sAndPlusOne "Use @'succAndPlusOneR'@" #-}
-sAndPlusOne :: SNat n -> 'S n :=: n :+: One
-sAndPlusOne = succAndPlusOneR
-
-{-# DEPRECATED plusAssociative "Use @'plusAssoc'@ instead." #-}
-plusAssociative :: SNat n -> SNat m -> SNat l
-                -> n :+: (m :+: l) :=: (n :+: m) :+: l
-plusAssociative n m l = sym $ plusAssoc n m l
-
-{-# DEPRECATED plusSR "Use @'plusSuccR'@ instead." #-}
-plusSR :: SNat n -> SNat m -> 'S (n :+: m) :=: n :+: 'S m
-plusSR n m = sym $ plusSuccR n m
-
-succPlusR :: SNat n -> SNat m -> n :+ 'S m :=: 'S (n :+ m)
-succPlusR = plusSuccR
-{-# DEPRECATED succPlusR "Use @'plusSuccR'@ instead." #-}
-
-succInjective :: S (n :: Nat) :~: S m -> n :~: m
-succInjective = succInj
-{-# DEPRECATED succInjective "Use @'succInj'@ instead." #-}
-
--- eqSuccMinus :: ((m :<<= n) ~ 'True)
---             => SNat n -> SNat m -> ('S n :-: m) :=: ('S (n :-: m))
--- eqSuccMinus _      SZ     = Refl
--- eqSuccMinus (SS n) (SS m) =
---   start (SS (SS n) %:- SS m)
---     =~= SS n %:- m
---     === SS (n %:- m)       `because` eqSuccMinus n m
---     =~= SS (SS n %:- SS m)
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
--- eqSuccMinus _ _ = bugInGHC
--- #endif
 
 reflToSEqual :: SNat n -> SNat m -> n :~: m -> IsTrue (n :== m)
 reflToSEqual SZ     _      Refl = Witness
@@ -330,175 +286,11 @@ instance PeanoOrder Nat where
 plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :=: n
 plusMinusEqL = plusMinus
 
-{-# DEPRECATED minusCongEq "Use @'minusCongL'@ instead." #-}
-minusCongEq :: n :~: m -> Sing l -> n :- l :~: m :- l
-minusCongEq = minusCongL
-
-{-# DEPRECATED plusMinusEqR "Prove on your own." #-}
-plusMinusEqR :: SNat n -> SNat m -> (m :+: n) :-: m :=: n
-plusMinusEqR n m = transitivity (minusCongEq (plusCommutative m n) m) (plusMinusEqL n m)
-
--- zAbsorbsMinR :: SNat n -> Min n 'Z :=: 'Z
--- zAbsorbsMinR SZ     = Refl
--- zAbsorbsMinR (SS n) =
---   case zAbsorbsMinR n of
---     Refl -> Refl
-
--- zAbsorbsMinL :: SNat n -> Min 'Z n :=: 'Z
--- zAbsorbsMinL SZ     = Refl
--- zAbsorbsMinL (SS n) = case zAbsorbsMinL n of Refl -> Refl
-
--- minComm :: SNat n -> SNat m -> Min n m :=: Min m n
--- minComm SZ     SZ = Refl
--- minComm SZ     (SS _) = Refl
--- minComm (SS _) SZ = Refl
--- minComm (SS n) (SS m) = case minComm n m of Refl -> Refl
-
--- maxZeroL :: SNat n -> Max 'Z n :=: n
--- maxZeroL SZ = Refl
--- maxZeroL (SS _) = Refl
-
--- maxComm :: SNat n -> SNat m -> (Max n m) :=: (Max m n)
--- maxComm SZ SZ = Refl
--- maxComm SZ (SS _) = Refl
--- maxComm (SS _) SZ = Refl
--- maxComm (SS n) (SS m) = case maxComm n m of Refl -> Refl
-
--- maxZeroR :: SNat n -> Max n 'Z :=: n
--- maxZeroR n = transitivity (maxComm n SZ) (maxZeroL n)
-
-{-# DEPRECATED multPlusDistr "Use @'multPlusDistirb'@ instead." #-}
-multPlusDistr :: SNat n -> SNat m -> SNat l -> n :* (m :+ l) :=: (n :* m) :+ (n :* l)
-multPlusDistr = multPlusDistrib
-
-{-# DEPRECATED plusMultDistr "Use @'plusMultDistirb'@ instead." #-}
-plusMultDistr :: SNat n -> SNat m -> SNat l -> (n :+ m) :* l :=: (n :* l) :+ (m :* l)
-plusMultDistr = plusMultDistrib
-
-{-# DEPRECATED multAssociative "Use @'multAssoc'@ instead." #-}
-multAssociative :: SNat n -> SNat m -> SNat l -> n :* (m :* l) :=: (n :* m) :* l
-multAssociative n m l = sym $ multAssoc n m l
-
-{-# DEPRECATED eqPreservesS "Use @'succCong'@ instead." #-}
-eqPreservesS :: n :~: m -> S n :~: S m
-eqPreservesS = succCong
-
 plusNeutralR :: SNat n -> SNat m -> n :+ m :=: n -> m :=: 'Z
 plusNeutralR n m npmn = plusEqCancelL n m SZ (npmn `trans` sym (plusZeroR n))
 
 plusNeutralL :: SNat n -> SNat m -> n :+ m :=: m -> n :=: 'Z
 plusNeutralL n m npmm = plusNeutralR m n (plusComm m n `trans` npmm)
-
--- --------------------------------------------------
--- -- * Properties of 'Leq'
--- --------------------------------------------------
-
--- leqRefl :: SNat n -> Leq n n
--- leqRefl SZ = ZeroLeq SZ
--- leqRefl (SS n) = SuccLeqSucc $ leqRefl n
-
--- leqSucc :: SNat n -> Leq n ('S n)
--- leqSucc SZ = ZeroLeq sOne
--- leqSucc (SS n) = SuccLeqSucc $ leqSucc n
-
--- leqTrans :: Leq n m -> Leq m l -> Leq n l
--- leqTrans (ZeroLeq _) leq = ZeroLeq $ leqRhs leq
--- leqTrans (SuccLeqSucc nLeqm) (SuccLeqSucc mLeql) = SuccLeqSucc $ leqTrans nLeqm mLeql
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
--- leqTrans _ _ = error "impossible!"
--- #endif
-
--- instance Preorder Leq where
---   reflexivity = leqRefl
---   transitivity = leqTrans
-
--- plusMonotone :: Leq n m -> Leq l k -> Leq (n :+: l) (m :+: k)
--- plusMonotone (ZeroLeq m) (ZeroLeq k) = ZeroLeq (m %+ k)
--- plusMonotone (ZeroLeq m) (SuccLeqSucc leq) =
---   case plusSR m (leqRhs leq) of
---     Refl -> SuccLeqSucc $ plusMonotone (ZeroLeq m) leq
--- plusMonotone (SuccLeqSucc leq) leq' = SuccLeqSucc $ plusMonotone leq leq'
-
--- plusLeqL :: SNat n -> SNat m -> Leq n (n :+: m)
--- plusLeqL SZ     m = ZeroLeq $ coerce (symmetry $ plusZeroL m) m
--- plusLeqL (SS n) m =
---   start (SS n)
---     =<= SS (n %+ m) `because` SuccLeqSucc (plusLeqL n m)
---     =~= SS n %+ m
-
--- plusLeqR :: SNat n -> SNat m -> Leq m (n :+: m)
--- plusLeqR n m =
---   case plusCommutative n m of
---     Refl -> plusLeqL m n
-
--- minLeqL :: SNat n -> SNat m -> Leq (Min n m) n
--- minLeqL SZ m = case zAbsorbsMinL m of Refl -> ZeroLeq SZ
--- minLeqL n SZ = case zAbsorbsMinR n of Refl -> ZeroLeq n
--- minLeqL (SS n) (SS m) = SuccLeqSucc (minLeqL n m)
-
--- minLeqR :: SNat n -> SNat m -> Leq (Min n m) m
--- minLeqR n m = case minComm n m of Refl -> minLeqL m n
-
--- leqAnitsymmetric :: Leq n m -> Leq m n -> n :=: m
--- leqAnitsymmetric (ZeroLeq _) (ZeroLeq _) = Refl
--- leqAnitsymmetric (SuccLeqSucc leq1) (SuccLeqSucc leq2) = eqPreserveSS $ leqAnitsymmetric leq1 leq2
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
--- leqAnitsymmetric _ _ = error "impossible!"
--- #endif
-
--- maxLeqL :: SNat n -> SNat m -> Leq n (Max n m)
--- maxLeqL SZ m = ZeroLeq (sMax SZ m)
--- maxLeqL n SZ = case maxZeroR n of
---                  Refl -> leqRefl n
--- maxLeqL (SS n) (SS m) = SuccLeqSucc $ maxLeqL n m
-
--- maxLeqR :: SNat n -> SNat m -> Leq m (Max n m)
--- maxLeqR n m = case maxComm n m of
---                 Refl -> maxLeqL m n
-
--- leqSnZAbsurd :: Leq ('S n) 'Z -> a
--- leqSnZAbsurd = \case {}
-
--- leqnZElim :: Leq n 'Z -> n :=: 'Z
--- leqnZElim (ZeroLeq SZ) = Refl
-
--- leqSnLeq :: Leq ('S n) m -> Leq n m
--- leqSnLeq (SuccLeqSucc leq) =
---   let n = leqLhs leq
---       m = SS $ leqRhs leq
---   in start n
---        =<= SS n   `because` leqSucc n
---        =<= m      `because` SuccLeqSucc leq
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
--- leqSnLeq _ = bugInGHC
--- #endif
-
--- leqPred :: Leq ('S n) ('S m) -> Leq n m
--- leqPred (SuccLeqSucc leq) = leq
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
--- leqPred _ = bugInGHC
--- #endif
-
--- leqSnnAbsurd :: Leq ('S n) n -> a
--- leqSnnAbsurd (SuccLeqSucc leq) =
---   case leqLhs leq of
---     SS _ -> leqSnnAbsurd leq
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
---     _    -> bugInGHC "cannot be occured"
--- leqSnnAbsurd _ = bugInGHC
--- #endif
-
-{-# DEPRECATED succCongEq "Use @'succCong'@ instead." #-}
-succCongEq :: n :~: m -> S n :~: S m
-succCongEq = succCong
-
-{-# DEPRECATED succPlusL "Use @'plusSuccL'@ instead." #-}
-succPlusL :: SNat n -> SNat m -> (S n :+ m) :~: S (n :+ m)
-succPlusL = plusSuccL
-
-{-# DEPRECATED multCongEq "Use @'multCong'@ instead." #-}
-multCongEq :: n :~: m -> l :~: k -> n :* l :~: m :* (k :: nat)
-multCongEq = multCong
 
 --------------------------------------------------
 -- * Quasi Quoter

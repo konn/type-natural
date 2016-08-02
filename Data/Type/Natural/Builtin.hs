@@ -1,5 +1,7 @@
-{-# LANGUAGE ConstraintKinds, DataKinds, GADTs, PolyKinds, RankNTypes, InstanceSigs #-}
-{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances, EmptyCase, ViewPatterns  #-}
+{-# LANGUAGE CPP, ConstraintKinds, DataKinds, EmptyCase, ExplicitNamespaces #-}
+{-# LANGUAGE FlexibleContexts, GADTs, InstanceSigs, PolyKinds, RankNTypes   #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators                   #-}
+{-# LANGUAGE UndecidableInstances                                           #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 -- | Coercion between Peano Numerals @'Data.Type.Natural.Nat'@ and builtin naturals @'GHC.TypeLits.Nat'@
@@ -24,28 +26,31 @@ module Data.Type.Natural.Builtin
          inductionNat,
        )
        where
-import Data.Promotion.Prelude.Enum (Succ)
-import           Data.Singletons              (Sing, SingI, sing)
-import           Data.Singletons.Decide       (Decision (..), (%~))
-import           Data.Singletons.TypeLits
-import           Data.Singletons.Decide       (Void)
-import           Data.Singletons.TH
-import           Data.Singletons.Prelude.Bool (Sing (..))
-import           Data.Singletons.Prelude.Enum (Pred, sPred, sSucc)
-import           Data.Singletons.Prelude.Num  (SNum (..))
-import           Data.Singletons.Prelude.Ord
+import Data.Type.Natural.Class
+
+import           Data.Singletons.Decide       (SDecide (..))
+import           Data.Singletons.Decide       (Decision (..))
+import           Data.Singletons.Prelude      (SNum (..), Sing (..))
+import           Data.Singletons.Prelude      (SingI (..))
+import           Data.Singletons.Prelude      (SingKind (..), SomeSing (..))
+import           Data.Singletons.Prelude.Enum (PEnum (..), SEnum (..))
+import           Data.Singletons.Prelude.Ord  (POrd (..), SOrd (..))
+import           Data.Singletons.TH           (sCases)
+import           Data.Singletons.TypeLits     (withKnownNat)
+import           Data.Type.Equality           ((:~:) (..))
+import           Data.Type.Monomorphic        (Monomorphic (..))
+import           Data.Type.Monomorphic        (Monomorphicable (..))
 import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
 import qualified Data.Type.Natural            as PN
-import   Data.Type.Natural.Class
 import           Data.Void                    (absurd)
+import           Data.Void                    (Void)
+import           GHC.TypeLits                 (type (+), type (<=), type (<=?))
 import qualified GHC.TypeLits                 as TL
-import           Proof.Equational             ((:~:), (:~:) (Refl), coerce)
+import           Proof.Equational             (coerce)
 import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
-import           Proof.Propositional          (IsTrue(..), Empty(..))
+import           Proof.Propositional          (Empty (..), IsTrue (..))
 import           Unsafe.Coerce                (unsafeCoerce)
-import Data.Type.Monomorphic
-import Data.Kind
 
 -- | Type synonym for @'PN.Nat'@ to avoid confusion with built-in @'TL.Nat'@.
 type Peano = PN.Nat
@@ -132,7 +137,7 @@ fromPeanoInjective frEq =
 fromPeanoSuccCong :: Sing n -> FromPeano ('S n) :~: Succ (FromPeano n)
 fromPeanoSuccCong _sn = Refl
 
-fromPeanoPlusCong :: Sing n -> Sing m -> FromPeano (n PN.:+ m) :~: FromPeano n TL.+ FromPeano m
+fromPeanoPlusCong :: Sing n -> Sing m -> FromPeano (n PN.:+ m) :~: FromPeano n + FromPeano m
 fromPeanoPlusCong SZ _ = Refl
 fromPeanoPlusCong (SS sn) sm =
   start (sFromPeano (SS sn %:+ sm))
@@ -142,7 +147,7 @@ fromPeanoPlusCong (SS sn) sm =
     =~= sSucc (sFromPeano sn) %:+ sFromPeano sm
     =~= sFromPeano (SS sn)    %:+ sFromPeano sm
 
-toPeanoPlusCong :: Sing n -> Sing m -> ToPeano (n TL.+ m) :~: ToPeano n PN.:+ ToPeano m
+toPeanoPlusCong :: Sing n -> Sing m -> ToPeano (n + m) :~: ToPeano n PN.:+ ToPeano m
 toPeanoPlusCong sn sm =
   case viewNat sn of
     IsZero -> Refl
@@ -170,7 +175,7 @@ fromPeanoOneCong = Refl
 toPeanoOneCong :: ToPeano 1 :~: PN.One
 toPeanoOneCong = Refl
 
-natPlusCongR :: Sing r -> n :~: m -> n TL.+ r :~: m TL.+ r
+natPlusCongR :: Sing r -> n :~: m -> n + r :~: m + r
 natPlusCongR _ Refl = Refl
 
 fromPeanoMultCong :: Sing n -> Sing m -> FromPeano (n PN.:* m) :~: FromPeano n TL.* FromPeano m
@@ -202,22 +207,22 @@ toPeanoMultCong sn sm =
             `because` multCongL (sym (toPeanoSuccCong psn)) (sToPeano sm)
 
 infix 4 %:<=?
-(%:<=?) :: Sing (n :: TL.Nat) -> Sing m -> Sing (n TL.<=? m)
+(%:<=?) :: Sing (n :: TL.Nat) -> Sing m -> Sing (n <=? m)
 n %:<=? m = case sCompare n m of
   SLT -> STrue
   SEQ -> STrue
   SGT -> SFalse
 
-natLeqSuccEq :: Sing n -> Sing m -> ((n TL.+ 1) TL.<=? (m TL.+ 1)) :~: (n TL.<=? m)
+natLeqSuccEq :: Sing n -> Sing m -> ((n + 1) <=? (m + 1)) :~: (n <=? m)
 natLeqSuccEq _ _ = Refl
 
-leqqCong :: n :~: m -> l :~: z -> (n TL.<=? l) :~: (m TL.<=? z)
+leqqCong :: n :~: m -> l :~: z -> (n <=? l) :~: (m <=? z)
 leqqCong Refl Refl = Refl
 
 leqCong :: n :~: m -> l :~: z -> (n :<= l) :~: (m :<= z)
 leqCong Refl Refl = Refl
 
-fromPeanoMonotone :: ((n :<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n TL.<=? FromPeano m) :~: 'True
+fromPeanoMonotone :: ((n :<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n <=? FromPeano m) :~: 'True
 fromPeanoMonotone SZ _ = Refl
 fromPeanoMonotone (SS n) (SS m) =
    start (sFromPeano (SS n) %:<=? sFromPeano (SS m))
@@ -228,7 +233,7 @@ fromPeanoMonotone (SS n) (SS m) =
      === STrue
       `because` fromPeanoMonotone n m
 
-natLeqZero :: (n TL.<= 0) => Sing n -> n :~: 0
+natLeqZero :: (n <= 0) => Sing n -> n :~: 0
 natLeqZero Zero = Refl
 natLeqZero _    = error "natLeqZero : bug in ghc"
 
@@ -246,7 +251,7 @@ myLeqPred (SS _) SZ = Refl
 toPeanoCong :: a :~: b -> ToPeano a :~: ToPeano b
 toPeanoCong Refl = Refl
 
-toPeanoMonotone :: (n TL.<= m)
+toPeanoMonotone :: (n <= m)
                 => Sing n -> Sing m -> ((ToPeano n) :<= (ToPeano m)) :~: 'True
 toPeanoMonotone sn sm =
   case sn %~ (sing :: Sing 0) of
@@ -267,7 +272,7 @@ toPeanoMonotone sn sm =
              === STrue `because` toPeanoMonotone pn pm
 
 -- | Induction scheme for built-in @'TL.Nat'@.
-inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m TL.+ 1)) -> Sing n -> p n
+inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m + 1)) -> Sing n -> p n
 inductionNat base step snat =
   case viewNat snat of
     IsZero -> base
@@ -393,8 +398,8 @@ instance PeanoOrder TL.Nat where
           SFalse -> Refl
           STrue  -> eliminate $ succLeqToLT n m Witness
 
-instance Monomorphicable (Sing :: TL.Nat -> Type) where
-  type MonomorphicRep (Sing :: TL.Nat -> Type) = Integer
+instance Monomorphicable (Sing :: TL.Nat -> *) where
+  type MonomorphicRep (Sing :: TL.Nat -> *) = Integer
   demote  (Monomorphic sn) = fromSing sn
   {-# INLINE demote #-}
 
