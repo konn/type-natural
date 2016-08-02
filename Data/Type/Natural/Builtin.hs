@@ -283,6 +283,7 @@ inductionNat base step snat =
 
 
 instance IsPeano TL.Nat where
+  {-# SPECIALISE instance IsPeano TL.Nat #-}
   predSucc _ = Refl
   plusMinus _ _ = Refl
   succInj Refl = Refl
@@ -340,6 +341,7 @@ type family MyLeqHelper n m o where
   MyLeqHelper n m 'GT = 'False
 
 instance PeanoOrder TL.Nat where
+  {-# SPECIALISE instance PeanoOrder TL.Nat #-}
   eqlCmpEQ _ _ Refl = Refl
   ltToLeq _ _ Refl = Witness
   succLeqToLT m n Witness =

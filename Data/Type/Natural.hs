@@ -109,6 +109,7 @@ instance Monomorphicable (Sing :: Nat -> *) where
 
 -- | Since 0.5.0.0
 instance IsPeano Nat where
+  {-# SPECIALISE instance IsPeano Nat #-}
   induction base _step SZ = base
   induction base step (SS n) = step n (induction base step n)
 
@@ -200,6 +201,7 @@ nonSLeqToLT n m =
             SFalse -> case sleqFlip n m $ snequalToNoRefl n m Witness of {}
 
 instance PeanoOrder Nat where
+  {-# SPECIALISE instance PeanoOrder Nat #-}
   leqZero _ = Witness
   leqSucc _      _      Witness = Witness
   viewLeq SZ     n      Witness = LeqZero n
