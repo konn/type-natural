@@ -8,8 +8,7 @@ cache:
     - $HOME/.stack
 
 matrix:
-  include:
-    - env: GHCVER=7.10.3 STACK_YAML=stack.yaml
+    - env: GHCVER=8.0.1 STACK_YAML=stack.yaml
       compiler: ": #GHC 7.10.3"
       addons:
         apt:
@@ -17,24 +16,6 @@ matrix:
             - ghc-7.10.3
           sources:
             - hvr-ghc
-    - env: GHCVER=8.0.1 STACK_YAML=stack-ghc800.yaml
-      compiler: ": #GHC 8.0.1"
-      addons:
-        apt:
-          packages:
-            - ghc-8.0.1
-          sources:
-            - hvr-ghc
-    - env: GHCVER=head STACK_YAML=stack-head.yaml
-      compiler: ": #GHC HEAD"
-      addons:
-        apt:
-          packages:
-            - ghc-head
-          sources:
-            - hvr-ghc
-  allow_failures:
-    - env: GHCVER=head STACK_YAML=stack-head.yaml
 
 before_install:
  # install Stack

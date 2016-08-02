@@ -8,30 +8,24 @@ module Data.Type.Natural.Core where
 import Data.Type.Natural.Compat
 #endif
 
-import           Data.Constraint               hiding ((:-))
-import qualified Data.Singletons.Prelude       as S
-import           Data.Type.Natural.Definitions hiding ((:<=))
-import           Prelude                       (Bool (..), Eq (..), Show (..),
-                                                ($))
-import           Unsafe.Coerce
+import Data.Constraint               hiding ((:-))
+import Data.Promotion.Prelude.Ord    ((:<=))
+import Data.Type.Natural.Definitions hiding ((:<=))
+import Prelude                       (Bool (..), Eq (..), Show (..), ($))
+import Proof.Propositional           (IsTrue)
+import Unsafe.Coerce
 
 --------------------------------------------------
 -- ** Type-level predicate & judgements.
 --------------------------------------------------
--- | Comparison via type-class.
-class (n :: Nat) :<= (m :: Nat)
-instance 'Z :<= n
-instance (n :<= m) => 'S n :<= 'S m
-{-# DEPRECATED (:<=) "This class will be removed in 0.5.0.0. Use @(n 'Data.Singletons.Prelude.Ord.:<=' m) ~ 'True@ instead" #-}
-
 -- | Comparison via GADTs.
 data Leq (n :: Nat) (m :: Nat) where
   ZeroLeq     :: SNat m -> Leq Zero m
   SuccLeqSucc :: Leq n m -> Leq ('S n) ('S m)
 
-type LeqTrueInstance a b = Dict ((a S.:<= b) ~ 'True)
+type LeqTrueInstance a b = IsTrue (a :<= b)
 
-(%-) :: (m S.:<= n) ~ 'True => SNat n -> SNat m -> SNat (n :-: m)
+(%-) :: (m :<= n) ~ 'True => SNat n -> SNat m -> SNat (n :-: m)
 n   %- SZ    = n
 SS n %- SS m = n %- m
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
@@ -55,7 +49,7 @@ propToBoolLeq :: forall n m. Leq n m -> LeqTrueInstance n m
 propToBoolLeq _ = unsafeCoerce (Dict :: Dict ())
 {-# INLINE propToBoolLeq #-}
 
-boolToClassLeq :: (n S.:<= m) ~ 'True => SNat n -> SNat m -> LeqInstance n m
+boolToClassLeq :: (n :<= m) ~ 'True => SNat n -> SNat m -> LeqInstance n m
 boolToClassLeq _ = unsafeCoerce (Dict :: Dict ())
 {-# INLINE boolToClassLeq #-}
 
@@ -79,9 +73,9 @@ propToClassLeq (ZeroLeq _) = Dict
 propToClassLeq (SuccLeqSucc leq) = case propToClassLeq leq of Dict -> Dict
 -}
 
-type LeqInstance n m = Dict (n :<= m)
+type LeqInstance n m = IsTrue (n :<= m)
 
-boolToPropLeq :: (n S.:<= m) ~ 'True => SNat n -> SNat m -> Leq n m
+boolToPropLeq :: (n :<= m) ~ 'True => SNat n -> SNat m -> Leq n m
 boolToPropLeq SZ     m      = ZeroLeq m
 boolToPropLeq (SS n) (SS m) = SuccLeqSucc $ boolToPropLeq n m
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800

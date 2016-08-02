@@ -2,9 +2,13 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.4.2.0
+version:             0.5.0.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
+                     .
+                     This version 0.5.0.0 supports __GHC 7.10.* only__.
+                     .
+                     __Use >= 0.6.0.0 with GHC 8.0.0+__.
 homepage:            https://github.com/konn/type-natural
 license:             BSD3
 license-file:        LICENSE
@@ -14,7 +18,7 @@ copyright:           (C) Hiromi ISHII 2013-2014
 category:            Math
 build-type:          Simple
 cabal-version:       >= 1.10
-tested-with:         GHC == 7.10.3, GHC == 8.0.1
+tested-with:         GHC == 7.10.3
 
 source-repository head
   Type: git
@@ -28,6 +32,9 @@ library
   exposed-modules:     Data.Type.Natural
                      , Data.Type.Ordinal
                      , Data.Type.Natural.Builtin
+                     , Data.Type.Natural.Class
+                     , Data.Type.Natural.Class.Arithmetic
+                     , Data.Type.Natural.Class.Order
   other-modules:       Data.Type.Natural.Definitions
                      , Data.Type.Natural.Core
                      , Data.Type.Natural.Compat
@@ -37,8 +44,8 @@ library
                      , template-haskell          >= 2.8     && < 3
                      , constraints               >= 0.3     && < 0.9
                      , ghc-typelits-natnormalise == 0.4.*
-                     , ghc-typelits-presburger   == 0.1.*
-                     , singletons                >= 2.0 && < 2.3
+                     , ghc-typelits-presburger   >= 0.1.1   && < 1
+                     , singletons                == 2.1
 
   default-language:    Haskell2010
   default-extensions:  DataKinds

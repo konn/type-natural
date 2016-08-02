@@ -1,21 +1,17 @@
-{-# LANGUAGE DataKinds, DeriveDataTypeable, FlexibleContexts        #-}
-{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, KindSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses, NoImplicitPrelude, PolyKinds    #-}
-{-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving    #-}
-{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators           #-}
-{-# LANGUAGE UndecidableInstances                                   #-}
+{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, KindSignatures   #-}
+{-# LANGUAGE MultiParamTypeClasses, PolyKinds, RankNTypes             #-}
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances        #-}
 module Data.Type.Natural.Definitions
        (module Data.Type.Natural.Definitions,
         module Data.Singletons.Prelude
        ) where
-import           Data.Singletons.Prelude
-import           Data.Singletons.TH      (singletons)
-import           Data.Typeable           (Typeable)
-import           Prelude                 (Num (..), Ord (..))
-import           Prelude                 (Bool (..), Eq (..), Show (..))
-import qualified Prelude                 as P
-
-
+import Data.Promotion.Prelude.Enum
+import Data.Singletons.Prelude
+import Data.Singletons.Prelude.Enum
+import Data.Singletons.TH           (singletons)
+import Data.Typeable                (Typeable)
 
 --------------------------------------------------
 -- * Natural numbers and its singleton type
@@ -33,10 +29,14 @@ deriving instance Typeable 'Z
 --------------------------------------------------
 
 singletons [d|
-  instance P.Ord Nat where
+  instance Ord Nat where
      Z   <= _   = True
      S _ <= Z   = False
      S n <= S m = n <= m
+
+     n >= m = m   <= n
+     n <  m = S n <= m
+     n >  m = m   < n
 
      min Z     Z     = Z
      min Z     (S _) = Z
@@ -48,9 +48,8 @@ singletons [d|
      max (S n) Z     = S n
      max (S n) (S m) = S (max n m)
  |]
-
 singletons [d|
-  instance P.Num Nat where
+  instance Num Nat where
     Z   + n = n
     S m + n = S (m + n)
 
@@ -67,6 +66,16 @@ singletons [d|
     signum (S _) = S Z
 
     fromInteger n = if n == 0 then Z else S (fromInteger (n-1))
+ |]
+
+singletons [d|
+  instance Enum Nat where
+    succ n = S n
+    pred Z = Z
+    pred (S n) = n
+    toEnum n = if n == 0 then Z else S (toEnum (n - 1))
+    fromEnum Z = 0
+    fromEnum (S n) = 1 + fromEnum n
  |]
 
 type n :-: m = n :- m
@@ -151,24 +160,3 @@ singletons [d|
  n19 = nineteen
  n20 = twenty
  |]
-
--- | Boolean-valued type-level comparison function.
-{-# DEPRECATED (<<=) "Use @'Ord'@ instance instead." #-}
-(<<=) :: Nat -> Nat -> Bool
-(<<=) = (<=)
-
-{-# DEPRECATED (:<<=) "Use @'(:<=)'@ from @'POrd'@ instead." #-}
-type n :<<= m = n :<= m
-
-{-# DEPRECATED (%:<<=) "Use @'(%:<=)'@ from @'POrd'@ instead." #-}
-(%:<<=) :: SNat n -> SNat m -> SBool (n :<<= m)
-(%:<<=) = (%:<=)
-
-type (:<<=$) = (:<=$)
-{-# DEPRECATED (:<<=$) "Use @(':<=$')@ instead." #-}
-
-type (:<<=$$) = (:<=$$)
-{-# DEPRECATED (:<<=$$) "Use @(':<=$$')@ instead." #-}
-
-type (:<<=$$$) n m = (:<=$$$) n m
-{-# DEPRECATED (:<<=$$$) "Use @(':<=$$$')@ instead." #-}
