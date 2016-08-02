@@ -1,7 +1,7 @@
-{-# LANGUAGE DataKinds, EmptyCase, ExplicitForAll, FlexibleContexts         #-}
-{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures                       #-}
-{-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes  #-}
-{-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies, TypeInType #-}
+{-# LANGUAGE DataKinds, EmptyCase, ExplicitForAll, FlexibleContexts        #-}
+{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures                      #-}
+{-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies            #-}
 module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
         FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
@@ -19,7 +19,7 @@ import Proof.Equational
 import Proof.Propositional
 
 data LeqView (n :: nat) (m :: nat) where
-  LeqZero :: Sing n -> LeqView (Zero nat) n
+  LeqZero :: Sing n -> LeqView (Zero 'KProxy) n
   LeqSucc :: Sing n -> Sing m -> IsTrue (n :<= m) -> LeqView (Succ n) (Succ m)
 
 data DiffNat n m where
@@ -28,14 +28,15 @@ data DiffNat n m where
 newtype LeqWitPf n = LeqWitPf { leqWitPf :: forall m. Sing m -> IsTrue (n :<= m) -> DiffNat n m }
 newtype LeqStepPf n = LeqStepPf { leqStepPf :: forall m l. Sing m -> Sing l -> n :+ l :~: m -> IsTrue (n :<= m) }
 
-succDiffNat :: IsPeano nat => Sing n -> Sing m -> DiffNat (n :: nat) m -> DiffNat (Succ n) (Succ m)
+succDiffNat :: IsPeano ('KProxy :: KProxy nat)
+            => Sing n -> Sing m -> DiffNat (n :: nat) m -> DiffNat (Succ n) (Succ m)
 succDiffNat _ _ (DiffNat n m) = coerce (plusSuccL n m) $ DiffNat (sSucc n) m
 
-coerceLeqL :: forall (n :: nat) m l . IsPeano nat => n :~: m -> Sing l
+coerceLeqL :: forall (n :: nat) m l . IsPeano ('KProxy :: KProxy nat) => n :~: m -> Sing l
            -> IsTrue (n :<= l) -> IsTrue (m :<= l)
 coerceLeqL Refl _ Witness = Witness
 
-coerceLeqR :: forall (n :: nat) m l . IsPeano nat =>  Sing l -> n :~: m
+coerceLeqR :: forall (n :: nat) m l . IsPeano ('KProxy :: KProxy nat) =>  Sing l -> n :~: m
            -> IsTrue (l :<= n) -> IsTrue (l :<= m)
 coerceLeqR _ Refl Witness = Witness
 
@@ -70,7 +71,7 @@ newtype CmpSuccStepR (n :: nat) =
 
 newtype LeqViewRefl n = LeqViewRefl { proofLeqViewRefl :: LeqView n n }
 
-class (SOrd nat, IsPeano nat) => PeanoOrder nat where
+class (SOrd kproxy, IsPeano kproxy) => PeanoOrder (kproxy :: KProxy nat) where
   {-# MINIMAL ( succLeqToLT, cmpZero, leqRefl
               | leqZero, leqSucc , viewLeq
               | leqWitness, leqStep
@@ -132,7 +133,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   ltToSuccLeq n m nLTm =
      leqNeqToSuccLeq n m (ltToLeq n m nLTm) (ltToNeq n m nLTm)
 
-  cmpZero :: Sing a -> Compare (Zero nat) (Succ a) :~: 'LT
+  cmpZero :: Sing a -> Compare (Zero kproxy) (Succ a) :~: 'LT
   cmpZero sn = leqToLT sZero (sSucc sn) $ leqStep (sSucc sZero) (sSucc sn) sn $
                start (sSucc sZero %:+ sn)
                  === sSucc (sZero %:+ sn) `because` plusSuccL sZero sn
@@ -146,13 +147,13 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
       === sFlipOrdering SLT            `because` congFlipOrdering (leqToLT b a sbLEQa)
       =~= SGT
 
-  cmpZero' :: Sing a -> Either (Compare (Zero nat) a :~: 'EQ) (Compare (Zero nat) a :~: 'LT)
+  cmpZero' :: Sing a -> Either (Compare (Zero kproxy) a :~: 'EQ) (Compare (Zero kproxy) a :~: 'LT)
   cmpZero' n =
     case zeroOrSucc n of
       IsZero    -> Left $ eqlCmpEQ sZero n Refl
       IsSucc n' -> Right $ cmpZero n'
 
-  zeroNoLT :: Sing a -> Compare a (Zero nat) :~: 'LT -> Void
+  zeroNoLT :: Sing a -> Compare a (Zero kproxy) :~: 'LT -> Void
   zeroNoLT n eql =
     case cmpZero' n of
       Left cmp0nEQ -> eliminate $
@@ -206,8 +207,8 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   ltSucc :: Sing (a :: nat) -> Compare a (Succ a) :~: 'LT
   ltSucc = proofLTSucc . induction base step
     where
-      base :: LTSucc (Zero nat)
-      base = LTSucc $ cmpZero (sZero :: Sing (Zero nat))
+      base :: LTSucc (Zero kproxy)
+      base = LTSucc $ cmpZero (sZero :: Sing (Zero kproxy))
 
       step :: Sing (n :: nat) -> LTSucc n -> LTSucc (Succ n)
       step n (LTSucc ih) = LTSucc $
@@ -219,7 +220,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
                -> Compare n (Succ m) :~: 'LT
   cmpSuccStepR = proofCmpSuccStepR . induction base step
     where
-      base :: CmpSuccStepR (Zero nat)
+      base :: CmpSuccStepR (Zero kproxy)
       base = CmpSuccStepR $ \m _ -> cmpZero m
 
       step :: Sing (n :: nat) -> CmpSuccStepR n -> CmpSuccStepR (Succ n)
@@ -253,7 +254,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
           === SLT `because` ltSucc n
       Right nLTm -> ltSuccLToLT n m nLTm
 
-  leqZero :: Sing n -> IsTrue (Zero nat :<= n)
+  leqZero :: Sing n -> IsTrue (Zero kproxy :<= n)
   leqZero sn =
     case zeroOrSucc sn of
       IsZero   -> leqRefl sn
@@ -272,7 +273,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   leqViewRefl :: Sing (n :: nat) -> LeqView n n
   leqViewRefl = proofLeqViewRefl . induction base step
     where
-      base :: LeqViewRefl (Zero nat)
+      base :: LeqViewRefl (Zero kproxy)
       base = LeqViewRefl $ LeqZero sZero
       step :: Sing (n :: nat) -> LeqViewRefl n -> LeqViewRefl (Succ n)
       step n (LeqViewRefl nLEQn) =
@@ -292,7 +293,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   leqWitness :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> DiffNat n m
   leqWitness = leqWitPf . induction base step
     where
-      base :: LeqWitPf (Zero nat)
+      base :: LeqWitPf (Zero kproxy)
       base = LeqWitPf $ \sm _ -> coerce (plusZeroL sm) $ DiffNat sZero sm
 
       step :: Sing (n :: nat) -> LeqWitPf n -> LeqWitPf (Succ n)
@@ -305,7 +306,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   leqStep :: Sing (n :: nat) -> Sing m -> Sing l -> n :+ l :~: m -> IsTrue (n :<= m)
   leqStep = leqStepPf . induction base step
     where
-      base :: LeqStepPf (Zero nat)
+      base :: LeqStepPf (Zero kproxy)
       base = LeqStepPf $ \k _ _ -> leqZero k
 
       step :: Sing (n :: nat) -> LeqStepPf n -> LeqStepPf (Succ n)
@@ -393,7 +394,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
                  `because` sym (plusAssoc n mMINn k)
              =~= m %:+ k
 
-  leqZeroElim :: Sing n -> IsTrue (n :<= Zero nat) -> n :~: Zero nat
+  leqZeroElim :: Sing n -> IsTrue (n :<= Zero kproxy) -> n :~: Zero kproxy
   leqZeroElim n nLE0 =
     case viewLeq n sZero nLE0 of
       LeqZero _ -> Refl
@@ -435,11 +436,11 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
     coerceLeqL (plusComm n m) (l %:+ n) $
     coerceLeqR (n %:+ m) (plusComm n l) nmLEQnl
 
-  succLeqZeroAbsurd :: Sing n -> IsTrue (S n :<= Zero nat) -> Void
+  succLeqZeroAbsurd :: Sing n -> IsTrue (S n :<= Zero kproxy) -> Void
   succLeqZeroAbsurd n leq =
     succNonCyclic n (leqZeroElim (sSucc n) leq)
 
-  succLeqZeroAbsurd' :: Sing n -> (S n :<= Zero nat) :~: 'False
+  succLeqZeroAbsurd' :: Sing n -> (S n :<= Zero kproxy) :~: 'False
   succLeqZeroAbsurd' n =
     case sSucc n %:<= sZero of
       STrue  -> absurd $ succLeqZeroAbsurd n Witness
@@ -587,7 +588,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   ltToLneq n m nLTm =
     coerce (sym $ lneqSuccLeq n m) $ ltToSuccLeq n m nLTm
 
-  lneqZero :: Sing (a :: nat) -> IsTrue (Zero nat :< Succ a)
+  lneqZero :: Sing (a :: nat) -> IsTrue (Zero kproxy :< Succ a)
   lneqZero n = ltToLneq sZero (sSucc n) $ cmpZero n
 
   lneqSucc :: Sing (n :: nat) -> IsTrue (n :< Succ n)
@@ -616,3 +617,27 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
         (leqTrans l (sSucc l) k (leqSuccStepR l l (leqRefl l)) $
            coerce (lneqSuccLeq l k) lLNk)
 
+  maxZeroL :: Sing n -> Max (Zero kproxy) n :~: n
+  maxZeroL n = leqToMax sZero n (leqZero n)
+
+  maxZeroR  :: Sing n -> Max n (Zero kproxy) :~: n
+  maxZeroR n = geqToMax n sZero (leqZero n)
+
+  minZeroL :: Sing n -> Min (Zero kproxy) n :~: Zero kproxy
+  minZeroL n = leqToMin sZero n (leqZero n)
+
+  minZeroR  :: Sing n -> Min n (Zero kproxy) :~: Zero kproxy
+  minZeroR n = geqToMin n sZero (leqZero n)
+
+  minusSucc :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= n) -> Succ n :- m :~: Succ (n :- m)
+  minusSucc n m mLEQn =
+    case leqWitness m n mLEQn of
+      DiffNat _ k ->
+        start (sSucc n %:- m)
+          =~= sSucc (m %:+ k) %:- m
+          === (m %:+ sSucc k) %:- m  `because` minusCongL (sym $ plusSuccR m k) m
+          === (sSucc k %:+ m) %:- m  `because` minusCongL (plusComm m (sSucc k)) m
+          === sSucc k                `because` plusMinus (sSucc k) m
+          === sSucc (k %:+ m %:- m)  `because` succCong (sym $ plusMinus k m)
+          === sSucc (m %:+ k %:- m)  `because` succCong (minusCongL (plusComm k m) m)
+          =~= sSucc (n %:- m)

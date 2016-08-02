@@ -1,19 +1,19 @@
-resolver: nightly-2016-07-19
+flags: {}
 packages:
 - '.'
 - location:
     git: https://github.com/konn/ghc-typelits-presburger.git
-    commit: e29ddc8c3e0245e51362238fb8b8686b09947166
+    commit: e1fa7e0432b0c9360b73c805e51fd306a658f57c
   extra-dep: true
 - location:
     git: https://github.com/konn/equational-reasoning-in-haskell.git
     commit: b0c47234b4f02b9dc1ccc15c9b13054f2625b7e3
   extra-dep: true
 
-extra-deps:
+extra-deps: 
 - monomorphic-0.0.3.3
-- singletons-2.2
+- singletons-2.1
 - th-desugar-1.6
 - ghc-typelits-natnormalise-0.4.6
-
-flags: {}
+# - equational-reasoning-0.3.0.0
+resolver: lts-6.8

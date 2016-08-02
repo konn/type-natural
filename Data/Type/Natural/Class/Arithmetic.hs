@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances, GADTs, KindSignatures                      #-}
 {-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies            #-}
-{-# LANGUAGE TypeInType, ViewPatterns                                      #-}
+{-# LANGUAGE ViewPatterns                                                  #-}
 module Data.Type.Natural.Class.Arithmetic
        (Zero, One, S, sZero, sOne, ZeroOrSucc(..),
         plusCong, plusCongR, plusCongL, succCong,
@@ -18,21 +18,21 @@ import Data.Void
 import Proof.Equational
 import Proof.Propositional
 
-type family Zero k :: k where
-  Zero k = FromInteger 0
+type family Zero (kproxy :: KProxy nat) :: nat where
+  Zero 'KProxy = FromInteger 0
 
-sZero :: SNum nat => Sing (Zero nat)
+sZero :: (SNum kproxy) => Sing (Zero kproxy)
 sZero = sFromInteger (sing :: Sing 0)
 
-type family One k :: k where
-  One k = FromInteger 1
+type family One (kproxy :: KProxy nat) :: nat where
+  One 'KProxy = FromInteger 1
 
-sOne :: SNum nat => Sing (One nat)
+sOne :: SNum kproxy => Sing (One kproxy)
 sOne = sFromInteger (sing :: Sing 1)
 
 type S n = Succ n
 
-sS :: SEnum nat => Sing (n :: nat) -> Sing (S n)
+sS :: SEnum ('KProxy :: KProxy nat) => Sing (n :: nat) -> Sing (S n)
 sS = sSucc
 
 predCong :: n :~: m -> Pred n :~: Pred m
@@ -69,7 +69,7 @@ minusCongR :: Sing k -> n :~: m -> k :- n :~: k :- m
 minusCongR _ Refl = Refl
 
 data ZeroOrSucc (n :: nat) where
-  IsZero :: ZeroOrSucc (Zero n)
+  IsZero :: ZeroOrSucc (Zero 'KProxy)
   IsSucc :: Sing n -> ZeroOrSucc (Succ n)
 
 newtype Assoc op n = Assoc { assocProof :: forall k l. Sing k -> Sing l ->
@@ -81,11 +81,11 @@ newtype Assoc op n = Assoc { assocProof :: forall k l. Sing k -> Sing l ->
 newtype IdentityR op e (n :: nat) = IdentityR { idRProof :: Apply (op n) e :~: n }
 newtype IdentityL op e (n :: nat) = IdentityL { idLProof :: Apply (op e) n :~: n }
 
-type PlusZeroR (n :: nat) = IdentityR (:+$$) (Zero nat) n
+type PlusZeroR (n :: nat) = IdentityR (:+$$) (Zero 'KProxy) n
 newtype PlusSuccR (n :: nat) =
   PlusSuccR { plusSuccRProof :: forall m. Sing m -> n :+ S m :~: S (n :+ m) }
 
-type PlusZeroL (n :: nat) = IdentityL (:+$$) (Zero nat) n
+type PlusZeroL (n :: nat) = IdentityL (:+$$) (Zero 'KProxy) n
 newtype PlusSuccL (m :: nat) =
   PlusSuccL { plusSuccLProof :: forall n. Sing n -> S n :+ m :~: S (n :+ m) }
 
@@ -93,13 +93,15 @@ newtype Comm op n = Comm { commProof :: forall m. Sing m -> Apply (op n) m :~: A
 
 type PlusComm = Comm (:+$$)
 
-newtype MultZeroL (n :: nat) = MultZeroL { multZeroLProof :: Zero nat :* n :~: Zero nat }
-newtype MultZeroR (n :: nat) = MultZeroR { multZeroRProof :: n :* Zero nat :~: Zero nat }
+data MultZeroL n =
+  MultZeroL { multZeroLProof :: !(Zero ('KProxy :: KProxy nat) :* n :~: Zero 'KProxy) }
+data MultZeroR (n :: nat) =
+  MultZeroR { multZeroRProof :: !(n :* Zero ('KProxy :: KProxy nat) :~: Zero 'KProxy) }
 
 newtype MultSuccL (m :: nat) = MultSuccL { multSuccLProof :: forall n. Sing n -> S n :* m :~: n :* m :+ m }
-newtype MultSuccR (n :: nat) = MultSuccR { multSuccRProof :: forall m. Sing m -> n :* S m :~: n :* m :+ n }
+data MultSuccR (n :: nat) = MultSuccR { multSuccRProof :: forall m. Sing m -> n :* S m :~: n :* m :+ n }
 
-newtype PlusMultDistrib n =
+data PlusMultDistrib n =
   PlusMultDistrib { plusMultDistribProof :: forall m l. Sing m -> Sing l
                                          -> (n :+ m) :* l :~: n :* l :+ m :* l
                   }
@@ -107,31 +109,32 @@ newtype PlusMultDistrib n =
 newtype PlusEqCancelL n = PlusEqCancelL { plusEqCancelLProof :: forall m l . Sing m -> Sing l
                                                        -> n :+ m :~: n :+ l -> m :~: l }
 
-newtype SuccPlusL (n :: nat) = SuccPlusL { proofSuccPlusL :: Succ n :~: One nat :+ n }
+data SuccPlusL (n :: nat) = SuccPlusL { proofSuccPlusL :: !(Succ n :~: One 'KProxy :+ n) }
 newtype MultEqCancelR n =
   MultEqCancelR { proofMultEqCancelR :: forall m l. Sing m -> Sing l
                                         -> n :* Succ l :~: m :* Succ l
                                         -> n :~: m
                 }
 
-class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
+class (SDecide kproxy, SNum kproxy, SEnum kproxy, kproxy ~ 'KProxy)
+    => IsPeano (kproxy :: KProxy nat) where
   {-# MINIMAL succOneCong, succNonCyclic, predSucc, plusMinus,
               succInj, ( (plusZeroL, plusSuccL) | (plusZeroR, plusZeroL))
                      , ( (multZeroL, multSuccL) | (multZeroR, multSuccR)),
               induction #-}
 
-  succOneCong   :: Succ (Zero nat) :~: One nat
+  succOneCong   :: Succ (Zero kproxy) :~: One kproxy
   succInj       :: Succ n :~: Succ (m :: nat) -> n :~: m
   succInj'      :: proxy n -> proxy' m -> Succ n :~: Succ (m :: nat) -> n :~: m
   succInj' _ _  = succInj
-  succNonCyclic :: Sing n -> Succ n :~: Zero nat -> Void
-  induction     :: p (Zero nat) -> (forall n. Sing n -> p n -> p (S n)) -> Sing k -> p k
+  succNonCyclic :: Sing n -> Succ n :~: Zero kproxy -> Void
+  induction     :: p (Zero kproxy) -> (forall n. Sing n -> p n -> p (S n)) -> Sing k -> p k
   plusMinus :: Sing (n :: nat) -> Sing m -> n :+ m :- m :~: n
 
-  plusZeroL :: Sing n -> (Zero nat :+ n) :~: n
+  plusZeroL :: Sing n -> (Zero kproxy :+ n) :~: n
   plusZeroL sn = idLProof (induction base step sn)
     where
-      base :: PlusZeroL (Zero nat)
+      base :: PlusZeroL (Zero kproxy)
       base = IdentityL (plusZeroR sZero)
 
       step :: Sing (n :: nat) -> PlusZeroL n -> PlusZeroL (S n)
@@ -143,7 +146,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   plusSuccL :: Sing n -> Sing m -> S n :+ m :~: S (n :+ m :: nat)
   plusSuccL sn0 sm0 = plusSuccLProof (induction base step sm0) sn0
     where
-      base :: PlusSuccL (Zero nat)
+      base :: PlusSuccL (Zero kproxy)
       base = PlusSuccL $ \sn ->
         start (sS sn %:+ sZero)
           === sS sn             `because` plusZeroR (sS sn)
@@ -156,10 +159,10 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
         === sS (sS (sn %:+ sm)) `because` succCong (ih sn)
         === sS (sn %:+ sS sm)   `because` succCong (sym $ plusSuccR sn sm)
 
-  plusZeroR :: Sing n -> (n :+ Zero nat) :~: n
+  plusZeroR :: Sing n -> (n :+ Zero kproxy) :~: n
   plusZeroR sn = idRProof (induction base step sn)
     where
-      base :: PlusZeroR (Zero nat)
+      base :: PlusZeroR (Zero kproxy)
       base = IdentityR (plusZeroL sZero)
 
       step :: Sing (n :: nat) -> PlusZeroR n -> PlusZeroR (S n)
@@ -171,7 +174,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   plusSuccR :: Sing n -> Sing m -> n :+ S m :~: S (n :+ m :: nat)
   plusSuccR sn0 = plusSuccRProof (induction base step sn0)
     where
-      base :: PlusSuccR (Zero nat)
+      base :: PlusSuccR (Zero kproxy)
       base = PlusSuccR $ \sk ->
         start (sZero %:+ sS sk)
           === sS sk             `because` plusZeroL (sS sk)
@@ -187,7 +190,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   plusComm  :: Sing n -> Sing m -> n :+ m :~: (m :: nat) :+ n
   plusComm sn0 = commProof (induction base step sn0)
     where
-      base :: PlusComm (Zero nat)
+      base :: PlusComm (Zero kproxy)
       base = Comm $ \sk ->
         start (sZero %:+ sk)
           === sk             `because` plusZeroL sk
@@ -204,7 +207,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
             -> (n :+ m) :+ l :~: n :+ (m :+ l)
   plusAssoc sn m l = assocProof (induction base step sn) m l
     where
-      base :: Assoc (:+$$) (Zero nat)
+      base :: Assoc (:+$$) (Zero kproxy)
       base = Assoc $ \ sk sl ->
         start ((sZero %:+ sk) %:+ sl)
           === sk %:+ sl
@@ -221,10 +224,10 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
         ===   sS sk %:+ (sl %:+ su)   `because` sym (plusSuccL sk (sl %:+ su))
 
 
-  multZeroL :: Sing n -> Zero nat :* n :~: Zero nat
+  multZeroL :: Sing n -> Zero kproxy :* n :~: Zero kproxy
   multZeroL sn0 = multZeroLProof $ induction base step sn0
     where
-      base :: MultZeroL (Zero nat)
+      base :: MultZeroL (Zero kproxy)
       base = MultZeroL (multZeroR sZero)
 
       step :: Sing (k :: nat) -> MultZeroL k ->  MultZeroL (S k)
@@ -237,7 +240,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   multSuccL :: Sing (n :: nat) -> Sing m -> S n :* m :~: n :* m :+ m
   multSuccL sn0 sm0 = multSuccLProof (induction base step sm0) sn0
     where
-      base :: MultSuccL (Zero nat)
+      base :: MultSuccL (Zero kproxy)
       base = MultSuccL $ \sk ->
         start (sS sk %:* sZero)
           === sZero                  `because` multZeroR (sS sk)
@@ -263,10 +266,10 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
               `because` succCong (plusCongL (sym $ multSuccR sk sm) sm)
           === sk %:* sS sm %:+ sS sm `because` sym (plusSuccR (sk %:* sS sm) sm)
 
-  multZeroR :: Sing n -> n :* Zero nat :~: Zero nat
+  multZeroR :: Sing n -> n :* Zero kproxy :~: Zero kproxy
   multZeroR sn0 = multZeroRProof $ induction base step sn0
     where
-      base :: MultZeroR (Zero nat)
+      base :: MultZeroR (Zero kproxy)
       base = MultZeroR (multZeroR sZero)
 
       step :: Sing (k :: nat) -> MultZeroR k ->  MultZeroR (S k)
@@ -279,7 +282,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   multSuccR :: Sing n -> Sing m -> n :* S m :~: n :* m :+ (n :: nat)
   multSuccR sn0 = multSuccRProof $ induction base step sn0
     where
-      base :: MultSuccR (Zero nat)
+      base :: MultSuccR (Zero kproxy)
       base = MultSuccR $ \sk ->
         start (sZero %:* sS sk)
           === sZero
@@ -314,7 +317,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   multComm  :: Sing (n :: nat) -> Sing m -> n :* m :~: m :* n
   multComm sn0 = commProof (induction base step sn0)
     where
-      base :: Comm (:*$$) (Zero nat)
+      base :: Comm (:*$$) (Zero kproxy)
       base = Comm $ \sk ->
         start (sZero %:* sk)
           === sZero           `because` multZeroL sk
@@ -327,7 +330,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
           === sk %:* sn %:+ sk `because` plusCongL (ih sk) sk
           === sk %:* sS sn     `because` sym (multSuccR sk sn)
 
-  multOneR :: Sing n -> n :* One nat :~: n
+  multOneR :: Sing n -> n :* One kproxy :~: n
   multOneR sn =
     start (sn %:* sOne)
       === sn %:* sS sZero      `because` multCongR sn (sym $ succOneCong)
@@ -335,7 +338,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
       === sZero %:+ sn         `because` plusCongL (multZeroR sn) sn
       === sn                   `because` plusZeroL sn
 
-  multOneL :: Sing n -> One nat :* n :~: n
+  multOneL :: Sing n -> One kproxy :* n :~: n
   multOneL sn =
     start (sOne %:* sn)
       === sn %:* sOne   `because` multComm sOne sn
@@ -345,7 +348,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
                 -> (n :+ m) :* l :~: n :* l :+ m :* l
   plusMultDistrib sn0 = plusMultDistribProof $ induction base step sn0
     where
-      base :: PlusMultDistrib (Zero nat)
+      base :: PlusMultDistrib (Zero kproxy)
       base = PlusMultDistrib $ \sk sl ->
         start ((sZero %:+ sk) %:* sl)
           === (sk %:* sl)
@@ -374,7 +377,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
       === m %:* n %:+ l %:* n `because` plusMultDistrib m l n
       === n %:* m %:+ n %:* l `because` plusCong (multComm m n) (multComm l n)
 
-  minusNilpotent :: Sing n -> n :- n :~: Zero nat
+  minusNilpotent :: Sing n -> n :- n :~: Zero kproxy
   minusNilpotent n =
     start (n %:- n)
       === (sZero %:+ n) %:- n  `because` minusCongL (sym $ plusZeroL n) n
@@ -385,7 +388,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
             -> (n :* m) :* l :~: n :* (m :* l)
   multAssoc sn0 = assocProof $ induction base step sn0
     where
-      base :: Assoc (:*$$) (Zero nat)
+      base :: Assoc (:*$$) (Zero kproxy)
       base = Assoc $ \ m l ->
         start (sZero %:* m %:* l)
           === sZero %:* l  `because` multCongL (multZeroL m) l
@@ -403,7 +406,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   plusEqCancelL :: Sing (n :: nat) -> Sing m -> Sing l -> n :+ m :~: n :+ l -> m :~: l
   plusEqCancelL = plusEqCancelLProof . induction base step
     where
-      base :: PlusEqCancelL (Zero nat)
+      base :: PlusEqCancelL (Zero kproxy)
       base = PlusEqCancelL $ \l m nlnm ->
         start l === sZero %:+ l `because` sym (plusZeroL l)
                 === sZero %:+ m `because` nlnm
@@ -426,10 +429,10 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
       === (m %:+ l) `because` nlml
       === (l %:+ m) `because` plusComm m l
 
-  succAndPlusOneL :: Sing n -> Succ n :~: One nat :+ n
+  succAndPlusOneL :: Sing n -> Succ n :~: One kproxy :+ n
   succAndPlusOneL = proofSuccPlusL . induction base step
     where
-      base :: SuccPlusL (Zero nat)
+      base :: SuccPlusL (Zero kproxy)
       base = SuccPlusL $
              start (sSucc sZero)
                === sOne           `because` succOneCong
@@ -441,7 +444,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
           === sSucc (sOne %:+ sn) `because` succCong ih
           === sOne %:+ sSucc sn   `because` sym (plusSuccR sOne sn)
 
-  succAndPlusOneR :: Sing n -> Succ n :~: n :+ One nat
+  succAndPlusOneR :: Sing n -> Succ n :~: n :+ One kproxy
   succAndPlusOneR n =
     start (sSucc n)
       === sOne %:+ n `because` succAndPlusOneL n
@@ -455,13 +458,13 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
       base = IsZero
       step sn _ = IsSucc sn
 
-  plusEqZeroL :: Sing n -> Sing m -> n :+ m :~: Zero nat -> n :~: Zero nat
+  plusEqZeroL :: Sing n -> Sing m -> n :+ m :~: Zero kproxy -> n :~: Zero kproxy
   plusEqZeroL n m Refl =
     case zeroOrSucc n of
       IsZero -> Refl
       IsSucc pn -> absurd $ succNonCyclic (pn %:+ m) (sym $ plusSuccL pn m)
 
-  plusEqZeroR :: Sing n -> Sing m -> n :+ m :~: Zero nat -> m :~: Zero nat
+  plusEqZeroR :: Sing n -> Sing m -> n :+ m :~: Zero kproxy -> m :~: Zero kproxy
   plusEqZeroR n m = plusEqZeroL m n . trans (plusComm m n)
 
   predUnique :: Sing (n :: nat) -> Sing m -> Succ n :~: m -> n :~: Pred m
@@ -484,7 +487,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
   multEqCancelR :: Sing (n :: nat) -> Sing m -> Sing l -> n :* Succ l :~: m :* Succ l -> n :~: m
   multEqCancelR = proofMultEqCancelR . induction base step
     where
-      base :: MultEqCancelR (Zero nat)
+      base :: MultEqCancelR (Zero kproxy)
       base = MultEqCancelR $ \m l zslmsl ->
         sym $ plusEqZeroR (m %:* l) m $ sym $ start sZero
           === sZero %:* l            `because` sym (multZeroL l)
@@ -509,7 +512,7 @@ class (SDecide nat, SNum nat, SEnum nat) => IsPeano nat where
                     === (m' %:* sSucc l %:+ sSucc l) `because` multSuccL m' (sSucc l)
         in succCong pf' `trans` sym sm'Em
 
-  succPred :: Sing n -> (n :~: Zero nat -> Void) -> Succ (Pred n) :~: n
+  succPred :: Sing n -> (n :~: Zero kproxy -> Void) -> Succ (Pred n) :~: n
   succPred n nonZero =
     case zeroOrSucc n of
       IsZero -> absurd $ nonZero Refl
@@ -531,10 +534,8 @@ refute [t| 'GT :~: 'LT |]
 refute [t| 'GT :~: 'EQ |]
 refute [t| 'True :~: 'False |]
 
-pattern Zero :: IsPeano nat => n ~ Zero nat => Sing n
 pattern Zero <- (zeroOrSucc -> IsZero) where
   Zero = sZero
 
-pattern Succ :: IsPeano nat => n ~ Succ n1 => Sing (n1 :: nat) -> Sing n
 pattern Succ n <- (zeroOrSucc -> IsSucc n) where
   Succ n = sSucc n

@@ -1,8 +1,8 @@
-{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, FlexibleContexts          #-}
-{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, KindSignatures        #-}
-{-# LANGUAGE MultiParamTypeClasses, PolyKinds, RankNTypes                  #-}
-{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell      #-}
-{-# LANGUAGE TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, KindSignatures   #-}
+{-# LANGUAGE MultiParamTypeClasses, PolyKinds, RankNTypes             #-}
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances        #-}
 module Data.Type.Natural.Definitions
        (module Data.Type.Natural.Definitions,
         module Data.Singletons.Prelude
@@ -159,12 +159,4 @@ singletons [d|
  n18 = eighteen
  n19 = nineteen
  n20 = twenty
- |]
-
--- | Boolean-valued type-level comparison function.
-singletons [d|
- (<<=) :: Nat -> Nat -> Bool
- Z   <<= _   = True
- S _ <<= Z   = False
- S n <<= S m = n <<= m
  |]
