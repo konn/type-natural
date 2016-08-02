@@ -2,9 +2,13 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.5.0.0
+version:             0.6.0.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
+                     .
+                     Version 0.6+ supports __GHC 8+ only__.
+                     .
+                     __Use 0.5.* with ~ GHC 7.10.3__.
 homepage:            https://github.com/konn/type-natural
 license:             BSD3
 license-file:        LICENSE
