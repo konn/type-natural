@@ -2,11 +2,12 @@
 {-# LANGUAGE ExplicitNamespaces, FlexibleContexts, FlexibleInstances       #-}
 {-# LANGUAGE GADTs, KindSignatures, LambdaCase, PatternSynonyms, PolyKinds #-}
 {-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving           #-}
-{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators, TypeInType      #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeInType, TypeOperators      #-}
+{-# LANGUAGE ViewPatterns                                                  #-}
 -- | Set-theoretic ordinals for general peano arithmetic models
 module Data.Type.Ordinal
        ( -- * Data-types
-         Ordinal (..), HasOrdinal,
+         Ordinal (..), pattern OZ, pattern OS, HasOrdinal,
          -- * Conversion from cardinals to ordinals.
          sNatToOrd', sNatToOrd, ordToInt, ordToSing,
          ordToSing', CastedOrdinal(..),
@@ -19,6 +20,7 @@ module Data.Type.Ordinal
          od
        ) where
 import           Control.Monad                (liftM)
+import           Data.Kind
 import           Data.List                    (genericDrop, genericTake)
 import           Data.Ord                     (comparing)
 import           Data.Singletons.Prelude
@@ -29,6 +31,7 @@ import qualified Data.Type.Natural            as PN
 import           Data.Type.Natural.Builtin    ()
 import           Data.Type.Natural.Class
 import           Data.Typeable                (Typeable)
+import           Data.Void                    (absurd)
 import           GHC.TypeLits                 (type (+))
 import qualified GHC.TypeLits                 as TL
 import           Language.Haskell.TH          hiding (Type)
@@ -36,10 +39,6 @@ import           Language.Haskell.TH.Quote
 import           Proof.Equational
 import           Proof.Propositional
 import           Unsafe.Coerce
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
-import Data.Kind
-#endif
-
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -49,11 +48,26 @@ import Data.Kind
 --
 --   Since 0.5.0.0
 data Ordinal (n :: nat) where
-  OZ  :: Sing n -> Ordinal (Succ n)
-  OS  :: Ordinal n -> Ordinal (Succ n)
-  OLt :: (n :< m) ~ 'True => Sing n -> Ordinal m
+  OLt :: (IsPeano nat, (n :< m) ~ 'True) => Sing (n :: nat) -> Ordinal m
 
+fromOLt :: forall nat n m. (PeanoOrder nat, (Succ n :< Succ m) ~ 'True, SingI m)
+        => Sing (n :: nat) -> Ordinal m
+fromOLt  n =
+  case coerce (sym $ succLneqSucc n (sing :: Sing m)) Witness of
+    Witness -> OLt n
 
+-- | Pattern synonym representing the 0-th ordinal.
+pattern OZ :: forall nat (n :: nat). IsPeano nat
+           => (Zero nat :< n) ~ 'True => Ordinal n
+pattern OZ <- OLt Zero where
+  OZ = OLt sZero
+
+-- | Pattern synonym @'OS' n@ represents (n+1)-th ordinal.
+pattern OS :: forall nat (t :: nat). (PeanoOrder nat, SingI t)
+            => (IsPeano nat)
+            => Ordinal t -> Ordinal (Succ t)
+pattern OS n <- OLt (Succ (fromOLt -> n)) where
+  OS o = succOrd o
 
 -- | Since 0.2.3.0
 deriving instance Typeable Ordinal
@@ -63,11 +77,9 @@ deriving instance Typeable Ordinal
 --  Since 0.5.0.0
 class (PeanoOrder nat, Monomorphicable (Sing :: nat -> *),
        Integral (MonomorphicRep (Sing :: nat -> *)),
-       SingKind nat,
        Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal nat
 instance (PeanoOrder nat, Monomorphicable (Sing :: nat -> *),
        Integral (MonomorphicRep (Sing :: nat -> *)),
-       SingKind nat,
        Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal nat
 
 instance (HasOrdinal nat, SingI (n :: nat))
@@ -76,10 +88,10 @@ instance (HasOrdinal nat, SingI (n :: nat))
   {-# SPECIALISE instance SingI n => Num (Ordinal (n :: TL.Nat))  #-}
   _ + _ = error "Finite ordinal is not closed under addition."
   _ - _ = error "Ordinal subtraction is not defined"
-  negate (OZ pxy) = OZ pxy
+  negate OZ = OZ
   negate _  = error "There are no negative oridnals!"
-  OZ pxy * _ = OZ pxy
-  _ * OZ pxy = OZ pxy
+  OZ * _ = OZ
+  _ * OZ = OZ
   _ * _  = error "Finite ordinal is not closed under multiplication"
   abs    = id
   signum = error "What does Ordinal sign mean?"
@@ -121,23 +133,18 @@ enumFromOrd :: forall (n :: nat).
             => Ordinal n -> [Ordinal n]
 enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
 
-enumOrdinal :: (SingKind nat, PeanoOrder nat, SingI n) => Sing (n :: nat) -> [Ordinal n]
+enumOrdinal :: (PeanoOrder nat, SingI n) => Sing (n :: nat) -> [Ordinal n]
 enumOrdinal (Succ n) = withSingI n $
   case lneqZero n of
     Witness ->
       OLt sZero : map succOrd (enumOrdinal n)
 enumOrdinal _ = []
 
-succOrd :: forall (n :: nat). (SingKind nat, PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
+succOrd :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
 succOrd (OLt n) =
   case succLneqSucc n (sing :: Sing n) of
     Refl -> OLt (sSucc n)
-succOrd (OZ n) =
-  case (succLneqSucc sZero (sSucc n), lneqZero n) of
-    (Refl, Witness) -> OLt $ coerce (sym succOneCong) sOne
-succOrd (OS o) =
-  case (succLneqSucc sZero (sSucc (sing :: Sing n)), lneqZero (sing :: Sing n)) of
-    (Refl, Witness) -> OS (OS o)
+{-# INLINE succOrd #-}
 
 instance SingI n => Bounded (Ordinal ('PN.S n)) where
   minBound = OLt PN.SZ
@@ -180,6 +187,7 @@ unsafeFromInt' _ n =
 --   Since 0.5.0.0
 sNatToOrd' :: (PeanoOrder nat, (m :< n) ~ 'True) => Sing (n :: nat) -> Sing m -> Ordinal n
 sNatToOrd' _ m = OLt m
+{-# INLINE sNatToOrd' #-}
 
 -- | 'sNatToOrd'' with @n@ inferred.
 sNatToOrd :: (PeanoOrder nat, SingI (n :: nat), (m :< n) ~ 'True) => Sing m -> Ordinal n
@@ -190,41 +198,20 @@ data CastedOrdinal n where
 
 -- | Convert @Ordinal n@ into @Sing m@ with the proof of @'S m :<= n@.
 ordToSing' :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> CastedOrdinal n
-ordToSing' (OZ sk) =
-  case lneqZero sk of
-    (Witness) -> CastedOrdinal sZero
-ordToSing' (OS (on :: Ordinal k)) =
-  withSingI (sing :: Sing n) $
-  withPredSingI (Proxy :: Proxy k) (sing :: Sing n) $
-    case ordToSing' on of
-      CastedOrdinal m ->
-        case succLneqSucc m (sing :: Sing k) of
-          Refl -> CastedOrdinal (Succ m)
 ordToSing' (OLt s) = CastedOrdinal s
-
-withPredSingI :: forall proxy (n :: nat) r. PeanoOrder nat
-              => proxy (n :: nat) -> Sing (Succ n) -> (SingI n => r) -> r
-withPredSingI pxy sn r = withSingI (sPred' pxy sn) r
-
+{-# INLINE ordToSing' #-}
 
 -- | Convert @Ordinal n@ into monomorphic @Sing@
 --
 -- Since 0.5.0.0
 ordToSing :: (PeanoOrder nat) => Ordinal (n :: nat) -> SomeSing nat
 ordToSing (OLt n) = SomeSing n
-ordToSing OZ{} = SomeSing sZero
-ordToSing (OS n) =
-  case ordToSing n of
-    SomeSing sn ->
-      case singInstance sn of
-        SingInstance -> SomeSing (Succ sn)
+{-# INLINE ordToSing #-}
 
 -- | Convert ordinal into @Int@.
 ordToInt :: (HasOrdinal nat, int ~ MonomorphicRep (Sing :: nat -> *))
          => Ordinal (n :: nat)
          -> int
-ordToInt OZ{} = 0
-ordToInt (OS n) = 1 + ordToInt n
 ordToInt (OLt n) = demote $ Monomorphic n
 {-# SPECIALISE ordToInt :: Ordinal (n :: PN.Nat) -> Integer #-}
 {-# SPECIALISE ordToInt :: Ordinal (n :: TL.Nat) -> Integer #-}
@@ -233,14 +220,6 @@ ordToInt (OLt n) = demote $ Monomorphic n
 inclusion' :: (n :< m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
 inclusion' _ = unsafeCoerce
 {-# INLINE inclusion' #-}
-{-
--- The "proof" of the correctness of the above
-inclusion' :: (n :<= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
-inclusion' (SS SZ) OZ = OZ
-inclusion' (SS (SS _)) OZ = OZ
-inclusion' (SS (SS n)) (OS m) = OS $ inclusion' (SS n) m
-inclusion' _ _ = bugInGHC
--}
 
 -- | Inclusion function for ordinals with codomain inferred.
 inclusion :: ((n :<= m) ~ 'True) => Ordinal n -> Ordinal m
@@ -249,38 +228,18 @@ inclusion on = unsafeCoerce on
 
 
 -- | Ordinal addition.
-(@+) :: forall n m. (PeanoOrder nat, SingI (n :: nat), SingI m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
-OLt s @+ n =
-  case ordToSing' n of
-    CastedOrdinal n' ->
-      case plusStrictMonotone s (sing :: Sing n) n' (sing :: Sing m) Witness Witness of
-        Witness -> OLt $ s %:+ n'
-OZ {} @+ n =
-  let sn = sing :: Sing n
-      sm = sing :: Sing m
-  in case plusLeqR sn sm of
-      Witness -> inclusion n
-OS (n :: Ordinal k) @+ m =
-  withPredSingI n (sing :: Sing n) $
-  case sing :: Sing n of
-    Zero -> absurdOrd (OS n)
-    Succ sn ->
-      case singInstance sn of
-        SingInstance ->
-          let sm = sing :: Sing m
-              sn' = sing :: Sing n
-              sk  = sing :: Sing k
-              pf = start (sSucc (sk %:+ sm))
-                     === sSucc sk %:+ sm     `because` sym (plusSuccL sk sm)
-                     =~= sn' %:+ sm
-          in coerce pf $ OS $ n @+ m
-    _ -> error "inaccessible pattern"
+(@+) :: forall n m. (PeanoOrder nat, SingI (n :: nat), SingI m)
+     => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
+OLt k @+ OLt l =
+  let (n, m) = (n :: Sing n, m :: Sing m)
+  in case plusStrictMonotone k n l m Witness Witness of
+    Witness -> OLt $ k %:+ l
 
 -- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 --
 -- Since 0.2.3.0
 absurdOrd :: PeanoOrder nat => Ordinal (Zero nat) -> a
-absurdOrd _cs = undefined -- case cs of {}
+absurdOrd (OLt n) = absurd $ lneqZeroAbsurd n Witness
 
 -- | 'absurdOrd' for the value in 'Functor'.
 --
