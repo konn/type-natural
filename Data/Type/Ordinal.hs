@@ -2,7 +2,7 @@
 {-# LANGUAGE ExplicitNamespaces, FlexibleContexts, FlexibleInstances       #-}
 {-# LANGUAGE GADTs, KindSignatures, LambdaCase, PatternSynonyms, PolyKinds #-}
 {-# LANGUAGE RankNTypes, ScopedTypeVariables, StandaloneDeriving           #-}
-{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators                  #-}
+{-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators, TypeInType      #-}
 -- | Set-theoretic ordinals for general peano arithmetic models
 module Data.Type.Ordinal
        ( -- * Data-types
@@ -53,22 +53,24 @@ data Ordinal (n :: nat) where
   OS  :: Ordinal n -> Ordinal (Succ n)
   OLt :: (n :< m) ~ 'True => Sing n -> Ordinal m
 
+
+
 -- | Since 0.2.3.0
 deriving instance Typeable Ordinal
 
 -- |  Class synonym for Peano numerals with ordinals.
 --
 --  Since 0.5.0.0
-class (PeanoOrder kproxy, Monomorphicable (Sing :: nat -> *),
+class (PeanoOrder nat, Monomorphicable (Sing :: nat -> *),
        Integral (MonomorphicRep (Sing :: nat -> *)),
-       SingKind kproxy, kproxy ~ 'KProxy,
-       Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal (kproxy :: KProxy nat)
-instance (PeanoOrder ('KProxy :: KProxy nat), Monomorphicable (Sing :: nat -> *),
+       SingKind nat,
+       Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal nat
+instance (PeanoOrder nat, Monomorphicable (Sing :: nat -> *),
        Integral (MonomorphicRep (Sing :: nat -> *)),
-       SingKind ('KProxy :: KProxy nat),
-       Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal ('KProxy :: KProxy nat)
+       SingKind nat,
+       Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal nat
 
-instance (HasOrdinal ('KProxy :: KProxy nat), SingI (n :: nat))
+instance (HasOrdinal nat, SingI (n :: nat))
       => Num (Ordinal n) where
   {-# SPECIALISE instance SingI n => Num (Ordinal (n :: PN.Nat))  #-}
   {-# SPECIALISE instance SingI n => Num (Ordinal (n :: TL.Nat))  #-}
@@ -81,33 +83,33 @@ instance (HasOrdinal ('KProxy :: KProxy nat), SingI (n :: nat))
   _ * _  = error "Finite ordinal is not closed under multiplication"
   abs    = id
   signum = error "What does Ordinal sign mean?"
-  fromInteger = unsafeFromInt' (Proxy :: Proxy ('KProxy :: KProxy nat)) . fromInteger
+  fromInteger = unsafeFromInt' (Proxy :: Proxy nat) . fromInteger
 
 -- deriving instance Read (Ordinal n) => Read (Ordinal (Succ n))
-instance (SingI n, HasOrdinal ('KProxy :: KProxy nat))
+instance (SingI n, HasOrdinal nat)
         => Show (Ordinal (n :: nat)) where
   {-# SPECIALISE instance SingI n => Show (Ordinal (n :: PN.Nat))  #-}
   {-# SPECIALISE instance SingI n => Show (Ordinal (n :: TL.Nat))  #-}
   showsPrec d o = showChar '#' . showParen True (showsPrec d (ordToInt o) . showString " / " . showsPrec d (demote $ Monomorphic (sing :: Sing n)))
 
-instance (HasOrdinal ('KProxy :: KProxy nat))
+instance (HasOrdinal nat)
          => Eq (Ordinal (n :: nat)) where
   {-# SPECIALISE instance Eq (Ordinal (n :: PN.Nat))  #-}
   {-# SPECIALISE instance Eq (Ordinal (n :: TL.Nat))  #-}
   o == o' = ordToInt o == ordToInt o'
 
-instance (HasOrdinal ('KProxy :: KProxy nat)) => Ord (Ordinal (n :: nat)) where
+instance (HasOrdinal nat) => Ord (Ordinal (n :: nat)) where
   compare = comparing ordToInt
 
-instance (HasOrdinal ('KProxy :: KProxy nat), SingI n)
+instance (HasOrdinal nat, SingI n)
       => Enum (Ordinal (n :: nat)) where
   fromEnum = fromIntegral . ordToInt
-  toEnum   = unsafeFromInt' (Proxy :: Proxy ('KProxy :: KProxy nat)) . fromIntegral
+  toEnum   = unsafeFromInt' (Proxy :: Proxy nat) . fromIntegral
   enumFrom = enumFromOrd
   enumFromTo = enumFromToOrd
 
 enumFromToOrd :: forall (n :: nat).
-                 (HasOrdinal ('KProxy :: KProxy nat), SingI n)
+                 (HasOrdinal nat, SingI n)
               => Ordinal n -> Ordinal n -> [Ordinal n]
 enumFromToOrd ok ol =
   let k = ordToInt ok
@@ -115,18 +117,18 @@ enumFromToOrd ok ol =
   in genericTake (l - k + 1) $ enumFromOrd ok
 
 enumFromOrd :: forall (n :: nat).
-               (HasOrdinal ('KProxy :: KProxy nat), SingI n)
+               (HasOrdinal nat, SingI n)
             => Ordinal n -> [Ordinal n]
 enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
 
-enumOrdinal :: (SingKind ('KProxy :: KProxy nat), PeanoOrder ('KProxy :: KProxy nat), SingI n) => Sing (n :: nat) -> [Ordinal n]
+enumOrdinal :: (SingKind nat, PeanoOrder nat, SingI n) => Sing (n :: nat) -> [Ordinal n]
 enumOrdinal (Succ n) = withSingI n $
   case lneqZero n of
     Witness ->
       OLt sZero : map succOrd (enumOrdinal n)
 enumOrdinal _ = []
 
-succOrd :: forall (n :: nat). (SingKind ('KProxy :: KProxy nat), PeanoOrder ('KProxy :: KProxy nat), SingI n) => Ordinal n -> Ordinal (Succ n)
+succOrd :: forall (n :: nat). (SingKind nat, PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
 succOrd (OLt n) =
   case succLneqSucc n (sing :: Sing n) of
     Refl -> OLt (sSucc n)
@@ -155,7 +157,7 @@ instance (SingI m, SingI n, n ~ (m + 1)) => Bounded (Ordinal n) where
   {-# INLINE maxBound #-}
 
 
-unsafeFromInt :: forall (n :: nat). (HasOrdinal ('KProxy :: KProxy nat), SingI (n :: nat))
+unsafeFromInt :: forall (n :: nat). (HasOrdinal nat, SingI (n :: nat))
               => MonomorphicRep (Sing :: nat -> *) -> Ordinal n
 unsafeFromInt n =
     case promote (n :: MonomorphicRep (Sing :: nat -> *)) of
@@ -164,8 +166,8 @@ unsafeFromInt n =
              STrue -> sNatToOrd' (sing :: Sing n) sn
              SFalse -> error "Bound over!"
 
-unsafeFromInt' :: forall proxy (n :: nat). (HasOrdinal ('KProxy :: KProxy nat), SingI n)
-              => proxy ('KProxy :: KProxy nat) -> MonomorphicRep (Sing :: nat -> *) -> Ordinal n
+unsafeFromInt' :: forall proxy (n :: nat). (HasOrdinal nat, SingI n)
+              => proxy nat -> MonomorphicRep (Sing :: nat -> *) -> Ordinal n
 unsafeFromInt' _ n =
     case promote (n :: MonomorphicRep (Sing :: nat -> *)) of
       Monomorphic sn ->
@@ -176,18 +178,18 @@ unsafeFromInt' _ n =
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
 --
 --   Since 0.5.0.0
-sNatToOrd' :: (PeanoOrder ('KProxy :: KProxy nat), (m :< n) ~ 'True) => Sing (n :: nat) -> Sing m -> Ordinal n
+sNatToOrd' :: (PeanoOrder nat, (m :< n) ~ 'True) => Sing (n :: nat) -> Sing m -> Ordinal n
 sNatToOrd' _ m = OLt m
 
 -- | 'sNatToOrd'' with @n@ inferred.
-sNatToOrd :: (PeanoOrder ('KProxy :: KProxy nat), SingI (n :: nat), (m :< n) ~ 'True) => Sing m -> Ordinal n
+sNatToOrd :: (PeanoOrder nat, SingI (n :: nat), (m :< n) ~ 'True) => Sing m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
 
 data CastedOrdinal n where
   CastedOrdinal :: (m :< n) ~ 'True => Sing m -> CastedOrdinal n
 
 -- | Convert @Ordinal n@ into @Sing m@ with the proof of @'S m :<= n@.
-ordToSing' :: forall (n :: nat). (PeanoOrder ('KProxy :: KProxy nat), SingI n) => Ordinal n -> CastedOrdinal n
+ordToSing' :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> CastedOrdinal n
 ordToSing' (OZ sk) =
   case lneqZero sk of
     (Witness) -> CastedOrdinal sZero
@@ -200,7 +202,7 @@ ordToSing' (OS (on :: Ordinal k)) =
           Refl -> CastedOrdinal (Succ m)
 ordToSing' (OLt s) = CastedOrdinal s
 
-withPredSingI :: forall proxy (n :: nat) r. PeanoOrder ('KProxy :: KProxy nat)
+withPredSingI :: forall proxy (n :: nat) r. PeanoOrder nat
               => proxy (n :: nat) -> Sing (Succ n) -> (SingI n => r) -> r
 withPredSingI pxy sn r = withSingI (sPred' pxy sn) r
 
@@ -208,7 +210,7 @@ withPredSingI pxy sn r = withSingI (sPred' pxy sn) r
 -- | Convert @Ordinal n@ into monomorphic @Sing@
 --
 -- Since 0.5.0.0
-ordToSing :: (PeanoOrder ('KProxy :: KProxy nat)) => Ordinal (n :: nat) -> SomeSing ('KProxy :: KProxy nat)
+ordToSing :: (PeanoOrder nat) => Ordinal (n :: nat) -> SomeSing nat
 ordToSing (OLt n) = SomeSing n
 ordToSing OZ{} = SomeSing sZero
 ordToSing (OS n) =
@@ -218,7 +220,7 @@ ordToSing (OS n) =
         SingInstance -> SomeSing (Succ sn)
 
 -- | Convert ordinal into @Int@.
-ordToInt :: (HasOrdinal ('KProxy :: KProxy nat), int ~ MonomorphicRep (Sing :: nat -> *))
+ordToInt :: (HasOrdinal nat, int ~ MonomorphicRep (Sing :: nat -> *))
          => Ordinal (n :: nat)
          -> int
 ordToInt OZ{} = 0
@@ -247,7 +249,7 @@ inclusion on = unsafeCoerce on
 
 
 -- | Ordinal addition.
-(@+) :: forall n m. (PeanoOrder ('KProxy :: KProxy nat), SingI (n :: nat), SingI m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
+(@+) :: forall n m. (PeanoOrder nat, SingI (n :: nat), SingI m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
 OLt s @+ n =
   case ordToSing' n of
     CastedOrdinal n' ->
@@ -277,13 +279,13 @@ OS (n :: Ordinal k) @+ m =
 -- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 --
 -- Since 0.2.3.0
-absurdOrd :: PeanoOrder ('KProxy :: KProxy nat) => Ordinal (Zero ('KProxy :: KProxy nat)) -> a
+absurdOrd :: PeanoOrder nat => Ordinal (Zero nat) -> a
 absurdOrd _cs = undefined -- case cs of {}
 
 -- | 'absurdOrd' for the value in 'Functor'.
 --
 --   Since 0.2.3.0
-vacuousOrd :: (PeanoOrder ('KProxy :: KProxy nat), Functor f) => f (Ordinal (Zero ('KProxy :: KProxy nat))) -> f a
+vacuousOrd :: (PeanoOrder nat, Functor f) => f (Ordinal (Zero nat)) -> f a
 vacuousOrd = fmap absurdOrd
 
 -- | 'absurdOrd' for the value in 'Monad'.
@@ -291,7 +293,7 @@ vacuousOrd = fmap absurdOrd
 --   become the superclass of 'Monad'.
 --
 --   Since 0.2.3.0
-vacuousOrdM :: (PeanoOrder ('KProxy :: KProxy nat), Monad m) => m (Ordinal (Zero ('KProxy :: KProxy nat))) -> m a
+vacuousOrdM :: (PeanoOrder nat, Monad m) => m (Ordinal (Zero nat)) -> m a
 vacuousOrdM = liftM absurdOrd
 
 -- | Quasiquoter for ordinals

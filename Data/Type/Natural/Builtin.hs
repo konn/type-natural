@@ -27,13 +27,11 @@ module Data.Type.Natural.Builtin
        )
        where
 import Data.Type.Natural.Class
-import Data.Type.Natural.Compat
 
 import           Data.Singletons.Decide       (SDecide (..))
 import           Data.Singletons.Decide       (Decision (..))
-import           Data.Singletons.Prelude      (PNum (..), SNum (..), Sing (..))
+import           Data.Singletons.Prelude      (SNum (..), PNum(..), Sing (..))
 import           Data.Singletons.Prelude      (SingI (..))
-import           Data.Singletons.Prelude      (KProxy (..))
 import           Data.Singletons.Prelude      (SingKind (..), SomeSing (..))
 import           Data.Singletons.Prelude.Enum (PEnum (..), SEnum (..))
 import           Data.Singletons.Prelude.Ord  (POrd (..), SOrd (..))
@@ -53,9 +51,6 @@ import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
 import           Proof.Propositional          (Empty (..), IsTrue (..))
 import           Unsafe.Coerce                (unsafeCoerce)
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
-import Data.Kind
-#endif
 
 -- | Type synonym for @'PN.Nat'@ to avoid confusion with built-in @'TL.Nat'@.
 type Peano = PN.Nat
@@ -142,7 +137,7 @@ fromPeanoInjective frEq =
 fromPeanoSuccCong :: Sing n -> FromPeano ('S n) :~: Succ (FromPeano n)
 fromPeanoSuccCong _sn = Refl
 
-fromPeanoPlusCong :: Sing n -> Sing m -> FromPeano (n PN.:+ m) :~: FromPeano n :+ FromPeano m
+fromPeanoPlusCong :: Sing n -> Sing m -> FromPeano (n :+ m) :~: FromPeano n :+ FromPeano m
 fromPeanoPlusCong SZ _ = Refl
 fromPeanoPlusCong (SS sn) sm =
   start (sFromPeano (SS sn %:+ sm))
@@ -152,7 +147,7 @@ fromPeanoPlusCong (SS sn) sm =
     =~= sSucc (sFromPeano sn) %:+ sFromPeano sm
     =~= sFromPeano (SS sn)    %:+ sFromPeano sm
 
-toPeanoPlusCong :: Sing n -> Sing m -> ToPeano (n :+ m) :~: ToPeano n :+ ToPeano m
+toPeanoPlusCong :: Sing n -> Sing m -> ToPeano (n + m) :~: ToPeano n :+ ToPeano m
 toPeanoPlusCong sn sm =
   case viewNat sn of
     IsZero -> Refl
@@ -287,7 +282,7 @@ inductionNat base step snat =
     IsSucc sl -> step (inductionNat base step sl)
 
 
-instance IsPeano ('KProxy :: KProxy TL.Nat) where
+instance IsPeano TL.Nat where
   predSucc _ = Refl
   plusMinus _ _ = Refl
   succInj Refl = Refl
@@ -344,7 +339,7 @@ type family MyLeqHelper n m o where
   MyLeqHelper n m 'EQ = 'True
   MyLeqHelper n m 'GT = 'False
 
-instance PeanoOrder ('KProxy :: KProxy TL.Nat) where
+instance PeanoOrder TL.Nat where
   eqlCmpEQ _ _ Refl = Refl
   ltToLeq _ _ Refl = Witness
   succLeqToLT m n Witness =

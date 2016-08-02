@@ -25,8 +25,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           (:-$), (:-$$), (:-$$$),
                           (%:-), (%-),
                           -- ** Type-level predicate & judgements
-                          Leq(..), (:<=),
-                          LeqInstance,
+                          Leq(..), (:<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
                           propToBoolLeq,
                           -- * Conversion functions
@@ -35,10 +34,10 @@ module Data.Type.Natural (-- * Re-exported modules.
                           nat, snat,
                           -- * Properties of natural numbers
                           IsPeano(..),
-                          plusCongR, plusCongL, snEqZAbsurd,
-                          plusInjectiveL, plusInjectiveR,
-                          multCongL, multCongR,
-                          plusMinusEqL, leqRhs, leqLhs,
+                          plusCong, plusCongR, plusCongL,
+                          snEqZAbsurd, plusInjectiveL, plusInjectiveR,
+                          multCongL, multCongR, multCong,
+                          plusMinusEqL,
                           plusNeutralR, plusNeutralL,
                           -- * Properties of ordering 'Leq'
                           PeanoOrder(..),
@@ -65,11 +64,6 @@ module Data.Type.Natural (-- * Re-exported modules.
 import Data.Type.Natural.Class hiding (One, Zero, sOne, sZero)
 import Data.Type.Natural.Core
 import Data.Type.Natural.Definitions hiding ((:<=))
-
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
-import Data.Kind
-#endif
-
 import Data.Singletons
 import Data.Singletons.Prelude.Ord
 import Data.Singletons.Decide
@@ -114,7 +108,7 @@ instance Monomorphicable (Sing :: Nat -> *) where
 --------------------------------------------------
 
 -- | Since 0.5.0.0
-instance IsPeano ('KProxy :: KProxy Nat) where
+instance IsPeano Nat where
   induction base _step SZ = base
   induction base step (SS n) = step n (induction base step n)
 
@@ -153,18 +147,6 @@ plusInjectiveR n m l eq = plusInjectiveL l n m $
     === n %:+ l   `because` plusComm l n
     === m %:+ l   `because` eq
     === l %:+ m   `because` plusComm m l
-
--- eqSuccMinus :: ((m :<<= n) ~ 'True)
---             => SNat n -> SNat m -> ('S n :-: m) :~: ('S (n :-: m))
--- eqSuccMinus _      SZ     = Refl
--- eqSuccMinus (SS n) (SS m) =
---   start (SS (SS n) %:- SS m)
---     =~= SS n %:- m
---     === SS (n %:- m)       `because` eqSuccMinus n m
---     =~= SS (SS n %:- SS m)
--- #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
--- eqSuccMinus _ _ = bugInGHC
--- #endif
 
 reflToSEqual :: SNat n -> SNat m -> n :~: m -> IsTrue (n :== m)
 reflToSEqual SZ     _      Refl = Witness
@@ -217,7 +199,7 @@ nonSLeqToLT n m =
             STrue  -> Refl
             SFalse -> case sleqFlip n m $ snequalToNoRefl n m Witness of {}
 
-instance PeanoOrder ('KProxy :: KProxy Nat) where
+instance PeanoOrder Nat where
   leqZero _ = Witness
   leqSucc _      _      Witness = Witness
   viewLeq SZ     n      Witness = LeqZero n
@@ -228,9 +210,6 @@ instance PeanoOrder ('KProxy :: KProxy Nat) where
     case n %:== m of
       SFalse -> case n %:<= m of
         STrue -> Witness
-        _ -> bugInGHC
-      _ -> bugInGHC
-
   eqlCmpEQ n m Refl =
     case n %:== m of
       STrue  -> Refl
