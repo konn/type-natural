@@ -654,3 +654,6 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
           === sSucc (m %:+ k %:- m)  `because` succCong (minusCongL (plusComm k m) m)
           =~= sSucc (n %:- m)
 
+  lneqZeroAbsurd :: Sing n -> IsTrue (n :< Zero nat) -> Void
+  lneqZeroAbsurd n leq =
+    succLeqZeroAbsurd n (coerce (lneqSuccLeq n sZero) leq)
