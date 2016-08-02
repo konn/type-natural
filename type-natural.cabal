@@ -5,6 +5,10 @@ name:                type-natural
 version:             0.5.0.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
+                     .
+                     This version 0.5.0.0 supports __GHC 7.10.* only__.
+                     .
+                     __Use >= 0.6.0.0 with GHC 8.0.0+__.
 homepage:            https://github.com/konn/type-natural
 license:             BSD3
 license-file:        LICENSE
@@ -14,7 +18,7 @@ copyright:           (C) Hiromi ISHII 2013-2014
 category:            Math
 build-type:          Simple
 cabal-version:       >= 1.10
-tested-with:         GHC == 7.10.3, GHC == 8.0.1
+tested-with:         GHC == 7.10.3
 
 source-repository head
   Type: git
