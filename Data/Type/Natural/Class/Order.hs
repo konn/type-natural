@@ -606,6 +606,18 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
                     -> m :~: Succ (Pred m)
   lneqRightPredSucc n m nLNEQm = ltRightPredSucc n m $ lneqToLT n m nLNEQm
 
+  lneqSuccStepL :: Sing (n :: nat) -> Sing m -> IsTrue (Succ n :< m) -> IsTrue (n :< m)
+  lneqSuccStepL n m snLNEQm =
+    coerce (sym $ lneqSuccLeq n m) $
+    leqSuccStepL (sSucc n) m $
+    coerce (lneqSuccLeq (sSucc n) m) snLNEQm
+
+  lneqSuccStepR :: Sing (n :: nat) -> Sing m -> IsTrue (n :< m) -> IsTrue (n :< Succ m)
+  lneqSuccStepR n m nLNEQm =
+    coerce (sym $ lneqSuccLeq n (sSucc m)) $
+    leqSuccStepR (sSucc n) m $
+    coerce (lneqSuccLeq n m) nLNEQm
+
   plusStrictMonotone :: Sing (n :: nat) -> Sing m -> Sing l -> Sing k
                      -> IsTrue (n :< m) -> IsTrue (l :< k)
                      -> IsTrue (n :+ l :< m :+ k)
