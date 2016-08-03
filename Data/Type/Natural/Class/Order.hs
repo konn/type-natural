@@ -5,7 +5,8 @@
 module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
         FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
-        sLeqCongL, sLeqCongR, sLeqCong
+        sLeqCongL, sLeqCongR, sLeqCong,
+        (:-.), (%:-.), minPlusTruncMinus
        ) where
 import Data.Type.Natural.Class.Arithmetic
 
@@ -657,3 +658,43 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   lneqZeroAbsurd :: Sing n -> IsTrue (n :< Zero nat) -> Void
   lneqZeroAbsurd n leq =
     succLeqZeroAbsurd n (coerce (lneqSuccLeq n sZero) leq)
+
+  minusPlus :: forall (n :: nat) m .PeanoOrder nat => Sing (n :: nat) -> Sing m -> IsTrue (m :<= n)
+            -> n :- m :+ m :~: n
+  minusPlus n m mLEQn =
+    case leqWitness m n mLEQn of
+      DiffNat _ k ->
+        start (n %:- m %:+ m)
+          =~= m %:+ k %:- m %:+ m
+          === k %:+ m %:- m %:+ m  `because` plusCongL (minusCongL (plusComm m k) m) m
+          === k %:+ m              `because` plusCongL (plusMinus k m) m
+          === m %:+ k              `because` plusComm  k m
+          =~= n
+
+-- | Natural subtraction, truncated to zero if m > n.
+type n :-. m = Subt n m (m :<= n)
+type family Subt (n :: nat) (m :: nat) (b :: Bool) :: nat where
+  Subt n          m 'True  = n :- m
+  Subt (n :: nat) m 'False = Zero nat
+
+(%:-.) :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> Sing (n :-. m)
+n %:-. m =
+  case m %:<= n of
+    STrue -> n %:- m
+    SFalse -> sZero
+
+minPlusTruncMinus :: (PeanoOrder nat) => Sing (n :: nat) -> Sing (m :: nat)
+                  -> Min n m :+ (n :-. m) :~: n
+minPlusTruncMinus n m =
+  case m %:<= n of
+    STrue ->
+      start (sMin n m %:+ (n %:-. m))
+        === m %:+ (n %:-. m) `because` plusCongL (geqToMin n m Witness) (n %:-. m)
+        =~= m %:+ (n %:- m)
+        === (n %:- m) %:+ m  `because` plusComm m (n %:- m)
+        === n                `because` minusPlus n m Witness
+    SFalse ->
+      start (sMin n m %:+ (n %:-. m))
+        =~= sMin n m %:+ sZero
+        === sMin n m  `because` plusZeroR (sMin n m)
+        === n         `because` leqToMin n m (notLeqToLeq m n)

@@ -8,7 +8,7 @@ module Data.Type.Natural.Class.Arithmetic
         plusCong, plusCongR, plusCongL, succCong,
         multCong, multCongL, multCongR,
         minusCong, minusCongL, minusCongR,
-        IsPeano(..), pattern Zero, pattern Succ
+        IsPeano(..), pattern Zero, pattern Succ,
        ) where
 import Data.Singletons.Decide
 import Data.Singletons.Prelude
@@ -383,7 +383,6 @@ class (SDecide nat, SNum nat, SEnum nat, nat ~ nat)
       === (sZero %:+ n) %:- n  `because` minusCongL (sym $ plusZeroL n) n
       === sZero                `because` plusMinus sZero n
 
-
   multAssoc :: Sing (n :: nat) -> Sing m -> Sing l
             -> (n :* m) :* l :~: n :* (m :* l)
   multAssoc sn0 = assocProof $ induction base step sn0
@@ -484,6 +483,13 @@ class (SDecide nat, SNum nat, SEnum nat, nat ~ nat)
   multEqSuccElimR n m l nmEsl =
     multEqSuccElimL m n l (multComm m n `trans` nmEsl)
 
+  minusZero :: Sing n -> n :- Zero nat :~: n
+  minusZero n =
+    start (n %:- sZero)
+      === (n %:+ sZero) %:- sZero
+             `because` minusCongL (sym $ plusZeroR n) sZero
+      === n  `because` plusMinus n sZero
+
   multEqCancelR :: Sing (n :: nat) -> Sing m -> Sing l -> n :* Succ l :~: m :* Succ l -> n :~: m
   multEqCancelR = proofMultEqCancelR . induction base step
     where
@@ -541,3 +547,4 @@ pattern Zero <- (zeroOrSucc -> IsZero) where
 pattern Succ :: forall nat (n :: nat). IsPeano nat => forall (n1 :: nat). n ~ Succ n1 => Sing n1 -> Sing n
 pattern Succ n <- (zeroOrSucc -> IsSucc n) where
   Succ n = sSucc n
+
