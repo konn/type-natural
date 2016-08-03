@@ -131,6 +131,12 @@ class (SDecide nat, SNum nat, SEnum nat, nat ~ nat)
   induction     :: p (Zero nat) -> (forall n. Sing n -> p n -> p (S n)) -> Sing k -> p k
   plusMinus :: Sing (n :: nat) -> Sing m -> n :+ m :- m :~: n
 
+  plusMinus' :: Sing (n :: nat) -> Sing m -> n :+ m :- n :~: m
+  plusMinus'  n m =
+    start (n %:+ m %:- n)
+      === m %:+ n %:- n   `because` minusCongL (plusComm n m) n
+      === m               `because` plusMinus m n
+
   plusZeroL :: Sing n -> (Zero nat :+ n) :~: n
   plusZeroL sn = idLProof (induction base step sn)
     where
