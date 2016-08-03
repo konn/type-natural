@@ -6,7 +6,7 @@ module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
         FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
         sLeqCongL, sLeqCongR, sLeqCong,
-        (:-.), (%:-.), minPlusTruncMinus
+        (:-.), (%:-.), minPlusTruncMinus, truncMinusLeq
        ) where
 import Data.Type.Natural.Class.Arithmetic
 
@@ -676,6 +676,7 @@ type n :-. m = Subt n m (m :<= n)
 type family Subt (n :: nat) (m :: nat) (b :: Bool) :: nat where
   Subt n          m 'True  = n :- m
   Subt (n :: nat) m 'False = Zero nat
+infixl 6 :-.
 
 (%:-.) :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> Sing (n :-. m)
 n %:-. m =
@@ -698,3 +699,10 @@ minPlusTruncMinus n m =
         =~= sMin n m %:+ sZero
         === sMin n m  `because` plusZeroR (sMin n m)
         === n         `because` leqToMin n m (notLeqToLeq m n)
+
+truncMinusLeq :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> IsTrue (n :-. m :<= n)
+truncMinusLeq n m =
+  case m %:<= n of
+    STrue  -> leqStep (n %:-. m) n m $ minusPlus n m Witness
+    SFalse -> leqZero n
+
