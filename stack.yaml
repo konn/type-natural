@@ -8,7 +8,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/konn/equational-reasoning-in-haskell.git
-    commit: b0c47234b4f02b9dc1ccc15c9b13054f2625b7e3
+    commit: e6d36662387926cc1bfd9db59582e1b14cad1b8e
   extra-dep: true
 
 extra-deps: 
@@ -16,4 +16,4 @@ extra-deps:
 - singletons-2.2
 - th-desugar-1.6
 - ghc-typelits-natnormalise-0.4.6
-# - equational-reasoning-0.3.0.0
+# - equational-reasoning-0.4.1.0

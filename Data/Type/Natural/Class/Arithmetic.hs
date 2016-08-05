@@ -16,7 +16,6 @@ import Data.Singletons.Prelude.Enum
 import Data.Type.Equality
 import Data.Void
 import Proof.Equational
-import Proof.Propositional
 
 type family Zero nat :: nat where
   Zero nat = FromInteger 0
@@ -537,14 +536,6 @@ class (SDecide nat, SNum nat, SEnum nat, nat ~ nat)
 
   sPred' :: proxy n -> Sing (Succ n) -> Sing (n :: nat)
   sPred' pxy sn = coerce (succInj $ succCong $ predSucc (sPred' pxy sn)) (sPred sn)
-
-refute [t| 'LT :~: 'GT |]
-refute [t| 'LT :~: 'EQ |]
-refute [t| 'EQ :~: 'LT |]
-refute [t| 'EQ :~: 'GT |]
-refute [t| 'GT :~: 'LT |]
-refute [t| 'GT :~: 'EQ |]
-refute [t| 'True :~: 'False |]
 
 pattern Zero :: forall nat (n :: nat). IsPeano nat => n ~ Zero nat => Sing n
 pattern Zero <- (zeroOrSucc -> IsZero) where
