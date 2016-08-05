@@ -249,7 +249,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
            -> Compare a b :~: 'LT
   leqToLT n m snLEQm =
     case leqToCmp (sSucc n) m snLEQm of
-      Left Refl ->
+      Left eql -> withRefl eql $
         start (sCompare n m)
           =~= sCompare n (sSucc n)
           === SLT `because` ltSucc n
@@ -264,7 +264,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   leqSucc :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> IsTrue (Succ n :<= Succ m)
   leqSucc n m nLEQm =
     case leqToCmp n m nLEQm of
-      Left  Refl  -> leqRefl (sSucc n)
+      Left  eql  -> withRefl eql $ leqRefl (sSucc n)
       Right nLTm -> ltToLeq (sSucc n) (sSucc m) $ sym (cmpSucc n m) `trans` nLTm
 
   fromLeqView :: LeqView (n :: nat) m -> IsTrue (n :<= m)
@@ -470,9 +470,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   leqSucc' :: Sing (n :: nat) -> Sing m -> (n :<= m) :~: (Succ n :<= Succ m)
   leqSucc' n m =
     case n %:<= m of
-      STrue ->
-        case leqSucc n m Witness of
-          Witness -> Refl
+      STrue -> withWitness (leqSucc n m Witness) Refl
       SFalse ->
         case sSucc n %:<= sSucc m of
           SFalse -> Refl

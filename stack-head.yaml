@@ -7,14 +7,14 @@ packages:
     git: https://github.com/konn/ghc-typelits-presburger.git
     commit: e1fa7e0432b0c9360b73c805e51fd306a658f57c
   extra-dep: true
-- location:
-    git: https://github.com/konn/equational-reasoning-in-haskell.git
-    commit: e6d36662387926cc1bfd9db59582e1b14cad1b8e
-  extra-dep: true
+# - location:
+#     git: https://github.com/konn/equational-reasoning-in-haskell.git
+#     commit: e6d36662387926cc1bfd9db59582e1b14cad1b8e
+#   extra-dep: true
 
 extra-deps: 
 - monomorphic-0.0.3.3
 - singletons-2.2
 - th-desugar-1.6
 - ghc-typelits-natnormalise-0.4.6
-# - equational-reasoning-0.4.1.0
+- equational-reasoning-0.4.1.1

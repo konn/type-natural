@@ -53,8 +53,8 @@ data Ordinal (n :: nat) where
 fromOLt :: forall nat n m. (PeanoOrder nat, (Succ n :< Succ m) ~ 'True, SingI m)
         => Sing (n :: nat) -> Ordinal m
 fromOLt  n =
-  case coerce (sym $ succLneqSucc n (sing :: Sing m)) Witness of
-    Witness -> OLt n
+  withRefl (sym $ succLneqSucc n (sing :: Sing m)) $
+  OLt n
 
 -- | Pattern synonym representing the 0-th ordinal.
 pattern OZ :: forall nat (n :: nat). IsPeano nat
@@ -135,32 +135,31 @@ enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
 
 enumOrdinal :: (PeanoOrder nat, SingI n) => Sing (n :: nat) -> [Ordinal n]
 enumOrdinal (Succ n) = withSingI n $
-  case lneqZero n of
-    Witness ->
+  withWitness (lneqZero n) $
       OLt sZero : map succOrd (enumOrdinal n)
 enumOrdinal _ = []
 
 succOrd :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
 succOrd (OLt n) =
-  case succLneqSucc n (sing :: Sing n) of
-    Refl -> OLt (sSucc n)
+  withRefl (succLneqSucc n (sing :: Sing n)) $
+  OLt (sSucc n)
 {-# INLINE succOrd #-}
 
 instance SingI n => Bounded (Ordinal ('PN.S n)) where
   minBound = OLt PN.SZ
 
   maxBound =
-    case leqRefl (sing :: Sing n) of
-      Witness -> sNatToOrd (sing :: Sing n)
+    withWitness (leqRefl (sing :: Sing n)) $
+    sNatToOrd (sing :: Sing n)
 
 instance (SingI m, SingI n, n ~ (m + 1)) => Bounded (Ordinal n) where
   minBound =
-    case lneqZero (sing :: Sing m) of
-      Witness -> OLt (sing :: Sing 0)
+    withWitness (lneqZero (sing :: Sing m)) $
+    OLt (sing :: Sing 0)
   {-# INLINE minBound #-}
   maxBound =
-    case lneqSucc (sing :: Sing m) of
-      Witness -> sNatToOrd (sing :: Sing m)
+    withWitness (lneqSucc (sing :: Sing m)) $
+    sNatToOrd (sing :: Sing m)
   {-# INLINE maxBound #-}
 
 
@@ -232,8 +231,7 @@ inclusion on = unsafeCoerce on
      => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
 OLt k @+ OLt l =
   let (n, m) = (n :: Sing n, m :: Sing m)
-  in case plusStrictMonotone k n l m Witness Witness of
-    Witness -> OLt $ k %:+ l
+  in withWitness (plusStrictMonotone k n l m Witness Witness) $ OLt $ k %:+ l
 
 -- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 --

@@ -46,10 +46,10 @@ import           Data.Void                    (absurd)
 import           Data.Void                    (Void)
 import           GHC.TypeLits                 (type (+), type (<=), type (<=?))
 import qualified GHC.TypeLits                 as TL
-import           Proof.Equational             (coerce)
+import           Proof.Equational             (coerce, withRefl)
 import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
-import           Proof.Propositional          (Empty (..), IsTrue (..))
+import           Proof.Propositional          (Empty (..), IsTrue (..), withWitness)
 import           Unsafe.Coerce                (unsafeCoerce)
 
 -- | Type synonym for @'PN.Nat'@ to avoid confusion with built-in @'TL.Nat'@.
@@ -66,7 +66,7 @@ type family ToPeano (n :: TL.Nat) :: PN.Nat where
 viewNat :: Sing (n :: TL.Nat) -> ZeroOrSucc n
 viewNat n =
   case n %~ (sing :: Sing 0) of
-    Proved Refl -> IsZero
+    Proved _    -> IsZero
     Disproved _ -> IsSucc (sPred n)
 
 sFromPeano :: Sing n -> Sing (FromPeano n)
@@ -88,7 +88,7 @@ toPeanoSuccCong _ = unsafeCoerce (Refl :: () :~: ())
 sToPeano :: Sing n -> Sing (ToPeano n)
 sToPeano sn =
   case sn %~ (sing :: Sing 0) of
-    Proved Refl  -> SZ
+    Proved eq     -> withRefl eq SZ
     Disproved _pf -> coerce (sym (toPeanoSuccCong (sPred sn))) (SS (sToPeano (sPred sn)))
 
 -- litSuccInjective :: forall (n :: TL.Nat) (m :: TL.Nat).
@@ -258,9 +258,9 @@ toPeanoMonotone :: (n <= m)
                 => Sing n -> Sing m -> ((ToPeano n) :<= (ToPeano m)) :~: 'True
 toPeanoMonotone sn sm =
   case sn %~ (sing :: Sing 0) of
-    Proved Refl -> Refl
+    Proved eql -> withRefl eql Refl
     Disproved nPos -> case sm %~ (sing :: Sing 0) of
-      Proved Refl -> absurd $ nPos $ natLeqZero sn
+      Proved _ -> absurd $ nPos $ natLeqZero sn
       Disproved mPos ->
         let pn = sPred sn
             pm = sPred sm
@@ -367,25 +367,25 @@ instance PeanoOrder TL.Nat where
   leqToMax _ _ Witness = Refl
   geqToMax n m mLEQn =
     case leqToCmp m n mLEQn of
-      Left Refl  -> Refl
+      Left eql   -> withRefl eql Refl
       Right mLTn ->
         maxCompareFlip n m mLTn
   geqToMin n m mLEQn =
     case leqToCmp m n mLEQn of
-      Left Refl  -> Refl
+      Left eql   -> withRefl eql Refl
       Right mLTn ->
         minCompareFlip n m mLTn
 
   lneqReversed n m =
-    case flipCompare n m of
-      Refl -> case sCompare n m of
+    withRefl (flipCompare n m) $
+      case sCompare n m of
         SEQ -> Refl
         SLT -> Refl
         SGT -> Refl
 
   leqReversed n m =
-    case flipCompare n m of
-      Refl -> case sCompare n m of
+    withRefl (flipCompare n m) $
+      case sCompare n m of
         SEQ -> Refl
         SLT -> Refl
         SGT -> Refl
@@ -397,12 +397,10 @@ instance PeanoOrder TL.Nat where
           =~= SFalse
           === (sSucc n %:<= n) `because` sym (succLeqAbsurd' n)
           === (sSucc n %:<= m) `because` sLeqCongR (sSucc n) (eqToRefl n m Refl)
-      SLT ->
-        case ltToSuccLeq n m Refl of
-          Witness ->
-            start (n %:< m)
-              =~= STrue
-              =~= (sSucc n %:<= m)
+      SLT -> withWitness (ltToSuccLeq n m Refl) $
+        start (n %:< m)
+          =~= STrue
+          =~= (sSucc n %:<= m)
       SGT ->
         case sSucc n %:<= m of
           SFalse -> Refl

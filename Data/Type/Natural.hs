@@ -151,9 +151,7 @@ plusInjectiveR n m l eq = plusInjectiveL l n m $
 
 reflToSEqual :: SNat n -> SNat m -> n :~: m -> IsTrue (n :== m)
 reflToSEqual SZ     _      Refl = Witness
-reflToSEqual (SS n) (SS m) Refl =
-  case reflToSEqual n m Refl of
-    Witness -> Witness
+reflToSEqual (SS n) (SS m) Refl = reflToSEqual n m Refl
 reflToSEqual (SS _) SZ refl = case refl of {}
 
 sequalToRefl :: SNat n -> SNat m -> IsTrue (n :== m) -> n :~: m
@@ -170,35 +168,27 @@ sequalSym :: SNat n -> SNat m -> (n :== m) :~: (m :== n)
 sequalSym SZ SZ         = Refl
 sequalSym SZ (SS _)     = Refl
 sequalSym (SS _) SZ     = Refl
-sequalSym (SS n) (SS m) =
-  case sequalSym n m of
-    Refl -> Refl
+sequalSym (SS n) (SS m) = sequalSym n m
 
 sleqFlip :: SNat n -> SNat m -> (n :~: m -> Void) -> (m :<= n) :~: Not (n :<= m)
 sleqFlip SZ     SZ     neq = absurd $ neq Refl
 sleqFlip SZ     (SS _) _   = Refl
 sleqFlip (SS _) SZ     _   = Refl
-sleqFlip (SS n) (SS m) neq =
-  case sleqFlip n m (neq . succCong) of
-    Refl -> Refl
+sleqFlip (SS n) (SS m) neq = sleqFlip n m (neq . succCong)
 
 sLeqReflexive :: SNat n -> SNat m -> IsTrue (n :== m) -> IsTrue (n :<= m)
 sLeqReflexive SZ     _      Witness = Witness
-sLeqReflexive (SS n) (SS m) Witness =
-  case sLeqReflexive n m Witness of
-    Witness -> Witness
+sLeqReflexive (SS n) (SS m) Witness = sLeqReflexive n m Witness
 sLeqReflexive (SS _) SZ  witness = case witness of {}
 
 nonSLeqToLT :: (n :<= m) ~ 'False => SNat n -> SNat m -> Compare m n :~: 'LT
-nonSLeqToLT n m =
-  case sequalSym n m of
-    Refl -> 
-      case m %:== n of
-        STrue -> case sLeqReflexive n m Witness of {}
-        SFalse ->
-          case m %:<= n of
-            STrue  -> Refl
-            SFalse -> case sleqFlip n m $ snequalToNoRefl n m Witness of {}
+nonSLeqToLT n m = withRefl (sequalSym n m) $
+  case m %:== n of
+    STrue -> case sLeqReflexive n m Witness of {}
+    SFalse ->
+      case m %:<= n of
+        STrue  -> Refl
+        SFalse -> case sleqFlip n m $ snequalToNoRefl n m Witness of {}
 
 instance PeanoOrder Nat where
   {-# SPECIALISE instance PeanoOrder Nat #-}
@@ -229,20 +219,15 @@ instance PeanoOrder Nat where
 
   flipCompare n m =
     case n %:== m of
-      STrue ->  case sequalSym n m of
-        Refl -> Refl
-      SFalse ->
-        case sequalSym n m of
-          Refl -> 
-            case n %:<= m of
-              STrue ->
-                case sleqFlip n m (snequalToNoRefl n m Witness) of
-                  Refl -> case m %:<= n of
-                    SFalse -> Refl
-              SFalse ->
-                case sleqFlip n m (snequalToNoRefl n m Witness) of
-                  Refl -> case m %:<= n of
-                    STrue -> Refl
+      STrue -> withRefl (sequalSym n m) Refl
+      SFalse -> withRefl (sequalSym n m) $
+        case n %:<= m of
+          STrue -> withRefl (sleqFlip n m (snequalToNoRefl n m Witness)) $
+            case m %:<= n of
+              SFalse -> Refl
+          SFalse -> withRefl (sleqFlip n m (snequalToNoRefl n m Witness)) $
+            case m %:<= n of
+              STrue -> Refl
 
   minLeqL SZ SZ     = Witness
   minLeqL SZ (SS _) = Witness
