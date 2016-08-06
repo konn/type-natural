@@ -31,7 +31,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- * Conversion functions
                           natToInt, intToNat, sNatToInt,
                           -- * Quasi quotes for natural numbers
-                          nat, snat,
+                          snat,
                           -- * Properties of natural numbers
                           IsPeano(..),
                           plusCong, plusCongR, plusCongL,
@@ -279,23 +279,9 @@ plusNeutralL n m npmm = plusNeutralR m n (plusComm m n `trans` npmm)
 -- * Quasi Quoter
 --------------------------------------------------
 
--- | Quotesi-quoter for 'Nat'. This can be used for an expression, pattern and type.
+-- | Quotesi-quoter for 'SNat'. This can be used for an expression.
 --
---   for example: @sing :: SNat ([nat| 2 |] :+ [nat| 5 |])@
-nat :: QuasiQuoter
-nat = QuasiQuoter { quoteExp = foldr appE (conE 'Z) . flip replicate (conE 'S) . read
-                  , quotePat = foldr (\a b -> conP a [b]) (conP 'Z []) . flip replicate 'S . read
-                  , quoteType = foldr appT (conT 'Z) . flip replicate (conT 'S) . read
-                  , quoteDec = error "not implemented"
-                  }
-
--- | Quotesi-quoter for 'SNat'. This can be used for an expression, pattern and type.
---
---  For example: @[snat|12|] '%+' [snat| 5 |]@, @'sing' :: [snat| 12 |]@, @f [snat| 12 |] = \"hey\"@
+--  For example: @[snat|12|] '%:+' [snat| 5 |]@.
 snat :: QuasiQuoter
-snat = QuasiQuoter { quoteExp = foldr appE (conE 'SZ) . flip replicate (conE 'SS) . read
-                   , quotePat = foldr (\a b -> conP a [b]) (conP 'SZ []) . flip replicate 'SS . read
-                   , quoteType = appT (conT ''SNat) . foldr appT (conT 'Z) . flip replicate (conT 'S) . read
-                   , quoteDec = error "not implemented"
-                   }
+snat = mkSNatQQ [t| Nat |]
 

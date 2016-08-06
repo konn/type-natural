@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.6.1.1
+version:             0.7.0.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
                      .
@@ -31,6 +31,8 @@ library
     ghc-options:       -Wno-redundant-constraints
   exposed-modules:     Data.Type.Natural
                      , Data.Type.Ordinal
+                     , Data.Type.Ordinal.Builtin
+                     , Data.Type.Ordinal.Peano
                      , Data.Type.Natural.Builtin
                      , Data.Type.Natural.Class
                      , Data.Type.Natural.Class.Arithmetic

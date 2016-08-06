@@ -8,21 +8,21 @@
 module Data.Type.Ordinal
        ( -- * Data-types
          Ordinal (..), pattern OZ, pattern OS, HasOrdinal,
+         -- * Quasi Quoter
+         -- $quasiquotes
+         mkOrdinalQQ, odPN, odLit,
          -- * Conversion from cardinals to ordinals.
          sNatToOrd', sNatToOrd, ordToInt, ordToSing,
-         ordToSing', CastedOrdinal(..),
          unsafeFromInt, inclusion, inclusion',
          -- * Ordinal arithmetics
          (@+), enumOrdinal,
          -- * Elimination rules for @'Ordinal' 'Z'@.
-         absurdOrd, vacuousOrd, vacuousOrdM,
-         -- * Quasi Quoter
-         od
+         absurdOrd, vacuousOrd
        ) where
-import           Control.Monad                (liftM)
 import           Data.Kind
 import           Data.List                    (genericDrop, genericTake)
 import           Data.Ord                     (comparing)
+import           Data.Singletons.Decide
 import           Data.Singletons.Prelude
 import           Data.Singletons.Prelude.Enum
 import           Data.Type.Equality
@@ -46,7 +46,7 @@ import           Unsafe.Coerce
 --
 -- So, @Ordinal n@ has exactly n inhabitants. So especially @Ordinal 'Z@ is isomorphic to @Void@.
 --
---   Since 0.5.0.0
+--   Since 0.6.0.0
 data Ordinal (n :: nat) where
   OLt :: (IsPeano nat, (n :< m) ~ 'True) => Sing (n :: nat) -> Ordinal m
 
@@ -57,12 +57,16 @@ fromOLt  n =
   OLt n
 
 -- | Pattern synonym representing the 0-th ordinal.
+--
+--   Since 0.6.0.0
 pattern OZ :: forall nat (n :: nat). IsPeano nat
            => (Zero nat :< n) ~ 'True => Ordinal n
 pattern OZ <- OLt Zero where
   OZ = OLt sZero
 
 -- | Pattern synonym @'OS' n@ represents (n+1)-th ordinal.
+--
+--   Since 0.6.0.0
 pattern OS :: forall nat (t :: nat). (PeanoOrder nat, SingI t)
             => (IsPeano nat)
             => Ordinal t -> Ordinal (Succ t)
@@ -133,7 +137,8 @@ enumFromOrd :: forall (n :: nat).
             => Ordinal n -> [Ordinal n]
 enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
 
-enumOrdinal :: (PeanoOrder nat, SingI n) => Sing (n :: nat) -> [Ordinal n]
+-- | Enumerate all @'Ordinal'@s less than @n@.
+enumOrdinal :: (PeanoOrder nat) => Sing (n :: nat) -> [Ordinal n]
 enumOrdinal (Succ n) = withSingI n $
   withWitness (lneqZero n) $
       OLt sZero : map succOrd (enumOrdinal n)
@@ -161,7 +166,6 @@ instance (SingI m, SingI n, n ~ (m + 1)) => Bounded (Ordinal n) where
     withWitness (lneqSucc (sing :: Sing m)) $
     sNatToOrd (sing :: Sing m)
   {-# INLINE maxBound #-}
-
 
 unsafeFromInt :: forall (n :: nat). (HasOrdinal nat, SingI (n :: nat))
               => MonomorphicRep (Sing :: nat -> *) -> Ordinal n
@@ -192,14 +196,6 @@ sNatToOrd' _ m = OLt m
 sNatToOrd :: (PeanoOrder nat, SingI (n :: nat), (m :< n) ~ 'True) => Sing m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
 
-data CastedOrdinal n where
-  CastedOrdinal :: (m :< n) ~ 'True => Sing m -> CastedOrdinal n
-
--- | Convert @Ordinal n@ into @Sing m@ with the proof of @'S m :<= n@.
-ordToSing' :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> CastedOrdinal n
-ordToSing' (OLt s) = CastedOrdinal s
-{-# INLINE ordToSing' #-}
-
 -- | Convert @Ordinal n@ into monomorphic @Sing@
 --
 -- Since 0.5.0.0
@@ -216,11 +212,15 @@ ordToInt (OLt n) = demote $ Monomorphic n
 {-# SPECIALISE ordToInt :: Ordinal (n :: TL.Nat) -> Integer #-}
 
 -- | Inclusion function for ordinals.
-inclusion' :: (n :< m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
+--
+--   Since 0.7.0.0 (constraint was weakened since last released)
+inclusion' :: (n :<= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
 inclusion' _ = unsafeCoerce
 {-# INLINE inclusion' #-}
 
 -- | Inclusion function for ordinals with codomain inferred.
+--
+--   Since 0.7.0.0 (constraint was weakened since last released)
 inclusion :: ((n :<= m) ~ 'True) => Ordinal n -> Ordinal m
 inclusion on = unsafeCoerce on
 {-# INLINE inclusion #-}
@@ -239,24 +239,36 @@ OLt k @+ OLt l =
 absurdOrd :: PeanoOrder nat => Ordinal (Zero nat) -> a
 absurdOrd (OLt n) = absurd $ lneqZeroAbsurd n Witness
 
--- | 'absurdOrd' for the value in 'Functor'.
+-- | @'absurdOrd'@ for value in 'Functor'.
 --
 --   Since 0.2.3.0
 vacuousOrd :: (PeanoOrder nat, Functor f) => f (Ordinal (Zero nat)) -> f a
 vacuousOrd = fmap absurdOrd
 
--- | 'absurdOrd' for the value in 'Monad'.
---   This function will become uneccesary once 'Applicative' (and hence 'Functor')
---   become the superclass of 'Monad'.
---
---   Since 0.2.3.0
-vacuousOrdM :: (PeanoOrder nat, Monad m) => m (Ordinal (Zero nat)) -> m a
-vacuousOrdM = liftM absurdOrd
+{-$quasiquotes #quasiquoters#
 
--- | Quasiquoter for ordinals
-od :: QuasiQuoter
-od = QuasiQuoter { quoteExp = foldr appE (conE 'OZ) . flip replicate (conE 'OS) . read
-                 , quoteType = error "No type quoter for Ordinals"
-                 , quotePat = foldr (\a b -> conP a [b]) (conP 'OZ []) . flip replicate 'OS . read
-                 , quoteDec = error "No declaration quoter for Ordinals"
-                 }
+   This section provides QuasiQuoter and general generator for ordinals.
+   Note that, @'Num'@ instance for @'Ordinal'@s DOES NOT
+   checks boundary; with @'od'@, we can use literal with
+   boundary check.
+   For example, with @-XQuasiQuotes@ language extension enabled,
+   @['od'| 12 |] :: Ordinal 1@ doesn't typechecks and causes compile-time error,
+   whilst @12 :: Ordinal 1@ compiles but raises run-time error.
+   So, to enforce correctness, we recommend to use these quoters
+   instead of bare @'Num'@ numerals.
+-}
+
+-- | Quasiquoter generator for ordinals
+mkOrdinalQQ :: TypeQ -> QuasiQuoter
+mkOrdinalQQ t =
+  QuasiQuoter { quoteExp  = \s -> [| OLt $(quoteExp (mkSNatQQ t) s) |]
+              , quoteType = error "No type quoter for Ordinals"
+              , quotePat  = \s -> [p| OLt ((%~ $(quoteExp (mkSNatQQ t) s)) -> Proved Refl) |]
+              , quoteDec  = error "No declaration quoter for Ordinals"
+              }
+
+odPN, odLit :: QuasiQuoter
+-- | Quasiquoter for ordinal indexed by Peano numeral @'Data.Type.Natural.Nat'@.
+odPN  = mkOrdinalQQ [t| PN.Nat |]
+-- | Quasiquoter for ordinal indexed by built-in numeral @'GHC.TypeLits.Nat'@.
+odLit = mkOrdinalQQ [t| TL.Nat |]

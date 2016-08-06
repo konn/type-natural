@@ -24,6 +24,8 @@ module Data.Type.Natural.Builtin
          -- * Peano and commutative ring axioms for built-in @'GHC.TypeLits.Nat'@
          IsPeano(..),
          inductionNat,
+         -- * QuasiQuotes
+         snat
        )
        where
 import Data.Type.Natural.Class
@@ -46,6 +48,7 @@ import           Data.Void                    (absurd)
 import           Data.Void                    (Void)
 import           GHC.TypeLits                 (type (+), type (<=), type (<=?))
 import qualified GHC.TypeLits                 as TL
+import           Language.Haskell.TH.Quote    (QuasiQuoter)
 import           Proof.Equational             (coerce, withRefl)
 import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
@@ -276,8 +279,8 @@ toPeanoMonotone sn sm =
 
 -- | Induction scheme for built-in @'TL.Nat'@.
 inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m + 1)) -> Sing n -> p n
-inductionNat base step snat =
-  case viewNat snat of
+inductionNat base step sn =
+  case viewNat sn of
     IsZero -> base
     IsSucc sl -> step (inductionNat base step sl)
 
@@ -303,8 +306,8 @@ instance IsPeano TL.Nat where
   multAssoc _ _ _ = Refl
   plusMultDistrib _ _ _ = Refl
   multPlusDistrib _ _ _ = Refl
-  induction base step snat =
-    case viewNat snat of
+  induction base step sn =
+    case viewNat sn of
       IsZero    -> base
       IsSucc sl ->
         withKnownNat sl $ step sing (induction base step sl)
@@ -414,3 +417,8 @@ instance Monomorphicable (Sing :: TL.Nat -> *) where
   promote n = case toSing n of SomeSing k -> Monomorphic k
   {-# INLINE promote #-}
 
+-- | Quotesi-quoter for singleton types for @'GHC.TypeLits.Nat'@. This can be used for an expression.
+--
+--  For example: @[snat|12|] '%:+' [snat| 5 |]@.
+snat :: QuasiQuoter
+snat = mkSNatQQ [t| TL.Nat |]
