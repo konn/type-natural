@@ -3,7 +3,7 @@
 -- | Module providing the same API as 'Data.Type.Ordinal' but specialised to
 --   GHC's builtin @'Nat'@.
 --   
---   Since 0.7.0.0
+--   Since 0.7.1.0
 module Data.Type.Ordinal.Builtin
        ( -- * Data-types and pattern synonyms
          Ordinal, pattern OLt, pattern OZ, pattern OS,
@@ -15,14 +15,14 @@ module Data.Type.Ordinal.Builtin
          unsafeFromInt, inclusion, inclusion',
          -- * Ordinal arithmetics
          (@+), enumOrdinal,
-         -- * Elimination rules for @'Ordinal' 'Z'@.
+         -- * Elimination rules for @'Ordinal' 0'@.
          absurdOrd, vacuousOrd
        ) where
 import           Data.Kind
-import           Data.Singletons.Prelude      (POrd (..), SingI, Sing (..))
+import           Data.Singletons.Prelude      (POrd (..), Sing (..))
 import           Data.Singletons.Prelude.Enum (PEnum (..))
 import qualified Data.Type.Ordinal            as O
-import           Data.Type.Natural
+import           GHC.TypeLits
 import           Language.Haskell.TH.Quote    (QuasiQuoter)
 import           Data.Type.Monomorphic
 
@@ -30,7 +30,7 @@ import           Data.Type.Monomorphic
 --
 -- > n = {0, 1, ..., n-1}
 --
--- So, @Ordinal n@ has exactly n inhabitants. So especially @Ordinal 'Z@ is isomorphic to @Void@.
+-- So, @Ordinal n@ has exactly n inhabitants. So especially @Ordinal 0@ is isomorphic to @Void@.
 -- This module exports a variant of polymorphic @'Data.Type.Ordinal.Ordinal'@
 -- specialised to GHC's builtin numeral @'Nat'@.
 --   
@@ -50,13 +50,13 @@ pattern OLt n = O.OLt n
 --   
 --   Since 0.7.0.0
 pattern OZ :: forall  (n :: Nat). ()
-           => ('Z :< n) ~ 'True => O.Ordinal n
+           => (0 :< n) ~ 'True => O.Ordinal n
 pattern OZ = O.OZ
 
 -- | Pattern synonym @'OS' n@ represents (n+1)-th ordinal.
 --   
 --   Since 0.7.0.0
-pattern OS :: forall (t :: Nat). (SingI t)
+pattern OS :: forall (t :: Nat). (KnownNat t)
            => () => O.Ordinal t -> O.Ordinal (Succ t)
 pattern OS n = O.OS n
 
@@ -90,7 +90,7 @@ sNatToOrd' = O.sNatToOrd'
 -- | 'sNatToOrd'' with @n@ inferred.
 --   
 --   Since 0.7.0.0
-sNatToOrd :: (SingI n, (m :< n) ~ 'True) => Sing m -> Ordinal n
+sNatToOrd :: (KnownNat n, (m :< n) ~ 'True) => Sing m -> Ordinal n
 sNatToOrd = O.sNatToOrd
 {-# INLINE sNatToOrd #-}
 
@@ -101,7 +101,7 @@ ordToInt :: Ordinal n -> Integer
 ordToInt = O.ordToInt
 {-# INLINE ordToInt #-}
 
-unsafeFromInt :: SingI n
+unsafeFromInt :: KnownNat n
               => MonomorphicRep (Sing :: Nat -> Type) -> Ordinal n
 unsafeFromInt = O.unsafeFromInt
 {-# INLINE unsafeFromInt #-}
@@ -123,7 +123,7 @@ inclusion' = O.inclusion'
 -- | Ordinal addition.
 --
 --   Since 0.7.0.0
-(@+) :: (SingI n, SingI m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
+(@+) :: (KnownNat n, KnownNat m) => Ordinal n -> Ordinal m -> Ordinal (n + m)
 (@+) = (O.@+)
 {-# INLINE (@+) #-}
 
@@ -134,16 +134,16 @@ enumOrdinal :: Sing n -> [Ordinal n]
 enumOrdinal = O.enumOrdinal
 {-# INLINE enumOrdinal #-}
 
--- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
+-- | Since @Ordinal 0@ is logically not inhabited, we can coerce it to any value.
 --
 --   Since 0.7.0.0
-absurdOrd :: Ordinal 'Z -> a
+absurdOrd :: Ordinal 0 -> a
 absurdOrd = O.absurdOrd
 {-# INLINE absurdOrd #-}
 
 -- | @'absurdOrd'@ for values in 'Functor'.
 --
 --   Since 0.7.0.0
-vacuousOrd :: Functor f => f (Ordinal 'Z) -> f a
+vacuousOrd :: Functor f => f (Ordinal 0) -> f a
 vacuousOrd = O.vacuousOrd
 {-# INLINE vacuousOrd #-}
