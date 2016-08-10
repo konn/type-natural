@@ -115,7 +115,7 @@ newtype MultEqCancelR n =
                                         -> n :~: m
                 }
 
-class (SDecide nat, SNum nat, SEnum nat, nat ~ nat)
+class (SDecide nat, SNum nat, SEnum nat)
     => IsPeano nat where
   {-# MINIMAL succOneCong, succNonCyclic, predSucc, plusMinus,
               succInj, ( (plusZeroL, plusSuccL) | (plusZeroR, plusZeroL))
