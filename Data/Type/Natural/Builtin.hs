@@ -263,7 +263,7 @@ toPeanoMonotone sn sm =
   case sn %~ (sing :: Sing 0) of
     Proved eql -> withRefl eql Refl
     Disproved nPos -> case sm %~ (sing :: Sing 0) of
-      Proved _ -> absurd $ nPos $ natLeqZero sn
+      Proved eql -> absurd $ nPos $ withRefl eql $ natLeqZero sn
       Disproved mPos ->
         let pn = sPred sn
             pm = sPred sm
