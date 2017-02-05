@@ -71,7 +71,6 @@ import Data.Type.Monomorphic
 import Proof.Equational
 import Proof.Propositional hiding (Not)
 import Data.Void
-import Language.Haskell.TH hiding (Type)
 import Language.Haskell.TH.Quote
 
 --------------------------------------------------
@@ -217,6 +216,8 @@ instance PeanoOrder Nat where
       STrue  -> Left $ sequalToRefl n m Witness
       SFalse -> Right Refl
 
+  cmpZero _ = Refl
+
   flipCompare n m =
     case n %:== m of
       STrue -> withRefl (sequalSym n m) Refl
@@ -256,11 +257,15 @@ instance PeanoOrder Nat where
   maxLeqR (SS n) (SS m) = maxLeqR n m
   maxLeqR SZ     (SS m) = leqRefl m
 
-  maxLeast SZ     SZ     SZ      Witness _ = Witness
-  maxLeast SZ     SZ     (SS _)  a _       = case a of {}
-  maxLeast SZ     (SS _) SZ      a _       = case a of {}
-  maxLeast SZ     (SS _) (SS _)  a _       = case a of {}
-  maxLeast (SS _) _      _       _ a       = case a of {}
+  maxLeast _      SZ     SZ     _       _ = Witness
+  maxLeast _      SZ     (SS _) _       a = a
+  maxLeast _      (SS _) SZ     a       _ = a
+  maxLeast SZ     _      (SS n) _       a = absurd $ succLeqZeroAbsurd n a
+  maxLeast (SS k) (SS l) (SS m) slLEsk  smLEsk =
+    coerce (leqSucc' (sMax l m) k) $
+    maxLeast k l m
+      (coerce (sym $ leqSucc' l k) slLEsk)
+      (coerce (sym $ leqSucc' m k) smLEsk)
 
   leqReversed _ _ = Refl
   lneqReversed _ _ = Refl
