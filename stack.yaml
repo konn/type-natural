@@ -17,4 +17,5 @@ extra-deps:
 - th-desugar-1.6
 # - ghc-typelits-natnormalise-0.4.6
 - equational-reasoning-0.4.1.1
+- constraints-0.9
 pvp-bounds: both
