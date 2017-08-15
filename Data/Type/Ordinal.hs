@@ -44,7 +44,7 @@ import           Unsafe.Coerce
 --
 -- > n = {0, 1, ..., n-1}
 --
--- So, @Ordinal n@ has exactly n inhabitants. So especially @Ordinal 'Z@ is isomorphic to @Void@.
+-- So, @Ordinal n@ has exactly n inhabitants. Especially, @Ordinal 'Z@ is isomorphic to @Void@.
 --
 --   Since 0.6.0.0
 data Ordinal (n :: nat) where
