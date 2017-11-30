@@ -3,7 +3,7 @@ flags: {}
 packages:
 - '.'
 - location:
-    git: git@github.com:konn/ghc-typelits-presburger.git
+    git: https://github.com/konn/ghc-typelits-presburger.git
     commit: bc063fb13a335cdf5259a4d669fd1bc390c0f807
   extra-dep: true
 
