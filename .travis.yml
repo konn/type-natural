@@ -5,17 +5,18 @@ cache:
   directories:
     - $HOME/.cabsnap
     - $HOME/.stack
+    - $HOME/.ghc
 
 matrix:
   include:
-    - env: STACK_YAML=stack.yaml
-      compiler: ": #GHC 8.0.1"
+    - env: STACK_YAML=stack-800.yaml
+      compiler: ": #GHC 8.0.2"
       addons:
         apt:
           packages:
             - libgmp3-dev
-    - env: STACK_YAML=stack-head.yaml
-      compiler: ": #GHC HEAD"
+    - env: STACK_YAML=stack-802.yaml
+      compiler: ": #GHC 8.2.2"
       addons:
         apt:
           packages:

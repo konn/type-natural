@@ -32,7 +32,7 @@ import Data.Type.Natural.Class
 
 import           Data.Singletons.Decide       (SDecide (..))
 import           Data.Singletons.Decide       (Decision (..))
-import           Data.Singletons.Prelude      (SNum (..), PNum(..), Sing (..))
+import           Data.Singletons.Prelude      (PNum (..), SNum (..), Sing (..))
 import           Data.Singletons.Prelude      (SingI (..))
 import           Data.Singletons.Prelude      (SingKind (..), SomeSing (..))
 import           Data.Singletons.Prelude.Enum (PEnum (..), SEnum (..))
@@ -52,7 +52,8 @@ import           Language.Haskell.TH.Quote    (QuasiQuoter)
 import           Proof.Equational             (coerce, withRefl)
 import           Proof.Equational             (start, sym, (===), (=~=))
 import           Proof.Equational             (because)
-import           Proof.Propositional          (Empty (..), IsTrue (..), withWitness)
+import           Proof.Propositional          (Empty (..), IsTrue (..),
+                                               withEmpty, withWitness)
 import           Unsafe.Coerce                (unsafeCoerce)
 
 -- | Type synonym for @'PN.Nat'@ to avoid confusion with built-in @'TL.Nat'@.
@@ -69,11 +70,11 @@ type family ToPeano (n :: TL.Nat) :: PN.Nat where
 viewNat :: Sing (n :: TL.Nat) -> ZeroOrSucc n
 viewNat n =
   case n %~ (sing :: Sing 0) of
-    Proved _    -> IsZero
-    Disproved _ -> IsSucc (sPred n)
+    Proved Refl -> IsZero
+    Disproved t -> withEmpty t $ IsSucc (sPred n)
 
 sFromPeano :: Sing n -> Sing (FromPeano n)
-sFromPeano SZ = sing
+sFromPeano SZ      = sing
 sFromPeano (SS sn) = sSucc (sFromPeano sn)
 
 toPeanoInjective :: ToPeano n :~: ToPeano m -> n :~: m
@@ -250,9 +251,9 @@ natSuccPred :: ((n :~: 0) -> Void) -> Succ (Pred n) :~: n
 natSuccPred _ = Refl
 
 myLeqPred :: Sing n -> Sing m -> ('S n :<= 'S m) :~: (n :<= m)
-myLeqPred SZ _ = Refl
+myLeqPred SZ _          = Refl
 myLeqPred (SS _) (SS _) = Refl
-myLeqPred (SS _) SZ = Refl
+myLeqPred (SS _) SZ     = Refl
 
 toPeanoCong :: a :~: b -> ToPeano a :~: ToPeano b
 toPeanoCong Refl = Refl
@@ -281,7 +282,7 @@ toPeanoMonotone sn sm =
 inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m + 1)) -> Sing n -> p n
 inductionNat base step sn =
   case viewNat sn of
-    IsZero -> base
+    IsZero    -> base
     IsSucc sl -> step (inductionNat base step sl)
 
 
@@ -291,7 +292,7 @@ instance IsPeano TL.Nat where
   plusMinus _ _ = Refl
   succInj Refl = Refl
   succOneCong = Refl
-  succNonCyclic _ a = case a of { }
+  succNonCyclic _ a = case a of  _ -> error "Bug in GHC!"
   plusZeroR _ = Refl
   plusZeroL _ = Refl
   plusSuccL _ _ =  Refl
