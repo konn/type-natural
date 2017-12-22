@@ -77,8 +77,15 @@ sFromPeano :: Sing n -> Sing (FromPeano n)
 sFromPeano SZ      = sing
 sFromPeano (SS sn) = sSucc (sFromPeano sn)
 
-toPeanoInjective :: ToPeano n :~: ToPeano m -> n :~: m
-toPeanoInjective Refl = Refl
+toPeanoInjective :: forall n m. (TL.KnownNat n, TL.KnownNat m)
+                 => ToPeano n :~: ToPeano m -> n :~: m
+toPeanoInjective tPnEqtPm =
+  let sn = sing :: Sing n
+      sm = sing :: Sing m
+  in start sn
+       === sFromPeano (sToPeano sn) `because` sym (fromToPeano sn)
+       === sFromPeano (sToPeano sm) `because` congFromPeano tPnEqtPm
+       === sm                       `because` fromToPeano sm
 
 -- trustMe :: a :~: b
 -- trustMe = unsafeCoerce (Refl :: () :~: ())
