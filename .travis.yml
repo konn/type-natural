@@ -21,8 +21,11 @@ matrix:
         apt:
           packages:
             - libgmp3-dev
+    - env: STACK_YAML=stack-804.yaml
+      compiler: ": #GHC 8.4.1-alpha1"
   allow_failures:
-    - env: STACK_YAML=stack-head.yaml
+    - env: STACK_YAML=stack-804.yaml
+
 
 before_install:
  # install Stack
