@@ -13,8 +13,8 @@ import Data.Type.Natural.Singleton.Compat
 import Data.Promotion.Prelude.Enum
 import Data.Singletons.Prelude
 import Data.Singletons.Prelude.Enum
-import Data.Singletons.TH           (singletons)
-import Data.Typeable                (Typeable)
+import Data.Singletons.TH
+import Data.Typeable
 
 --------------------------------------------------
 -- * Natural numbers and its singleton type

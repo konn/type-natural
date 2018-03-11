@@ -1,5 +1,5 @@
-{-# LANGUAGE DataKinds, EmptyCase, ExplicitForAll, FlexibleContexts         #-}
-{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures                       #-}
+{-# LANGUAGE DataKinds, EmptyCase, ExplicitForAll, ExplicitNamespaces       #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures     #-}
 {-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes  #-}
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies, TypeInType #-}
 module Data.Type.Natural.Class.Order
@@ -11,14 +11,14 @@ module Data.Type.Natural.Class.Order
 import Data.Type.Natural.Class.Arithmetic
 import Data.Type.Natural.Singleton.Compat
 
-import Data.Singletons.Decide
-import Data.Singletons.Prelude
-import Data.Singletons.Prelude.Enum
-import Data.Singletons.TH
-import Data.Type.Equality
-import Data.Void
-import Proof.Equational
-import Proof.Propositional
+import Data.Singletons.Prelude      (Sing (SFalse, STrue), sing, withSingI)
+import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ)
+import Data.Singletons.TH           (singletonsOnly)
+import Data.Type.Equality           ((:~:) (..))
+import Data.Void                    (Void, absurd)
+import Proof.Equational             (because, coerce, start, sym, trans,
+                                     withRefl, (===), (=~=))
+import Proof.Propositional          (IsTrue (..), eliminate, withWitness)
 
 data LeqView (n :: nat) (m :: nat) where
   LeqZero :: Sing n -> LeqView (Zero nat) n
@@ -114,7 +114,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
                          aNEQb aeqb = succNonCyclic k $ plusEqCancelL a (sSucc k) sZero $
                                      start (a %+ sSucc k)
                                       === sSucc (a %+ k) `because` plusSuccR a k
-                                      === (sSucc a) %+ k `because` sym (plusSuccL a k)
+                                      === sSucc a %+ k `because` sym (plusSuccL a k)
                                       =~= b
                                       === a               `because` sym aeqb
                                       === a %+ sZero     `because` sym (plusZeroR a)

@@ -4,11 +4,12 @@
 {-# LANGUAGE StandaloneDeriving, TypeFamilies, TypeOperators            #-}
 {-# LANGUAGE UndecidableInstances                                       #-}
 module Data.Type.Natural.Core where
-import Data.Constraint               hiding ((-))
-import Data.Type.Natural.Definitions hiding ((<=))
-import Prelude                       (Bool (..), Eq (..), Show (..), ($))
-import Proof.Propositional           (IsTrue)
-import Unsafe.Coerce
+import Data.Type.Natural.Definitions
+
+import Data.Constraint     (Dict (..))
+import Prelude             (Bool (..), Eq (..), Show (..), ($))
+import Proof.Propositional (IsTrue)
+import Unsafe.Coerce       (unsafeCoerce)
 
 --------------------------------------------------
 -- ** Type-level predicate & judgements.

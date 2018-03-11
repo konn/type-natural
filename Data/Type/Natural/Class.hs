@@ -9,8 +9,8 @@ import Data.Type.Natural.Class.Arithmetic
 import Data.Type.Natural.Class.Order
 
 import Data.Singletons.Prelude   (FromInteger, Sing, sing)
-import Language.Haskell.TH
-import Language.Haskell.TH.Quote
+import Language.Haskell.TH       (ExpQ, TypeQ, litT, numTyLit, sigT)
+import Language.Haskell.TH.Quote (QuasiQuoter (..))
 
 -- | Quasiquoter generateor for specific peano-types.
 --

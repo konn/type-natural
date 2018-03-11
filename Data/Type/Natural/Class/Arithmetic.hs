@@ -12,14 +12,15 @@ module Data.Type.Natural.Class.Arithmetic
        ) where
 import Data.Type.Natural.Singleton.Compat
 
-import Data.Singletons.Decide
-import Data.Singletons.Prelude
-import Data.Singletons.Prelude.Enum
-import Data.Type.Equality
-import Data.Void
-import Data.Functor.Const
-import Numeric.Natural
-import Proof.Equational
+import Data.Functor.Const           (Const (..))
+import Data.Singletons.Decide       (SDecide (..))
+import Data.Singletons.Prelude      (Apply, SingI (..), SingKind (..),
+                                     SomeSing (..))
+import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ, sPred, sSucc)
+import Data.Type.Equality           ((:~:) (..))
+import Data.Void                    (Void, absurd)
+import Numeric.Natural              (Natural)
+import Proof.Equational             (because, coerce, start, sym, trans, (===))
 
 type family Zero nat :: nat where
   Zero nat = FromInteger 0
@@ -469,7 +470,7 @@ class (SDecide nat, SNum nat, SEnum nat, SingKind nat, SingKind nat)
   plusEqZeroL :: Sing n -> Sing m -> n + m :~: Zero nat -> n :~: Zero nat
   plusEqZeroL n m Refl =
     case zeroOrSucc n of
-      IsZero -> Refl
+      IsZero    -> Refl
       IsSucc pn -> absurd $ succNonCyclic (pn %+ m) (sym $ plusSuccL pn m)
 
   plusEqZeroR :: Sing n -> Sing m -> n + m :~: Zero nat -> m :~: Zero nat
@@ -530,7 +531,7 @@ class (SDecide nat, SNum nat, SEnum nat, SingKind nat, SingKind nat)
   succPred :: Sing n -> (n :~: Zero nat -> Void) -> Succ (Pred n) :~: n
   succPred n nonZero =
     case zeroOrSucc n of
-      IsZero -> absurd $ nonZero Refl
+      IsZero    -> absurd $ nonZero Refl
       IsSucc n' -> sym $ succCong $ predUnique n' n Refl
 
   multEqCancelL :: Sing (n :: nat) -> Sing m -> Sing l -> Succ n * m :~: Succ n * l -> m :~: l
@@ -542,7 +543,7 @@ class (SDecide nat, SNum nat, SEnum nat, SingKind nat, SingKind nat)
   sPred' pxy sn = coerce (succInj $ succCong $ predSucc (sPred' pxy sn)) (sPred sn)
 
   toNatural :: Sing (n :: nat) -> Natural
-  toNatural = getConst . induction (Const 0) (\_ (Const k) -> (Const k + 1)) 
+  toNatural = getConst . induction (Const 0) (\_ (Const k) -> (Const k + 1))
 
   fromNatural :: Natural -> SomeSing nat
   fromNatural 0 = SomeSing sZero
