@@ -9,6 +9,7 @@ module Data.Type.Natural.Class.Arithmetic
         multCong, multCongL, multCongR,
         minusCong, minusCongL, minusCongR,
         IsPeano(..), pattern Zero, pattern Succ,
+        module Data.Type.Natural.Singleton.Compat
        ) where
 import Data.Type.Natural.Singleton.Compat
 

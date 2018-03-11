@@ -6,10 +6,10 @@ module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
         FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
         sLeqCongL, sLeqCongR, sLeqCong,
-        type (-.), (%-.), minPlusTruncMinus, truncMinusLeq
+        type (-.), (%-.), minPlusTruncMinus, truncMinusLeq,
+        module Data.Type.Natural.Singleton.Compat
        ) where
 import Data.Type.Natural.Class.Arithmetic
-import Data.Type.Natural.Singleton.Compat
 
 import Data.Singletons.Prelude      (Sing (SFalse, STrue), sing, withSingI)
 import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ)
