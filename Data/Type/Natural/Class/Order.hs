@@ -10,6 +10,20 @@ module Data.Type.Natural.Class.Order
         module Data.Type.Natural.Singleton.Compat
        ) where
 import Data.Type.Natural.Class.Arithmetic
+import Data.Type.Natural.Singleton.Compat (type (<), type (<=), type (<=@#@$),
+                                           type (<=@#@$$), type (<=@#@$$$),
+                                           type (<@#@$), type (<@#@$$),
+                                           type (<@#@$$$), type (>), type (>=),
+                                           type (>=@#@$), type (>=@#@$$),
+                                           type (>=@#@$$$), type (>@#@$),
+                                           type (>@#@$$), type (>@#@$$$),
+                                           type Min, type Max, type Compare,
+                                           type MinSym0, type MinSym1, type MinSym2,
+                                           type MaxSym0, type MaxSym1, type MaxSym2,
+                                           type CompareSym0, type CompareSym1, type CompareSym2,
+                                           Sing (SLT, SEQ, SGT), SOrd(..), POrd(..),
+                                           LTSym0, GTSym0, EQSym0,
+                                           (%<), (%<=), (%>), (%>=))
 
 import Data.Singletons.Prelude      (Sing (SFalse, STrue), sing, withSingI)
 import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ)

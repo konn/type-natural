@@ -25,7 +25,9 @@ module Data.Type.Natural.Builtin
          IsPeano(..),
          inductionNat,
          -- * QuasiQuotes
-         snat
+         snat,
+         -- * Re-exports
+         module Data.Type.Natural.Singleton.Compat
        )
        where
 import Data.Type.Natural.Singleton.Compat

@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances, GADTs, KindSignatures                      #-}
 {-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies            #-}
-{-# LANGUAGE TypeInType, ViewPatterns                                      #-}
+{-# LANGUAGE TypeInType, ViewPatterns , ExplicitNamespaces                 #-}
 module Data.Type.Natural.Class.Arithmetic
        (Zero, One, S, sZero, sOne, ZeroOrSucc(..),
         plusCong, plusCongR, plusCongL, succCong,
@@ -12,11 +12,21 @@ module Data.Type.Natural.Class.Arithmetic
         module Data.Type.Natural.Singleton.Compat
        ) where
 import Data.Type.Natural.Singleton.Compat
+  (type (/=), type (==), type (+), type (*), type (-)
+  ,type (/=@#@$) ,type (/=@#@$$), type (/=@#@$$$)
+  ,type (==@#@$) ,type (==@#@$$), type (==@#@$$$)
+  ,type (+@#@$) ,type (+@#@$$), type (+@#@$$$)
+  ,type (*@#@$) ,type (*@#@$$), type (*@#@$$$)
+  ,type (-@#@$) ,type (-@#@$$), type (-@#@$$$)
+  ,(%==), (%/=), (%+), (%*), (%-)
+  , FromInteger, FromIntegerSym0, FromIntegerSym1
+  ,SNum(..), PNum(..)
+  )
 
 import Data.Functor.Const           (Const (..))
 import Data.Singletons.Decide       (SDecide (..))
 import Data.Singletons.Prelude      (Apply, SingI (..), SingKind (..),
-                                     SomeSing (..))
+                                     SomeSing (..), Sing)
 import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ, sPred, sSucc)
 import Data.Type.Equality           ((:~:) (..))
 import Data.Void                    (Void, absurd)
