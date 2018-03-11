@@ -28,13 +28,13 @@ module Data.Type.Natural.Builtin
          snat
        )
        where
+import Data.Type.Natural.Singleton.Compat
 import Data.Type.Natural.Class
 
 import           Data.Singletons.Decide       (SDecide (..))
 import           Data.Singletons.Decide       (Decision (..))
-import           Data.Singletons.Prelude      (PNum (..), SNum (..), Sing (..))
+import           Data.Singletons.Prelude      (Sing (..), SingKind(..))
 import           Data.Singletons.Prelude      (SingI (..))
-import           Data.Singletons.Prelude      (SingKind (..), SomeSing (..))
 import           Data.Singletons.Prelude.Enum (PEnum (..), SEnum (..))
 import           Data.Singletons.Prelude.Ord  (POrd (..), SOrd (..))
 import           Data.Singletons.TH           (sCases)
@@ -46,7 +46,7 @@ import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
 import qualified Data.Type.Natural            as PN
 import           Data.Void                    (absurd)
 import           Data.Void                    (Void)
-import           GHC.TypeLits                 (type (+), type (<=), type (<=?))
+import           GHC.TypeLits                 (type (<=?))
 import qualified GHC.TypeLits                 as TL
 import           Language.Haskell.TH.Quote    (QuasiQuoter)
 import           Proof.Equational             (coerce, withRefl)
@@ -148,31 +148,31 @@ fromPeanoInjective frEq =
 fromPeanoSuccCong :: Sing n -> FromPeano ('S n) :~: Succ (FromPeano n)
 fromPeanoSuccCong _sn = Refl
 
-fromPeanoPlusCong :: Sing n -> Sing m -> FromPeano (n :+ m) :~: FromPeano n :+ FromPeano m
+fromPeanoPlusCong :: Sing n -> Sing m -> FromPeano (n PN.+ m) :~: FromPeano n TL.+ FromPeano m
 fromPeanoPlusCong SZ _ = Refl
 fromPeanoPlusCong (SS sn) sm =
-  start (sFromPeano (SS sn %:+ sm))
-    =~= sFromPeano (SS (sn %:+ sm))
-    === sSucc (sFromPeano (sn %:+ sm))           `because` fromPeanoSuccCong (sn %:+ sm)
-    === sSucc (sFromPeano sn  %:+ sFromPeano sm) `because` congSucc (fromPeanoPlusCong sn sm)
-    =~= sSucc (sFromPeano sn) %:+ sFromPeano sm
-    =~= sFromPeano (SS sn)    %:+ sFromPeano sm
+  start (sFromPeano (SS sn %+ sm))
+    =~= sFromPeano (SS (sn %+ sm))
+    === sSucc (sFromPeano (sn %+ sm))           `because` fromPeanoSuccCong (sn %+ sm)
+    === sSucc (sFromPeano sn  %+ sFromPeano sm) `because` congSucc (fromPeanoPlusCong sn sm)
+    =~= sSucc (sFromPeano sn) %+ sFromPeano sm
+    =~= sFromPeano (SS sn)    %+ sFromPeano sm
 
-toPeanoPlusCong :: Sing n -> Sing m -> ToPeano (n + m) :~: ToPeano n :+ ToPeano m
+toPeanoPlusCong :: Sing n -> Sing m -> ToPeano (n TL.+ m) :~: ToPeano n PN.+ ToPeano m
 toPeanoPlusCong sn sm =
   case viewNat sn of
     IsZero -> Refl
     IsSucc pn ->
-      start (sToPeano (sSucc pn %:+ sm))
-        =~= sToPeano (sSucc (pn %:+ sm))
-        === SS (sToPeano (pn %:+ sm))
-            `because` toPeanoSuccCong (pn %:+ sm)
-        === SS (sToPeano pn %:+ sToPeano sm)
+      start (sToPeano (sSucc pn %+ sm))
+        =~= sToPeano (sSucc (pn %+ sm))
+        === SS (sToPeano (pn %+ sm))
+            `because` toPeanoSuccCong (pn %+ sm)
+        === SS (sToPeano pn %+ sToPeano sm)
             `because` succCong (toPeanoPlusCong pn sm)
-        =~= SS (sToPeano pn) %:+ sToPeano sm
-        === (sToPeano (sSucc pn) %:+ sToPeano sm)
+        =~= SS (sToPeano pn) %+ sToPeano sm
+        === (sToPeano (sSucc pn) %+ sToPeano sm)
             `because` plusCongL (sym (toPeanoSuccCong pn)) (sToPeano sm)
-        =~= sToPeano sn %:+ sToPeano sm
+        =~= sToPeano sn %+ sToPeano sm
 
 fromPeanoZeroCong :: FromPeano 'Z :~: 0
 fromPeanoZeroCong = Refl
@@ -186,60 +186,60 @@ fromPeanoOneCong = Refl
 toPeanoOneCong :: ToPeano 1 :~: PN.One
 toPeanoOneCong = Refl
 
-natPlusCongR :: Sing r -> n :~: m -> n + r :~: m + r
+natPlusCongR :: Sing r -> n :~: m -> n TL.+ r :~: m TL.+ r
 natPlusCongR _ Refl = Refl
 
-fromPeanoMultCong :: Sing n -> Sing m -> FromPeano (n PN.:* m) :~: FromPeano n :* FromPeano m
+fromPeanoMultCong :: Sing n -> Sing m -> FromPeano (n PN.* m) :~: FromPeano n TL.* FromPeano m
 fromPeanoMultCong SZ _ = Refl
 fromPeanoMultCong (SS psn) sm =
-  start (sFromPeano (SS psn %:* sm))
-    =~= sFromPeano (psn %:* sm %:+ sm)
-    === sFromPeano (psn %:* sm) %:+ sFromPeano sm
-        `because` fromPeanoPlusCong (psn %:* sm) sm
-    === sFromPeano psn %:* sFromPeano sm %:+ sFromPeano sm
+  start (sFromPeano (SS psn %* sm))
+    =~= sFromPeano (psn %* sm %+ sm)
+    === sFromPeano (psn %* sm) %+ sFromPeano sm
+        `because` fromPeanoPlusCong (psn %* sm) sm
+    === sFromPeano psn %* sFromPeano sm %+ sFromPeano sm
         `because` natPlusCongR (sFromPeano sm) (fromPeanoMultCong psn sm)
-    =~= sSucc (sFromPeano psn) %:* sFromPeano sm
-    =~= sFromPeano (SS psn)    %:* sFromPeano sm
+    =~= sSucc (sFromPeano psn) %* sFromPeano sm
+    =~= sFromPeano (SS psn)    %* sFromPeano sm
 
 
-toPeanoMultCong :: Sing n -> Sing m -> ToPeano (n PN.:* m) :~: ToPeano n PN.:* ToPeano m
+toPeanoMultCong :: Sing n -> Sing m -> ToPeano (n TL.* m) :~: ToPeano n PN.* ToPeano m
 toPeanoMultCong sn sm =
   case viewNat sn of
     IsZero -> Refl
     IsSucc psn ->
-      start (sToPeano (sSucc psn %:* sm))
-        =~= sToPeano (psn %:* sm %:+ sm)
-        === sToPeano (psn %:* sm) %:+ sToPeano sm
-            `because` toPeanoPlusCong (psn %:* sm) sm
-        === sToPeano psn %:* sToPeano sm %:+ sToPeano sm
+      start (sToPeano (sSucc psn %* sm))
+        =~= sToPeano (psn %* sm %+ sm)
+        === sToPeano (psn %* sm) %+ sToPeano sm
+            `because` toPeanoPlusCong (psn %* sm) sm
+        === sToPeano psn %* sToPeano sm %+ sToPeano sm
             `because` plusCongL (toPeanoMultCong psn sm) (sToPeano sm)
-        =~= SS (sToPeano psn) %:* sToPeano sm
-        === sToPeano (sSucc psn) %:* sToPeano sm
+        =~= SS (sToPeano psn) %* sToPeano sm
+        === sToPeano (sSucc psn) %* sToPeano sm
             `because` multCongL (sym (toPeanoSuccCong psn)) (sToPeano sm)
 
-infix 4 %:<=?
-(%:<=?) :: Sing (n :: TL.Nat) -> Sing m -> Sing (n <=? m)
-n %:<=? m = case sCompare n m of
+infix 4 %<=?
+(%<=?) :: Sing (n :: TL.Nat) -> Sing m -> Sing (n <=? m)
+n %<=? m = case sCompare n m of
   SLT -> STrue
   SEQ -> STrue
   SGT -> SFalse
 
-natLeqSuccEq :: Sing n -> Sing m -> ((n + 1) <=? (m + 1)) :~: (n <=? m)
+natLeqSuccEq :: Sing n -> Sing m -> ((n TL.+ 1) <=? (m TL.+ 1)) :~: (n <=? m)
 natLeqSuccEq _ _ = Refl
 
 leqqCong :: n :~: m -> l :~: z -> (n <=? l) :~: (m <=? z)
 leqqCong Refl Refl = Refl
 
-leqCong :: n :~: m -> l :~: z -> (n :<= l) :~: (m :<= z)
+leqCong :: n :~: m -> l :~: z -> (n PN.<= l) :~: (m PN.<= z)
 leqCong Refl Refl = Refl
 
-fromPeanoMonotone :: ((n :<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n <=? FromPeano m) :~: 'True
+fromPeanoMonotone :: ((n PN.<= m) ~ 'True) => Sing n -> Sing m -> (FromPeano n <=? FromPeano m) :~: 'True
 fromPeanoMonotone SZ _ = Refl
 fromPeanoMonotone (SS n) (SS m) =
-   start (sFromPeano (SS n) %:<=? sFromPeano (SS m))
-     === (sSucc (sFromPeano n) %:<=? sSucc (sFromPeano m))
+   start (sFromPeano (SS n) %<=? sFromPeano (SS m))
+     === (sSucc (sFromPeano n) %<=? sSucc (sFromPeano m))
       `because` leqqCong  (fromPeanoSuccCong n) (fromPeanoSuccCong m)
-     === (sFromPeano n %:<=? sFromPeano m)
+     === (sFromPeano n %<=? sFromPeano m)
       `because` natLeqSuccEq (sFromPeano n) (sFromPeano m)
      === STrue
       `because` fromPeanoMonotone n m
@@ -247,7 +247,7 @@ fromPeanoMonotone (SS n) (SS m) =
 fromPeanoMonotone _ _ = bugInGHC
 #endif
 
-natLeqZero :: (n <= 0) => Sing n -> n :~: 0
+natLeqZero :: (n TL.<= 0) => Sing n -> n :~: 0
 natLeqZero Zero = Refl
 natLeqZero _    = error "natLeqZero : bug in ghc"
 
@@ -257,7 +257,7 @@ natLeqZero _    = error "natLeqZero : bug in ghc"
 natSuccPred :: ((n :~: 0) -> Void) -> Succ (Pred n) :~: n
 natSuccPred _ = Refl
 
-myLeqPred :: Sing n -> Sing m -> ('S n :<= 'S m) :~: (n :<= m)
+myLeqPred :: Sing n -> Sing m -> ('S n PN.<= 'S m) :~: (n PN.<= m)
 myLeqPred SZ _          = Refl
 myLeqPred (SS _) (SS _) = Refl
 myLeqPred (SS _) SZ     = Refl
@@ -265,8 +265,8 @@ myLeqPred (SS _) SZ     = Refl
 toPeanoCong :: a :~: b -> ToPeano a :~: ToPeano b
 toPeanoCong Refl = Refl
 
-toPeanoMonotone :: (n <= m)
-                => Sing n -> Sing m -> ((ToPeano n) :<= (ToPeano m)) :~: 'True
+toPeanoMonotone :: (n TL.<= m)
+                => Sing n -> Sing m -> ((ToPeano n) PN.<= (ToPeano m)) :~: 'True
 toPeanoMonotone sn sm =
   case sn %~ (sing :: Sing 0) of
     Proved eql -> withRefl eql Refl
@@ -275,18 +275,18 @@ toPeanoMonotone sn sm =
       Disproved mPos ->
         let pn = sPred sn
             pm = sPred sm
-        in start (sToPeano sn %:<= sToPeano sm)
-             === (sToPeano (sSucc pn) %:<= sToPeano (sSucc pm))
+        in start (sToPeano sn %<= sToPeano sm)
+             === (sToPeano (sSucc pn) %<= sToPeano (sSucc pm))
                  `because` leqCong (toPeanoCong $ sym $ natSuccPred nPos)
                                    (toPeanoCong $ sym $ natSuccPred mPos)
-             === (SS (sToPeano pn) %:<= SS (sToPeano pm))
+             === (SS (sToPeano pn) %<= SS (sToPeano pm))
                  `because` leqCong (toPeanoSuccCong pn) (toPeanoSuccCong pm)
-             === (sToPeano pn %:<= sToPeano pm)
+             === (sToPeano pn %<= sToPeano pm)
                  `because` myLeqPred (sToPeano pn) (sToPeano pm)
              === STrue `because` toPeanoMonotone pn pm
 
 -- | Induction scheme for built-in @'TL.Nat'@.
-inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m + 1)) -> Sing n -> p n
+inductionNat :: forall p n. p 0 -> (forall m. p m -> p (m TL.+ 1)) -> Sing n -> p n
 inductionNat base step sn =
   case viewNat sn of
     IsZero    -> base
@@ -404,16 +404,16 @@ instance PeanoOrder TL.Nat where
   lneqSuccLeq n m =
     case sCompare n m of
       SEQ ->
-        start (n %:< m)
+        start (n %< m)
           =~= SFalse
-          === (sSucc n %:<= n) `because` sym (succLeqAbsurd' n)
-          === (sSucc n %:<= m) `because` sLeqCongR (sSucc n) (eqToRefl n m Refl)
+          === (sSucc n %<= n) `because` sym (succLeqAbsurd' n)
+          === (sSucc n %<= m) `because` sLeqCongR (sSucc n) (eqToRefl n m Refl)
       SLT -> withWitness (ltToSuccLeq n m Refl) $
-        start (n %:< m)
+        start (n %< m)
           =~= STrue
-          =~= (sSucc n %:<= m)
+          =~= (sSucc n %<= m)
       SGT ->
-        case sSucc n %:<= m of
+        case sSucc n %<= m of
           SFalse -> Refl
           STrue  -> eliminate $ succLeqToLT n m Witness
 
@@ -427,6 +427,7 @@ instance Monomorphicable (Sing :: TL.Nat -> *) where
 
 -- | Quotesi-quoter for singleton types for @'GHC.TypeLits.Nat'@. This can be used for an expression.
 --
---  For example: @[snat|12|] '%:+' [snat| 5 |]@.
+--  For example: @[snat|12|] '%+' [snat| 5 |]@.
 snat :: QuasiQuoter
 snat = mkSNatQQ [t| TL.Nat |]
+

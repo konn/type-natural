@@ -12,30 +12,36 @@ module Data.Type.Ordinal
          -- $quasiquotes
          mkOrdinalQQ, odPN, odLit,
          -- * Conversion from cardinals to ordinals.
-         sNatToOrd', sNatToOrd, ordToInt, ordToSing,
-         unsafeFromInt, inclusion, inclusion',
+         sNatToOrd', sNatToOrd,
+         ordToNatural, unsafeNaturalToOrd', unsafeNaturalToOrd,
+         reallyUnsafeNaturalToOrd,
+         naturalToOrd, naturalToOrd',
+         ordToSing,  inclusion, inclusion',
          -- * Ordinal arithmetics
          (@+), enumOrdinal,
          -- * Elimination rules for @'Ordinal' 'Z'@.
-         absurdOrd, vacuousOrd
+         absurdOrd, vacuousOrd,
+         -- * Deprecated combinators
+         ordToInt, unsafeFromInt, unsafeFromInt'
        ) where
-import           Data.Kind
+import Data.Type.Natural.Singleton.Compat
+
 import           Data.List                    (genericDrop, genericTake)
+import           Data.Maybe                   (fromMaybe)
 import           Data.Ord                     (comparing)
 import           Data.Singletons.Decide
 import           Data.Singletons.Prelude
 import           Data.Singletons.Prelude.Enum
 import           Data.Type.Equality
-import           Data.Type.Monomorphic
 import qualified Data.Type.Natural            as PN
 import           Data.Type.Natural.Builtin    ()
 import           Data.Type.Natural.Class
 import           Data.Typeable                (Typeable)
 import           Data.Void                    (absurd)
-import           GHC.TypeLits                 (type (+))
 import qualified GHC.TypeLits                 as TL
 import           Language.Haskell.TH          hiding (Type)
 import           Language.Haskell.TH.Quote
+import           Numeric.Natural
 import           Proof.Equational
 import           Proof.Propositional
 import           Unsafe.Coerce
@@ -48,9 +54,9 @@ import           Unsafe.Coerce
 --
 --   Since 0.6.0.0
 data Ordinal (n :: nat) where
-  OLt :: (IsPeano nat, (n :< m) ~ 'True) => Sing (n :: nat) -> Ordinal m
+  OLt :: (IsPeano nat, (n < m) ~ 'True) => Sing (n :: nat) -> Ordinal m
 
-fromOLt :: forall nat n m. (PeanoOrder nat, (Succ n :< Succ m) ~ 'True, SingI m)
+fromOLt :: forall nat n m. (PeanoOrder nat, (Succ n < Succ m) ~ 'True, SingI m)
         => Sing (n :: nat) -> Ordinal m
 fromOLt  n =
   withRefl (sym $ succLneqSucc n (sing :: Sing m)) $
@@ -60,7 +66,7 @@ fromOLt  n =
 --
 --   Since 0.6.0.0
 pattern OZ :: forall nat (n :: nat). IsPeano nat
-           => (Zero nat :< n) ~ 'True => Ordinal n
+           => (Zero nat < n) ~ 'True => Ordinal n
 pattern OZ <- OLt Zero where
   OZ = OLt sZero
 
@@ -79,17 +85,11 @@ deriving instance Typeable Ordinal
 -- |  Class synonym for Peano numerals with ordinals.
 --
 --  Since 0.5.0.0
-class (PeanoOrder nat, Monomorphicable (Sing :: nat -> *),
-       Integral (MonomorphicRep (Sing :: nat -> *)),
-       Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal nat
-instance (PeanoOrder nat, Monomorphicable (Sing :: nat -> *),
-       Integral (MonomorphicRep (Sing :: nat -> *)),
-       Show (MonomorphicRep (Sing :: nat -> *))) => HasOrdinal nat
+class (PeanoOrder nat, SingKind nat) => HasOrdinal nat
+instance (PeanoOrder nat, SingKind nat) => HasOrdinal nat
 
 instance (HasOrdinal nat, SingI (n :: nat))
       => Num (Ordinal n) where
-  {-# SPECIALISE instance SingI n => Num (Ordinal (n :: PN.Nat))  #-}
-  {-# SPECIALISE instance SingI n => Num (Ordinal (n :: TL.Nat))  #-}
   _ + _ = error "Finite ordinal is not closed under addition."
   _ - _ = error "Ordinal subtraction is not defined"
   negate OZ = OZ
@@ -104,14 +104,10 @@ instance (HasOrdinal nat, SingI (n :: nat))
 -- deriving instance Read (Ordinal n) => Read (Ordinal (Succ n))
 instance (SingI n, HasOrdinal nat)
         => Show (Ordinal (n :: nat)) where
-  {-# SPECIALISE instance SingI n => Show (Ordinal (n :: PN.Nat))  #-}
-  {-# SPECIALISE instance SingI n => Show (Ordinal (n :: TL.Nat))  #-}
-  showsPrec d o = showChar '#' . showParen True (showsPrec d (ordToInt o) . showString " / " . showsPrec d (demote $ Monomorphic (sing :: Sing n)))
+  showsPrec d o = showChar '#' . showParen True (showsPrec d (ordToInt o) . showString " / " . showsPrec d (toNatural (sing :: Sing n)))
 
 instance (HasOrdinal nat)
          => Eq (Ordinal (n :: nat)) where
-  {-# SPECIALISE instance Eq (Ordinal (n :: PN.Nat))  #-}
-  {-# SPECIALISE instance Eq (Ordinal (n :: TL.Nat))  #-}
   o == o' = ordToInt o == ordToInt o'
 
 instance (HasOrdinal nat) => Ord (Ordinal (n :: nat)) where
@@ -167,34 +163,73 @@ instance (SingI m, SingI n, n ~ (m + 1)) => Bounded (Ordinal n) where
     sNatToOrd (sing :: Sing m)
   {-# INLINE maxBound #-}
 
+{-# DEPRECATED unsafeFromInt "Use unsafeNaturalToOrd instead" #-}
+-- | Since 0.8.0.0
 unsafeFromInt :: forall (n :: nat). (HasOrdinal nat, SingI (n :: nat))
-              => MonomorphicRep (Sing :: nat -> *) -> Ordinal n
-unsafeFromInt n =
-    case promote (n :: MonomorphicRep (Sing :: nat -> *)) of
-      Monomorphic sn ->
-           case sn %:< (sing :: Sing n) of
-             STrue -> sNatToOrd' (sing :: Sing n) sn
+              => Int -> Ordinal n
+unsafeFromInt = unsafeNaturalToOrd . fromIntegral
+
+-- | Converts @'Natural'@s into @'Ordinal n'@.
+--   If the given natural is greater or equal to @n@, raises exception.
+--
+--   Since 0.8.0.0
+unsafeNaturalToOrd :: forall (n :: nat). (HasOrdinal nat, SingI (n :: nat))
+                  => Natural -> Ordinal n
+unsafeNaturalToOrd k =
+    fromMaybe (error "unsafeNaturalToOrd Out of bound") $
+    naturalToOrd k
+
+{-# DEPRECATED unsafeFromInt' "Use unsafeNaturalToOrd' instead" #-}
+-- | Since 0.8.0.0
+unsafeFromInt' :: forall proxy (n :: nat). (HasOrdinal nat, SingI n)
+              => proxy nat -> Int -> Ordinal n
+unsafeFromInt' p = unsafeNaturalToOrd' p . fromIntegral
+
+-- | Since 0.8.0.0
+unsafeNaturalToOrd' :: forall proxy (n :: nat). (HasOrdinal nat, SingI n)
+                   => proxy nat -> Natural -> Ordinal n
+unsafeNaturalToOrd' _ n =
+    case fromNatural n of
+      SomeSing sn ->
+           case sn %< (sing :: Sing n) of
+             STrue  -> sNatToOrd' (sing :: Sing n) sn
              SFalse -> error "Bound over!"
 
-unsafeFromInt' :: forall proxy (n :: nat). (HasOrdinal nat, SingI n)
-              => proxy nat -> MonomorphicRep (Sing :: nat -> *) -> Ordinal n
-unsafeFromInt' _ n =
-    case promote (n :: MonomorphicRep (Sing :: nat -> *)) of
-      Monomorphic sn ->
-           case sn %:< (sing :: Sing n) of
-             STrue -> sNatToOrd' (sing :: Sing n) sn
-             SFalse -> error "Bound over!"
+{-# WARNING reallyUnsafeNaturalToOrd "This function may violate type safety. Use with care!" #-}
+-- | Converts @'Natural'@s into @'Ordinal' n@, WITHOUT any boundary check.
+--   This function may easily violate type-safety. Use with care!
+reallyUnsafeNaturalToOrd :: forall pxy nat (n :: nat). (HasOrdinal nat, SingI n)
+                         => pxy nat -> Natural -> Ordinal n
+reallyUnsafeNaturalToOrd _ k =
+  case fromNatural k of
+    SomeSing (sk :: Sing (k :: nat)) ->
+      withRefl (unsafeCoerce (Refl :: () :~: ()) :: (k < n) :~: 'True) $
+      OLt sk
 
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
 --
 --   Since 0.5.0.0
-sNatToOrd' :: (PeanoOrder nat, (m :< n) ~ 'True) => Sing (n :: nat) -> Sing m -> Ordinal n
-sNatToOrd' _ m = OLt m
+sNatToOrd' :: (PeanoOrder nat, (m < n) ~ 'True) => Sing (n :: nat) -> Sing m -> Ordinal n
+sNatToOrd' _ = OLt
 {-# INLINE sNatToOrd' #-}
 
 -- | 'sNatToOrd'' with @n@ inferred.
-sNatToOrd :: (PeanoOrder nat, SingI (n :: nat), (m :< n) ~ 'True) => Sing m -> Ordinal n
+sNatToOrd :: (PeanoOrder nat, SingI (n :: nat), (m < n) ~ 'True) => Sing m -> Ordinal n
 sNatToOrd = sNatToOrd' sing
+
+-- | Since 0.8.0.0
+naturalToOrd :: forall nat n. (HasOrdinal nat, SingI n)
+             => Natural -> Maybe (Ordinal (n :: nat))
+naturalToOrd = naturalToOrd' (sing :: Sing n)
+
+naturalToOrd' :: HasOrdinal nat
+              => Sing (n :: nat) -> Natural -> Maybe (Ordinal n)
+naturalToOrd' sn k =
+  case fromNatural k of
+    SomeSing sk ->
+      case sk %< sn of
+        STrue -> Just (OLt sk)
+        _     -> Nothing
 
 -- | Convert @Ordinal n@ into monomorphic @Sing@
 --
@@ -203,35 +238,43 @@ ordToSing :: (PeanoOrder nat) => Ordinal (n :: nat) -> SomeSing nat
 ordToSing (OLt n) = SomeSing n
 {-# INLINE ordToSing #-}
 
--- | Convert ordinal into @Int@.
-ordToInt :: (HasOrdinal nat, int ~ MonomorphicRep (Sing :: nat -> *))
+{-# DEPRECATED ordToInt "Use ordToNatural instead." #-}
+-- | Convert ordinal into @'Int'@.
+ordToInt :: (HasOrdinal nat)
          => Ordinal (n :: nat)
-         -> int
-ordToInt (OLt n) = demote $ Monomorphic n
-{-# SPECIALISE ordToInt :: Ordinal (n :: PN.Nat) -> Integer #-}
-{-# SPECIALISE ordToInt :: Ordinal (n :: TL.Nat) -> Integer #-}
+         -> Int
+ordToInt = fromIntegral . ordToNatural
+{-# SPECIALISE ordToInt :: Ordinal (n :: PN.Nat) -> Int #-}
+{-# SPECIALISE ordToInt :: Ordinal (n :: TL.Nat) -> Int #-}
+
+ordToNatural :: HasOrdinal nat
+             => Ordinal (n :: nat)
+             -> Natural
+ordToNatural (OLt n) = toNatural n
+{-# SPECIALISE ordToNatural :: Ordinal (n :: PN.Nat) -> Natural #-}
+{-# SPECIALISE ordToNatural :: Ordinal (n :: TL.Nat) -> Natural #-}
 
 -- | Inclusion function for ordinals.
 --
 --   Since 0.7.0.0 (constraint was weakened since last released)
-inclusion' :: (n :<= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
+inclusion' :: (n <= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
 inclusion' _ = unsafeCoerce
 {-# INLINE inclusion' #-}
 
 -- | Inclusion function for ordinals with codomain inferred.
 --
 --   Since 0.7.0.0 (constraint was weakened since last released)
-inclusion :: ((n :<= m) ~ 'True) => Ordinal n -> Ordinal m
-inclusion on = unsafeCoerce on
+inclusion :: ((n <= m) ~ 'True) => Ordinal n -> Ordinal m
+inclusion = unsafeCoerce
 {-# INLINE inclusion #-}
 
 
 -- | Ordinal addition.
 (@+) :: forall n m. (PeanoOrder nat, SingI (n :: nat), SingI m)
-     => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
+     => Ordinal n -> Ordinal m -> Ordinal (n + m)
 OLt k @+ OLt l =
   let (n, m) = (n :: Sing n, m :: Sing m)
-  in withWitness (plusStrictMonotone k n l m Witness Witness) $ OLt $ k %:+ l
+  in withWitness (plusStrictMonotone k n l m Witness Witness) $ OLt $ k %+ l
 
 -- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 --
@@ -272,3 +315,4 @@ odPN, odLit :: QuasiQuoter
 odPN  = mkOrdinalQQ [t| PN.Nat |]
 -- | Quasiquoter for ordinal indexed by built-in numeral @'GHC.TypeLits.Nat'@.
 odLit = mkOrdinalQQ [t| TL.Nat |]
+

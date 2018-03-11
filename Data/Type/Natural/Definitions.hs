@@ -1,12 +1,15 @@
-{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, FlexibleContexts     #-}
-{-# LANGUAGE FlexibleInstances, GADTs, InstanceSigs, KindSignatures   #-}
-{-# LANGUAGE MultiParamTypeClasses, PolyKinds, RankNTypes             #-}
-{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies, TypeOperators, UndecidableInstances        #-}
+{-# LANGUAGE CPP, DataKinds, DeriveDataTypeable, EmptyCase                 #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, InstanceSigs      #-}
+{-# LANGUAGE KindSignatures, MultiParamTypeClasses, PolyKinds, RankNTypes  #-}
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell      #-}
+{-# LANGUAGE TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
 module Data.Type.Natural.Definitions
        (module Data.Type.Natural.Definitions,
-        module Data.Singletons.Prelude
+        module Data.Singletons.Prelude,
+        module Data.Type.Natural.Singleton.Compat
        ) where
+import Data.Type.Natural.Singleton.Compat
+
 import Data.Promotion.Prelude.Enum
 import Data.Singletons.Prelude
 import Data.Singletons.Prelude.Enum
@@ -48,6 +51,7 @@ singletons [d|
      max (S n) Z     = S n
      max (S n) (S m) = S (max n m)
  |]
+
 singletons [d|
   instance Num Nat where
     Z   + n = n
@@ -62,7 +66,7 @@ singletons [d|
 
     abs n = n
 
-    signum Z = Z
+    signum Z     = Z
     signum (S _) = S Z
 
     fromInteger n = if n == 0 then Z else S (fromInteger (n-1))
@@ -70,46 +74,25 @@ singletons [d|
 
 singletons [d|
   instance Enum Nat where
-    succ n = S n
-    pred Z = Z
+    succ = S
+    pred Z     = Z
     pred (S n) = n
     toEnum n = if n == 0 then Z else S (toEnum (n - 1))
-    fromEnum Z = 0
+    fromEnum Z     = 0
     fromEnum (S n) = 1 + fromEnum n
  |]
-
-type n :-: m = n :- m
-type n :+: m = n :+ m
-
-infixl 6 :-:, :+:
 
 singletons [d|
  (**) :: Nat -> Nat -> Nat
  _ ** Z = S Z
  n ** S m = (n ** m) * n
  |]
+#if !MIN_VERSION_singletons(2,4,0)
+type (**) a b = a :** b
 
-
--- | Addition for singleton numbers.
-(%+) :: SNat n -> SNat m -> SNat (n :+: m)
-(%+) = (%:+)
-infixl 6 %+
-
--- | Type-level multiplication.
-type n :*: m = n :* m
-infixl 7 :*:
-
--- | Multiplication for singleton numbers.
-(%*) :: SNat n -> SNat m -> SNat (n :*: m)
-(%*) = (%:*)
-infixl 7 %*
-
--- | Type-level exponentiation.
-type n :**: m = n :** m
-
--- | Exponentiation for singleton numbers.
-(%**) :: SNat n -> SNat m -> SNat (n :**: m)
+(%**) :: SNat n -> SNat m -> SNat (n ** m)
 (%**) = (%:**)
+#endif
 
 singletons [d|
  zero, one, two, three, four, five, six, seven, eight, nine, ten :: Nat

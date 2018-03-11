@@ -1,60 +1,43 @@
-resolver: ghc-8.4.0.20171214
-compiler: ghc-8.4.0.20171214
+resolver: ghc-8.4.1
+compiler: ghc-8.4.1
 skip-ghc-check: true
-
-setup-info:
-  ghc:
-    macosx:
-      8.4.0.20171214: 
-        url: "https://downloads.haskell.org/~ghc/8.4.1-alpha1/ghc-8.4.0.20171214-x86_64-apple-darwin.tar.xz"
-        sha1: f734623712a3e93fb676ee479de0670303a5d777
-    linux64:
-      8.4.0.20171214: 
-        url: "https://downloads.haskell.org/~ghc/8.4.1-alpha1/ghc-8.4.0.20171214-x86_64-deb8-linux.tar.xz"
-        sha1: 7c3fe68f0332b038c75c3b92d55878580b7d5d30
 
 flags: {}
 packages:
 - '.'
-- location:
-    git: https://github.com/konn/equational-reasoning-in-haskell.git
-    commit: 47fc2944aa86ff3b37baad4583802937f9de63c9
-  extra-dep: true
-- location:
-    git: https://github.com/konn/presburger.git
-    commit: fd7746dbc63d427ab5670341cd0fd13cb2c087b6
-  extra-dep: true
-
-package-indices:
-- name: Hackage Head
-  download-prefix: http://head.hackage.haskell.org/package/
-  http: http://head.hackage.haskell.org/01-index.tar.gz
-- name: Hackage
-  download-prefix: http://hackage.haskell.org/package/
-  http: http://hackage.haskell.org/01-index.tar.gz
 
 allow-newer: true
 
 extra-deps: 
-- constraints-0.9.1
-- ghc-tcplugins-extra-0.2.1
-- ghc-typelits-natnormalise-0.5.7
-- ghc-typelits-presburger-0.1.1.1
-- hashable-1.2.6.1
+- constraints-0.10
+- ghc-tcplugins-extra-0.2.2
+- hashable-1.2.7.0
 - monomorphic-0.0.3.3
-- primitive-0.6.2.0
-- reflection-2.1.2
-- safe-0.3.15
-- semigroups-0.18.3
-- singletons-2.3.1
+- primitive-0.6.3.0
+- reflection-2.1.3
+- safe-0.3.16
+- semigroups-0.18.4
+- singletons-2.4.1
 - syb-0.7
-- th-desugar-1.7
-- th-expand-syns-0.4.3.0
+- th-desugar-1.8
+- th-expand-syns-0.4.4.0
 - th-extras-0.0.0.4
-- th-lift-0.7.7
+- th-lift-0.7.8
 - th-lift-instances-0.1.11
-- th-orphans-0.13.4
+- th-orphans-0.13.5
 - th-reify-many-0.1.8
-- transformers-compat-0.5.1.4
+- transformers-compat-0.6.0.6
 - vector-0.12.0.1
 - void-0.7.2
+
+- git: https://github.com/konn/presburger.git
+  commit: fd7746dbc63d427ab5670341cd0fd13cb2c087b6
+
+- git: https://github.com/konn/equational-reasoning-in-haskell.git
+  commit: 6d4490d75f6f88d1918b7cef419792642e94eb56
+
+- git: https://github.com/konn/ghc-typelits-natnormalise.git
+  commit: 46f25195b85057757f5aac4e31d07391c9a95ac2
+
+- git: https://github.com/konn/ghc-typelits-presburger.git
+  commit: c1426eb3d74030857fe9d744572a179c6f8274bb

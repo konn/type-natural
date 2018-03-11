@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds, ExplicitNamespaces, FlexibleInstances, GADTs    #-}
 {-# LANGUAGE KindSignatures, PatternSynonyms, TypeInType, TypeOperators #-}
+{-# OPTIONS_GHC -Wno-warnings-deprecations #-}
 -- | Module providing the same API as 'Data.Type.Ordinal' but specialised to
 --   peano numeral @'Nat'@.
 --   
@@ -20,6 +21,7 @@ module Data.Type.Ordinal.Peano
        ) where
 import           Data.Kind
 import           Data.Singletons.Prelude      (POrd (..), SingI, Sing (..))
+import Data.Type.Natural.Singleton.Compat
 import           Data.Singletons.Prelude.Enum (PEnum (..))
 import qualified Data.Type.Ordinal            as O
 import           Data.Type.Natural
@@ -42,7 +44,7 @@ type Ordinal (n :: Nat) = O.Ordinal n
 --   but it is due to the limitation of GHC's current exhaustiveness checker.
 --   
 --   Since 0.7.0.0
-pattern OLt :: () => forall  (n1 :: Nat). ((n1 :< t) ~ 'True)
+pattern OLt :: () => forall  (n1 :: Nat). ((n1 < t) ~ 'True)
             => Sing n1 -> O.Ordinal t
 pattern OLt n = O.OLt n
 
@@ -50,7 +52,7 @@ pattern OLt n = O.OLt n
 --   
 --   Since 0.7.0.0
 pattern OZ :: forall  (n :: Nat). ()
-           => ('Z :< n) ~ 'True => O.Ordinal n
+           => ('Z < n) ~ 'True => O.Ordinal n
 pattern OZ = O.OZ
 
 -- | Pattern synonym @'OS' n@ represents (n+1)-th ordinal.
@@ -83,47 +85,47 @@ od = O.odLit
 -- | 'sNatToOrd'' @n m@ injects @m@ as @Ordinal n@.
 --   
 --   Since 0.7.0.0
-sNatToOrd' :: (m :< n) ~ 'True => Sing n -> Sing m -> Ordinal n
+sNatToOrd' :: (m < n) ~ 'True => Sing n -> Sing m -> Ordinal n
 sNatToOrd' = O.sNatToOrd'
 {-# INLINE sNatToOrd' #-}
 
 -- | 'sNatToOrd'' with @n@ inferred.
 --   
 --   Since 0.7.0.0
-sNatToOrd :: (SingI n, (m :< n) ~ 'True) => Sing m -> Ordinal n
+sNatToOrd :: (SingI n, (m < n) ~ 'True) => Sing m -> Ordinal n
 sNatToOrd = O.sNatToOrd
 {-# INLINE sNatToOrd #-}
 
 -- | Convert ordinal into @Int@.
 --   
 --   Since 0.7.0.0
-ordToInt :: Ordinal n -> Integer
+ordToInt :: Ordinal n -> Int
 ordToInt = O.ordToInt
 {-# INLINE ordToInt #-}
 
 unsafeFromInt :: SingI n
-              => MonomorphicRep (Sing :: Nat -> Type) -> Ordinal n
+              => Int -> Ordinal n
 unsafeFromInt = O.unsafeFromInt
 {-# INLINE unsafeFromInt #-}
 
 -- | Inclusion function for ordinals.
 --
 --   Since 0.7.0.0
-inclusion :: (n :<= m) ~ 'True => Ordinal n -> Ordinal m
+inclusion :: (n <= m) ~ 'True => Ordinal n -> Ordinal m
 inclusion = O.inclusion
 {-# INLINE inclusion #-}
 
 -- | Inclusion function for ordinals with codomain inferred.
 --
 --   Since 0.7.0.0
-inclusion' :: (n :<= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
+inclusion' :: (n <= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
 inclusion' = O.inclusion'
 {-# INLINE inclusion' #-}
 
 -- | Ordinal addition.
 --
 --   Since 0.7.0.0
-(@+) :: (SingI n, SingI m) => Ordinal n -> Ordinal m -> Ordinal (n :+ m)
+(@+) :: (SingI n, SingI m) => Ordinal n -> Ordinal m -> Ordinal (n + m)
 (@+) = (O.@+)
 {-# INLINE (@+) #-}
 

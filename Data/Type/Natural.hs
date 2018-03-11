@@ -16,16 +16,16 @@ module Data.Type.Natural (-- * Re-exported modules.
                           min, Min, sMin, max, Max, sMax,
                           MinSym0, MinSym1, MinSym2,
                           MaxSym0, MaxSym1, MaxSym2,
-                          (:+:), (:+),
-                          (:+$), (:+$$), (:+$$$),
-                          (%+), (%:+), (:*), (:*:),
-                          (:*$), (:*$$), (:*$$$),
-                          (%:*), (%*), (:-:), (:-),
-                          (:**:), (:**), (%:**), (%**),
-                          (:-$), (:-$$), (:-$$$),
-                          (%:-), (%-),
+                          type (+),
+                          type (+@#@$), type (+@#@$$), type (+@#@$$$),
+                          (%+), type (*),
+                          type (*@#@$), type (*@#@$$), type (*@#@$$$),
+                          (%*), type (-),
+                          type (**), (%**),
+                          type (-@#@$), type (-@#@$$), type (-@#@$$$),
+                          (%-), 
                           -- ** Type-level predicate & judgements
-                          Leq(..), (:<=), LeqInstance,
+                          Leq(..), type (<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
                           propToBoolLeq,
                           -- * Conversion functions
@@ -61,17 +61,18 @@ module Data.Type.Natural (-- * Re-exported modules.
                           sN15, sN16, sN17, sN18, sN19, sN20
                          )
        where
-import Data.Type.Natural.Class hiding (One, Zero, sOne, sZero)
-import Data.Type.Natural.Core
-import Data.Type.Natural.Definitions hiding ((:<=))
+import Data.Type.Natural.Singleton.Compat
+
 import Data.Singletons
-import Data.Singletons.Prelude.Ord
 import Data.Singletons.Decide
 import Data.Type.Monomorphic
-import Proof.Equational
-import Proof.Propositional hiding (Not)
+import Data.Type.Natural.Class       hiding (One, Zero, sOne, sZero)
+import Data.Type.Natural.Core
+import Data.Type.Natural.Definitions hiding (type (<=))
 import Data.Void
 import Language.Haskell.TH.Quote
+import Proof.Equational
+import Proof.Propositional           hiding (Not)
 
 --------------------------------------------------
 -- * Conversion functions.
@@ -109,24 +110,24 @@ instance Monomorphicable (Sing :: Nat -> *) where
 -- | Since 0.5.0.0
 instance IsPeano Nat where
   {-# SPECIALISE instance IsPeano Nat #-}
-  induction base _step SZ = base
+  induction base _step SZ    = base
   induction base step (SS n) = step n (induction base step n)
 
   plusMinus n SZ =
-    start (n %:+ SZ %:- SZ)
-      === (n %:- SZ)        `because` minusCongL (plusZeroR n) SZ 
+    start (n %+ SZ %- SZ)
+      === (n %- SZ)        `because` minusCongL (plusZeroR n) SZ
       =~= n
   plusMinus n (SS m) =
-    start (n %:+ SS m %:- SS m)
-      === SS (n %:+ m) %:- SS m `because` minusCongL (plusSuccR n m) (SS m)
-      =~= (n %:+ m) %:- m
+    start (n %+ SS m %- SS m)
+      === SS (n %+ m) %- SS m `because` minusCongL (plusSuccR n m) (SS m)
+      =~= (n %+ m) %- m
       === n                     `because` plusMinus n m
 
   succInj Refl = Refl
   succOneCong = Refl
   succNonCyclic _ a = case a of {}
 
-  plusZeroL _   = Refl  
+  plusZeroL _   = Refl
   plusSuccL _ _ = Refl
 
   multZeroL _   = Refl
@@ -137,55 +138,55 @@ instance IsPeano Nat where
 snEqZAbsurd :: SingI n => 'S n :~: 'Z -> a
 snEqZAbsurd = absurd . succNonCyclic sing
 
-plusInjectiveL :: SNat n -> SNat m -> SNat l -> n :+ m :~: n :+ l -> m :~: l
+plusInjectiveL :: SNat n -> SNat m -> SNat l -> n + m :~: n + l -> m :~: l
 plusInjectiveL SZ     _ _ Refl = Refl
 plusInjectiveL (SS n) m l eq   = plusInjectiveL n m l $ succInj eq
 
-plusInjectiveR :: SNat n -> SNat m -> SNat l -> n :+ l :~: m :+ l -> n :~: m
+plusInjectiveR :: SNat n -> SNat m -> SNat l -> n + l :~: m + l -> n :~: m
 plusInjectiveR n m l eq = plusInjectiveL l n m $
-  start (l %:+ n)
-    === n %:+ l   `because` plusComm l n
-    === m %:+ l   `because` eq
-    === l %:+ m   `because` plusComm m l
+  start (l %+ n)
+    === n %+ l   `because` plusComm l n
+    === m %+ l   `because` eq
+    === l %+ m   `because` plusComm m l
 
-reflToSEqual :: SNat n -> SNat m -> n :~: m -> IsTrue (n :== m)
+reflToSEqual :: SNat n -> SNat m -> n :~: m -> IsTrue (n == m)
 reflToSEqual SZ     _      Refl = Witness
 reflToSEqual (SS n) (SS m) Refl = reflToSEqual n m Refl
-reflToSEqual (SS _) SZ refl = case refl of {}
+reflToSEqual (SS _) SZ refl     = case refl of {}
 
-sequalToRefl :: SNat n -> SNat m -> IsTrue (n :== m) -> n :~: m
+sequalToRefl :: SNat n -> SNat m -> IsTrue (n == m) -> n :~: m
 sequalToRefl SZ     SZ     Witness = Refl
 sequalToRefl SZ     (SS _) witness = case witness of {}
 sequalToRefl (SS n) (SS m) Witness = succCong $ sequalToRefl n m Witness
 sequalToRefl (SS _) SZ     witness = case witness of {}
 
-snequalToNoRefl :: SNat n -> SNat m -> IsTrue (Not (n :== m)) -> n :~: m -> Void
+snequalToNoRefl :: SNat n -> SNat m -> IsTrue (Not (n == m)) -> n :~: m -> Void
 snequalToNoRefl SZ     _ Witness = \case  {}
 snequalToNoRefl (SS _) _ Witness = \case  {}
 
-sequalSym :: SNat n -> SNat m -> (n :== m) :~: (m :== n)
+sequalSym :: SNat n -> SNat m -> (n == m) :~: (m == n)
 sequalSym SZ SZ         = Refl
 sequalSym SZ (SS _)     = Refl
 sequalSym (SS _) SZ     = Refl
 sequalSym (SS n) (SS m) = sequalSym n m
 
-sleqFlip :: SNat n -> SNat m -> (n :~: m -> Void) -> (m :<= n) :~: Not (n :<= m)
+sleqFlip :: SNat n -> SNat m -> (n :~: m -> Void) -> (m <= n) :~: Not (n <= m)
 sleqFlip SZ     SZ     neq = absurd $ neq Refl
 sleqFlip SZ     (SS _) _   = Refl
 sleqFlip (SS _) SZ     _   = Refl
 sleqFlip (SS n) (SS m) neq = sleqFlip n m (neq . succCong)
 
-sLeqReflexive :: SNat n -> SNat m -> IsTrue (n :== m) -> IsTrue (n :<= m)
+sLeqReflexive :: SNat n -> SNat m -> IsTrue (n == m) -> IsTrue (n <= m)
 sLeqReflexive SZ     _      Witness = Witness
 sLeqReflexive (SS n) (SS m) Witness = sLeqReflexive n m Witness
-sLeqReflexive (SS _) SZ  witness = case witness of {}
+sLeqReflexive (SS _) SZ  witness    = case witness of {}
 
-nonSLeqToLT :: (n :<= m) ~ 'False => SNat n -> SNat m -> Compare m n :~: 'LT
+nonSLeqToLT :: (n <= m) ~ 'False => SNat n -> SNat m -> Compare m n :~: 'LT
 nonSLeqToLT n m = withRefl (sequalSym n m) $
-  case m %:== n of
+  case m %== n of
     STrue -> case sLeqReflexive n m Witness of {}
     SFalse ->
-      case m %:<= n of
+      case m %<= n of
         STrue  -> Refl
         SFalse -> case sleqFlip n m $ snequalToNoRefl n m Witness of {}
 
@@ -198,46 +199,46 @@ instance PeanoOrder Nat where
   viewLeq (SS _) SZ     a       = case a of {}
 
   ltToLeq n m Refl =
-    case n %:== m of
-      SFalse -> case n %:<= m of
+    case n %== m of
+      SFalse -> case n %<= m of
         STrue -> Witness
   eqlCmpEQ n m Refl =
-    case n %:== m of
+    case n %== m of
       STrue  -> Refl
       SFalse -> absurd $ snequalToNoRefl n m Witness Refl
 
   eqToRefl n m Refl =
-    case n %:== m of
-      STrue -> sequalToRefl n m Witness
-      SFalse -> case n %:<= m of {}
+    case n %== m of
+      STrue  -> sequalToRefl n m Witness
+      SFalse -> case n %<= m of {}
 
   leqToCmp n m Witness =
-    case n %:== m of
+    case n %== m of
       STrue  -> Left $ sequalToRefl n m Witness
       SFalse -> Right Refl
 
   cmpZero _ = Refl
 
   flipCompare n m =
-    case n %:== m of
+    case n %== m of
       STrue -> withRefl (sequalSym n m) Refl
       SFalse -> withRefl (sequalSym n m) $
-        case n %:<= m of
+        case n %<= m of
           STrue -> withRefl (sleqFlip n m (snequalToNoRefl n m Witness)) $
-            case m %:<= n of
+            case m %<= n of
               SFalse -> Refl
           SFalse -> withRefl (sleqFlip n m (snequalToNoRefl n m Witness)) $
-            case m %:<= n of
+            case m %<= n of
               STrue -> Refl
 
-  minLeqL SZ SZ     = Witness
-  minLeqL SZ (SS _) = Witness
-  minLeqL (SS _) SZ = Witness
+  minLeqL SZ SZ         = Witness
+  minLeqL SZ (SS _)     = Witness
+  minLeqL (SS _) SZ     = Witness
   minLeqL (SS n) (SS m) = minLeqL n m
 
-  minLeqR SZ SZ     = Witness
-  minLeqR SZ (SS _) = Witness
-  minLeqR (SS _) SZ = Witness
+  minLeqR SZ SZ         = Witness
+  minLeqR SZ (SS _)     = Witness
+  minLeqR (SS _) SZ     = Witness
   minLeqR (SS n) (SS m) = minLeqR n m
 
   minLargest SZ     _      _  _ _       = Witness
@@ -271,13 +272,13 @@ instance PeanoOrder Nat where
   lneqReversed _ _ = Refl
   lneqSuccLeq _ _ = Refl
 
-plusMinusEqL :: SNat n -> SNat m -> ((n :+: m) :-: m) :~: n
+plusMinusEqL :: SNat n -> SNat m -> ((n + m) - m) :~: n
 plusMinusEqL = plusMinus
 
-plusNeutralR :: SNat n -> SNat m -> n :+ m :~: n -> m :~: 'Z
+plusNeutralR :: SNat n -> SNat m -> n + m :~: n -> m :~: 'Z
 plusNeutralR n m npmn = plusEqCancelL n m SZ (npmn `trans` sym (plusZeroR n))
 
-plusNeutralL :: SNat n -> SNat m -> n :+ m :~: m -> n :~: 'Z
+plusNeutralL :: SNat n -> SNat m -> n + m :~: m -> n :~: 'Z
 plusNeutralL n m npmm = plusNeutralR m n (plusComm m n `trans` npmm)
 
 --------------------------------------------------
@@ -286,7 +287,7 @@ plusNeutralL n m npmm = plusNeutralR m n (plusComm m n `trans` npmm)
 
 -- | Quotesi-quoter for 'SNat'. This can be used for an expression.
 --
---  For example: @[snat|12|] '%:+' [snat| 5 |]@.
+--  For example: @[snat|12|] '%+' [snat| 5 |]@.
 snat :: QuasiQuoter
 snat = mkSNatQQ [t| Nat |]
 

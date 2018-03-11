@@ -6,9 +6,10 @@ module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
         FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
         sLeqCongL, sLeqCongR, sLeqCong,
-        (:-.), (%:-.), minPlusTruncMinus, truncMinusLeq
+        type (-.), (%-.), minPlusTruncMinus, truncMinusLeq
        ) where
 import Data.Type.Natural.Class.Arithmetic
+import Data.Type.Natural.Singleton.Compat
 
 import Data.Singletons.Decide
 import Data.Singletons.Prelude
@@ -21,24 +22,24 @@ import Proof.Propositional
 
 data LeqView (n :: nat) (m :: nat) where
   LeqZero :: Sing n -> LeqView (Zero nat) n
-  LeqSucc :: Sing n -> Sing m -> IsTrue (n :<= m) -> LeqView (Succ n) (Succ m)
+  LeqSucc :: Sing n -> Sing m -> IsTrue (n <= m) -> LeqView (Succ n) (Succ m)
 
 data DiffNat n m where
-  DiffNat :: Sing n -> Sing m -> DiffNat n (n :+ m)
+  DiffNat :: Sing n -> Sing m -> DiffNat n (n + m)
 
-newtype LeqWitPf n = LeqWitPf { leqWitPf :: forall m. Sing m -> IsTrue (n :<= m) -> DiffNat n m }
-newtype LeqStepPf n = LeqStepPf { leqStepPf :: forall m l. Sing m -> Sing l -> n :+ l :~: m -> IsTrue (n :<= m) }
+newtype LeqWitPf n = LeqWitPf { leqWitPf :: forall m. Sing m -> IsTrue (n <= m) -> DiffNat n m }
+newtype LeqStepPf n = LeqStepPf { leqStepPf :: forall m l. Sing m -> Sing l -> n + l :~: m -> IsTrue (n <= m) }
 
 succDiffNat :: IsPeano nat
             => Sing n -> Sing m -> DiffNat (n :: nat) m -> DiffNat (Succ n) (Succ m)
 succDiffNat _ _ (DiffNat n m) = coerce (plusSuccL n m) $ DiffNat (sSucc n) m
 
 coerceLeqL :: forall (n :: nat) m l . IsPeano nat => n :~: m -> Sing l
-           -> IsTrue (n :<= l) -> IsTrue (m :<= l)
+           -> IsTrue (n <= l) -> IsTrue (m <= l)
 coerceLeqL Refl _ Witness = Witness
 
 coerceLeqR :: forall (n :: nat) m l . IsPeano nat =>  Sing l -> n :~: m
-           -> IsTrue (l :<= n) -> IsTrue (l :<= m)
+           -> IsTrue (l <= n) -> IsTrue (l <= m)
 coerceLeqR _ Refl Witness = Witness
 
 singletonsOnly [d|
@@ -54,13 +55,13 @@ congFlipOrdering Refl = Refl
 compareCongR :: Sing (a :: k) -> b :~: c -> Compare a b :~: Compare a c
 compareCongR _ Refl = Refl
 
-sLeqCong :: a :~: b -> c :~: d -> (a :<= c) :~: (b :<= d)
+sLeqCong :: a :~: b -> c :~: d -> (a <= c) :~: (b <= d)
 sLeqCong Refl Refl = Refl
 
-sLeqCongL :: a :~: b -> Sing c -> (a :<= c) :~: (b :<= c)
+sLeqCongL :: a :~: b -> Sing c -> (a <= c) :~: (b <= c)
 sLeqCongL Refl _ = Refl
 
-sLeqCongR :: Sing a -> b :~: c -> (a :<= b) :~: (a :<= c)
+sLeqCongR :: Sing a -> b :~: c -> (a <= b) :~: (a <= c)
 sLeqCongR _ Refl = Refl
 
 newtype LTSucc n = LTSucc { proofLTSucc :: Compare n (Succ n) :~: 'LT }
@@ -83,7 +84,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
               (leqToMin, geqToMin | minLeqL, minLeqR, minLargest),
               (leqToMax, geqToMax | maxLeqL, maxLeqR, maxLeast) #-}
 
-  leqToCmp :: Sing (a :: nat) -> Sing b -> IsTrue (a :<= b)
+  leqToCmp :: Sing (a :: nat) -> Sing b -> IsTrue (a <= b)
            -> Either (a :~: b) (Compare a b :~: 'LT)
   eqlCmpEQ :: Sing (a :: nat) -> Sing b -> a :~: b -> Compare a b :~: 'EQ
   eqToRefl :: Sing (a :: nat) -> Sing b -> Compare a b :~: 'EQ -> a :~: b
@@ -98,49 +99,49 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
       === sCompare a b `because` sym aLTb
       === SEQ          `because` eqlCmpEQ a b aEQb
 
-  leqNeqToLT :: Sing (a :: nat) -> Sing b -> IsTrue (a :<= b) -> (a :~: b -> Void) -> Compare a b :~: 'LT
+  leqNeqToLT :: Sing (a :: nat) -> Sing b -> IsTrue (a <= b) -> (a :~: b -> Void) -> Compare a b :~: 'LT
   leqNeqToLT a b aLEQb aNEQb = either (absurd . aNEQb) id $ leqToCmp a b aLEQb
 
 
-  succLeqToLT :: Sing (a :: nat) -> Sing b -> IsTrue (S a :<= b) -> Compare a b :~: 'LT
+  succLeqToLT :: Sing (a :: nat) -> Sing b -> IsTrue (S a <= b) -> Compare a b :~: 'LT
   succLeqToLT a b saLEQb =
     case leqWitness (sSucc a) b saLEQb of
       DiffNat _ k -> let aLEQb = leqStep a b (sSucc k) $
-                                 start (a %:+ sSucc k)
-                                   === sSucc (a %:+ k) `because` plusSuccR a k
-                                   === sSucc a %:+ k   `because` sym (plusSuccL a k)
+                                 start (a %+ sSucc k)
+                                   === sSucc (a %+ k) `because` plusSuccR a k
+                                   === sSucc a %+ k   `because` sym (plusSuccL a k)
                                    =~= b
                          aNEQb aeqb = succNonCyclic k $ plusEqCancelL a (sSucc k) sZero $
-                                     start (a %:+ sSucc k)
-                                      === sSucc (a %:+ k) `because` plusSuccR a k
-                                      === (sSucc a) %:+ k `because` sym (plusSuccL a k)
+                                     start (a %+ sSucc k)
+                                      === sSucc (a %+ k) `because` plusSuccR a k
+                                      === (sSucc a) %+ k `because` sym (plusSuccL a k)
                                       =~= b
                                       === a               `because` sym aeqb
-                                      === a %:+ sZero     `because` sym (plusZeroR a)
+                                      === a %+ sZero     `because` sym (plusZeroR a)
                      in leqNeqToLT a b aLEQb aNEQb
 
   ltToLeq :: Sing (a :: nat) -> Sing b -> Compare a b :~: 'LT
-          -> IsTrue (a :<= b)
+          -> IsTrue (a <= b)
 
   gtToLeq :: Sing (a :: nat) -> Sing b -> Compare a b :~: 'GT
-          -> IsTrue (b :<= a)
+          -> IsTrue (b <= a)
   gtToLeq n m nGTm = ltToLeq m n $
     start (sCompare m n) === sFlipOrdering (sCompare n m) `because` sym (flipCompare n m)
                          === sFlipOrdering SGT            `because` congFlipOrdering nGTm
                          =~= SLT
 
   ltToSuccLeq :: Sing (a :: nat) -> Sing b -> Compare a b :~: 'LT
-              -> IsTrue (Succ a :<= b)
+              -> IsTrue (Succ a <= b)
   ltToSuccLeq n m nLTm =
      leqNeqToSuccLeq n m (ltToLeq n m nLTm) (ltToNeq n m nLTm)
 
   cmpZero :: Sing a -> Compare (Zero nat) (Succ a) :~: 'LT
   cmpZero sn = leqToLT sZero (sSucc sn) $ leqStep (sSucc sZero) (sSucc sn) sn $
-               start (sSucc sZero %:+ sn)
-                 === sSucc (sZero %:+ sn) `because` plusSuccL sZero sn
+               start (sSucc sZero %+ sn)
+                 === sSucc (sZero %+ sn) `because` plusSuccL sZero sn
                  === sSucc sn             `because` succCong (plusZeroL sn)
 
-  leqToGT :: Sing (a :: nat) -> Sing b -> IsTrue (Succ b :<= a)
+  leqToGT :: Sing (a :: nat) -> Sing b -> IsTrue (Succ b <= a)
               -> Compare a b :~: 'GT
   leqToGT a b sbLEQa =
     start (sCompare a b)
@@ -189,15 +190,15 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
                DiffNat _ k ->
                  sym $ succLeqToLT (sSucc n) (sSucc m) $
                  leqStep (sSucc (sSucc n)) (sSucc m) k $
-                 start (sSucc (sSucc n) %:+ k)
-                   === sSucc (sSucc n %:+ k)    `because` plusSuccL (sSucc n) k
+                 start (sSucc (sSucc n) %+ k)
+                   === sSucc (sSucc n %+ k)    `because` plusSuccL (sSucc n) k
                    =~= sSucc m
       SGT -> case leqWitness (sSucc m) n $ ltToSuccLeq m n (sym $ flipCompare n m) of
                DiffNat _ k ->
                  let pf = (succLeqToLT (sSucc m) (sSucc n) $
                           leqStep (sSucc (sSucc m)) (sSucc n) k $
-                          start (sSucc (sSucc m) %:+ k)
-                            === sSucc (sSucc m %:+ k)    `because` plusSuccL (sSucc m) k
+                          start (sSucc (sSucc m) %+ k)
+                            === sSucc (sSucc m %+ k)    `because` plusSuccL (sSucc m) k
                             =~= sSucc n)
                  in start (sCompare n m)
                       =~= SGT
@@ -245,7 +246,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
         in start (sCompare n (sSucc m'))
              === SLT `because` cmpSuccStepR n m' nLTm
 
-  leqToLT :: Sing (a :: nat) -> Sing b -> IsTrue (Succ a :<= b)
+  leqToLT :: Sing (a :: nat) -> Sing b -> IsTrue (Succ a <= b)
            -> Compare a b :~: 'LT
   leqToLT n m snLEQm =
     case leqToCmp (sSucc n) m snLEQm of
@@ -255,20 +256,20 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
           === SLT `because` ltSucc n
       Right nLTm -> ltSuccLToLT n m nLTm
 
-  leqZero :: Sing n -> IsTrue (Zero nat :<= n)
+  leqZero :: Sing n -> IsTrue (Zero nat <= n)
   leqZero sn =
     case zeroOrSucc sn of
-      IsZero   -> leqRefl sn
+      IsZero    -> leqRefl sn
       IsSucc pn -> ltToLeq sZero sn $ cmpZero pn
 
-  leqSucc :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> IsTrue (Succ n :<= Succ m)
+  leqSucc :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> IsTrue (Succ n <= Succ m)
   leqSucc n m nLEQm =
     case leqToCmp n m nLEQm of
       Left  eql  -> withRefl eql $ leqRefl (sSucc n)
       Right nLTm -> ltToLeq (sSucc n) (sSucc m) $ sym (cmpSucc n m) `trans` nLTm
 
-  fromLeqView :: LeqView (n :: nat) m -> IsTrue (n :<= m)
-  fromLeqView (LeqZero n) = leqZero n
+  fromLeqView :: LeqView (n :: nat) m -> IsTrue (n <= m)
+  fromLeqView (LeqZero n)         = leqZero n
   fromLeqView (LeqSucc n m nLEQm) = leqSucc n m nLEQm
 
   leqViewRefl :: Sing (n :: nat) -> LeqView n n
@@ -280,7 +281,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
       step n (LeqViewRefl nLEQn) =
         LeqViewRefl $ LeqSucc n n (fromLeqView nLEQn)
 
-  viewLeq :: forall n m . Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> LeqView n m
+  viewLeq :: forall n m . Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> LeqView n m
   viewLeq n m nLEQm =
     case (zeroOrSucc n, leqToCmp n m nLEQm) of
       (IsZero, _)    -> LeqZero m
@@ -291,7 +292,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
              n'LTm' = cmpSucc n' m' `trans` compareCongR n (sym sm'EQm) `trans` nLTm
          in coerce (sym sm'EQm) $ LeqSucc n' m' $ ltToLeq n' m' n'LTm'
 
-  leqWitness :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> DiffNat n m
+  leqWitness :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> DiffNat n m
   leqWitness = leqWitPf . induction base step
     where
       base :: LeqWitPf (Zero nat)
@@ -304,7 +305,7 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
           LeqSucc (_ :: Sing n') pm nLEQpm ->
             succDiffNat n pm $ ih pm $ coerceLeqL (succInj Refl :: n' :~: n) pm nLEQpm
 
-  leqStep :: Sing (n :: nat) -> Sing m -> Sing l -> n :+ l :~: m -> IsTrue (n :<= m)
+  leqStep :: Sing (n :: nat) -> Sing m -> Sing l -> n + l :~: m -> IsTrue (n <= m)
   leqStep = leqStepPf . induction base step
     where
       base :: LeqStepPf (Zero nat)
@@ -314,165 +315,165 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
       step n (LeqStepPf ih) =
         LeqStepPf $ \k l snPlEqk ->
         let kEQspk = start k
-                       === sSucc n %:+ l   `because` sym snPlEqk
-                       === sSucc (n %:+ l) `because` plusSuccL n l
-            pk = n %:+ l
+                       === sSucc n %+ l   `because` sym snPlEqk
+                       === sSucc (n %+ l) `because` plusSuccL n l
+            pk = n %+ l
         in coerceLeqR (sSucc n) (sym kEQspk) $ leqSucc n pk $ ih pk l Refl
 
-  leqNeqToSuccLeq :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> (n :~: m -> Void) -> IsTrue (Succ n :<= m)
+  leqNeqToSuccLeq :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> (n :~: m -> Void) -> IsTrue (Succ n <= m)
   leqNeqToSuccLeq n m nLEQm nNEQm =
     case leqWitness n m nLEQm of
       DiffNat _ k ->
         case zeroOrSucc k of
           IsZero -> absurd $ nNEQm $ sym $ plusZeroR n
           IsSucc k' -> leqStep (sSucc n) m k' $
-            start (sSucc n %:+ k')
-              === sSucc (n %:+ k') `because` plusSuccL n k'
-              === n %:+ sSucc k'   `because` sym (plusSuccR n k')
+            start (sSucc n %+ k')
+              === sSucc (n %+ k') `because` plusSuccL n k'
+              === n %+ sSucc k'   `because` sym (plusSuccR n k')
               =~= m
 
-  leqRefl :: Sing (n :: nat) -> IsTrue (n :<= n)
+  leqRefl :: Sing (n :: nat) -> IsTrue (n <= n)
   leqRefl sn = leqStep sn sn sZero (plusZeroR sn)
 
-  leqSuccStepR :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> IsTrue (n :<= Succ m)
+  leqSuccStepR :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> IsTrue (n <= Succ m)
   leqSuccStepR n m nLEQm =
     case leqWitness n m nLEQm of
       DiffNat _ k -> leqStep n (sSucc m) (sSucc k) $
-        start (n %:+ sSucc k) === sSucc (n %:+ k) `because` plusSuccR n k =~= sSucc m
+        start (n %+ sSucc k) === sSucc (n %+ k) `because` plusSuccR n k =~= sSucc m
 
-  leqSuccStepL :: Sing (n :: nat) -> Sing m -> IsTrue (Succ n :<= m) -> IsTrue (n :<= m)
+  leqSuccStepL :: Sing (n :: nat) -> Sing m -> IsTrue (Succ n <= m) -> IsTrue (n <= m)
   leqSuccStepL n m snLEQm =
      leqTrans n (sSucc n) m (leqSuccStepR n n $ leqRefl n) snLEQm
 
-  leqReflexive :: Sing (n :: nat) -> Sing m -> n :~: m -> IsTrue (n :<= m)
+  leqReflexive :: Sing (n :: nat) -> Sing m -> n :~: m -> IsTrue (n <= m)
   leqReflexive n _ Refl = leqRefl n
 
-  leqTrans :: Sing (n :: nat) -> Sing m -> Sing l -> IsTrue (n :<= m) -> IsTrue (m :<= l) -> IsTrue (n :<= l)
+  leqTrans :: Sing (n :: nat) -> Sing m -> Sing l -> IsTrue (n <= m) -> IsTrue (m <= l) -> IsTrue (n <= l)
   leqTrans n m k nLEm mLEk =
     case leqWitness n m nLEm of
       DiffNat _ mMn -> case leqWitness m k mLEk of
-        DiffNat _ kMn -> leqStep n k (mMn %:+ kMn) (sym $ plusAssoc n mMn kMn)
+        DiffNat _ kMn -> leqStep n k (mMn %+ kMn) (sym $ plusAssoc n mMn kMn)
 
-  leqAntisymm :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> IsTrue (m :<= n) -> n :~: m
+  leqAntisymm :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> IsTrue (m <= n) -> n :~: m
   leqAntisymm n m nLEm mLEn =
     case (leqWitness n m nLEm, leqWitness m n mLEn) of
       (DiffNat _ mMn, DiffNat _ nMm) ->
-        let pEQ0 = plusEqCancelL n (mMn %:+ nMm) sZero $
-                   start (n %:+ (mMn %:+ nMm))
-                     === (n %:+ mMn) %:+ nMm
+        let pEQ0 = plusEqCancelL n (mMn %+ nMm) sZero $
+                   start (n %+ (mMn %+ nMm))
+                     === (n %+ mMn) %+ nMm
                          `because` sym (plusAssoc n mMn nMm)
-                     =~= m %:+ nMm
+                     =~= m %+ nMm
                      =~= n
-                     === n %:+ sZero
+                     === n %+ sZero
                          `because` sym (plusZeroR n)
             nMmEQ0 = plusEqZeroL mMn nMm pEQ0
 
         in sym $ start m
-             =~= n %:+ mMn
-             === n %:+ sZero  `because` plusCongR n nMmEQ0
+             =~= n %+ mMn
+             === n %+ sZero  `because` plusCongR n nMmEQ0
              === n            `because` plusZeroR n
 
   plusMonotone :: Sing (n :: nat) -> Sing m -> Sing l -> Sing k
-               -> IsTrue (n :<= m) -> IsTrue (l :<= k)
-               -> IsTrue (n :+ l :<= m :+ k)
+               -> IsTrue (n <= m) -> IsTrue (l <= k)
+               -> IsTrue ((n + l) <= (m + k))
   plusMonotone n m l k nLEm lLEk =
     case (leqWitness n m nLEm, leqWitness l k lLEk) of
       (DiffNat _ mMINn, DiffNat _ kMINl) ->
-        let r = mMINn %:+ kMINl
-        in leqStep (n %:+ l) (m %:+ k) r $
-           start (n %:+ l %:+ r)
-             === n %:+ (l %:+ r)
+        let r = mMINn %+ kMINl
+        in leqStep (n %+ l) (m %+ k) r $
+           start (n %+ l %+ r)
+             === n %+ (l %+ r)
                  `because` plusAssoc n l r
-             =~= n %:+ (l %:+ (mMINn %:+ kMINl))
-             === n %:+ (l %:+ (kMINl %:+ mMINn))
+             =~= n %+ (l %+ (mMINn %+ kMINl))
+             === n %+ (l %+ (kMINl %+ mMINn))
                  `because` plusCongR n (plusCongR l (plusComm mMINn kMINl))
-             === n %:+ ((l %:+ kMINl) %:+ mMINn)
+             === n %+ ((l %+ kMINl) %+ mMINn)
                  `because` plusCongR n (sym $ plusAssoc l kMINl mMINn)
-             =~= n %:+ (k %:+ mMINn)
-             === n %:+ (mMINn %:+ k)
+             =~= n %+ (k %+ mMINn)
+             === n %+ (mMINn %+ k)
                  `because` plusCongR n (plusComm k mMINn)
-             === n %:+ mMINn %:+ k
+             === n %+ mMINn %+ k
                  `because` sym (plusAssoc n mMINn k)
-             =~= m %:+ k
+             =~= m %+ k
 
-  leqZeroElim :: Sing n -> IsTrue (n :<= Zero nat) -> n :~: Zero nat
+  leqZeroElim :: Sing n -> IsTrue (n <= Zero nat) -> n :~: Zero nat
   leqZeroElim n nLE0 =
     case viewLeq n sZero nLE0 of
-      LeqZero _ -> Refl
+      LeqZero _      -> Refl
       LeqSucc _ pZ _ -> absurd $ succNonCyclic pZ Refl
 
-  plusMonotoneL :: Sing (n :: nat) -> Sing m -> Sing (l :: nat) -> IsTrue (n :<= m)
-           -> IsTrue (n :+ l :<= m :+ l)
+  plusMonotoneL :: Sing (n :: nat) -> Sing m -> Sing (l :: nat) -> IsTrue (n <= m)
+           -> IsTrue ((n + l) <= (m + l))
   plusMonotoneL n m l leq = plusMonotone n m l l leq (leqRefl l)
 
-  plusMonotoneR :: Sing n -> Sing m -> Sing (l :: nat) -> IsTrue (m :<= l)
-           -> IsTrue (n :+ m :<= n :+ l)
+  plusMonotoneR :: Sing n -> Sing m -> Sing (l :: nat) -> IsTrue (m <= l)
+           -> IsTrue ((n + m) <= (n + l))
   plusMonotoneR n m l leq = plusMonotone n n m l (leqRefl n) leq
 
-  plusLeqL :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= n :+ m)
-  plusLeqL n m = leqStep n (n %:+ m) m Refl
+  plusLeqL :: Sing (n :: nat) -> Sing m -> IsTrue (n <= (n + m))
+  plusLeqL n m = leqStep n (n %+ m) m Refl
 
-  plusLeqR :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= n :+ m)
-  plusLeqR n m = leqStep m (n %:+ m) n $ plusComm m n
+  plusLeqR :: Sing (n :: nat) -> Sing m -> IsTrue (m <= (n + m))
+  plusLeqR n m = leqStep m (n %+ m) n $ plusComm m n
 
   plusCancelLeqR :: Sing (n :: nat) -> Sing m -> Sing l
-                 -> IsTrue (n :+ l :<= m :+ l)
-                 -> IsTrue (n :<= m)
+                 -> IsTrue ((n + l) <= (m + l))
+                 -> IsTrue (n <= m)
   plusCancelLeqR n m l nlLEQml =
-    case leqWitness (n %:+ l) (m %:+ l) nlLEQml of
+    case leqWitness (n %+ l) (m %+ l) nlLEQml of
       DiffNat _ k ->
-        let pf = plusEqCancelR (n %:+ k) m l $
-                 start ((n %:+ k) %:+ l)
-                   === n %:+ (k %:+ l) `because` plusAssoc n k l
-                   === n %:+ (l %:+ k) `because` plusCongR n (plusComm k l)
-                   === n %:+ l %:+ k   `because` sym (plusAssoc n l k)
-                   =~= m %:+ l
+        let pf = plusEqCancelR (n %+ k) m l $
+                 start ((n %+ k) %+ l)
+                   === n %+ (k %+ l) `because` plusAssoc n k l
+                   === n %+ (l %+ k) `because` plusCongR n (plusComm k l)
+                   === n %+ l %+ k   `because` sym (plusAssoc n l k)
+                   =~= m %+ l
         in leqStep n m k pf
 
   plusCancelLeqL :: Sing (n :: nat) -> Sing m -> Sing l
-                 -> IsTrue (n :+ m :<= n :+ l)
-                 -> IsTrue (m :<= l)
+                 -> IsTrue ((n + m) <= (n + l))
+                 -> IsTrue (m <= l)
   plusCancelLeqL n m l nmLEQnl =
     plusCancelLeqR m l n $
-    coerceLeqL (plusComm n m) (l %:+ n) $
-    coerceLeqR (n %:+ m) (plusComm n l) nmLEQnl
+    coerceLeqL (plusComm n m) (l %+ n) $
+    coerceLeqR (n %+ m) (plusComm n l) nmLEQnl
 
-  succLeqZeroAbsurd :: Sing n -> IsTrue (S n :<= Zero nat) -> Void
+  succLeqZeroAbsurd :: Sing n -> IsTrue (S n <= Zero nat) -> Void
   succLeqZeroAbsurd n leq =
     succNonCyclic n (leqZeroElim (sSucc n) leq)
 
-  succLeqZeroAbsurd' :: Sing n -> (S n :<= Zero nat) :~: 'False
+  succLeqZeroAbsurd' :: Sing n -> (S n <= Zero nat) :~: 'False
   succLeqZeroAbsurd' n =
-    case sSucc n %:<= sZero of
+    case sSucc n %<= sZero of
       STrue  -> absurd $ succLeqZeroAbsurd n Witness
       SFalse -> Refl
 
-  succLeqAbsurd :: Sing (n :: nat) -> IsTrue (S n :<= n) -> Void
+  succLeqAbsurd :: Sing (n :: nat) -> IsTrue (S n <= n) -> Void
   succLeqAbsurd n snLEQn =
     eliminate $
       start SLT
         === sCompare n n `because` sym (succLeqToLT n n snLEQn)
         === SEQ          `because` eqlCmpEQ n n Refl
 
-  succLeqAbsurd' :: Sing (n :: nat) -> (S n :<= n) :~: 'False
+  succLeqAbsurd' :: Sing (n :: nat) -> (S n <= n) :~: 'False
   succLeqAbsurd' n =
-    case sSucc n %:<= n of
-      STrue -> absurd $ succLeqAbsurd n Witness
+    case sSucc n %<= n of
+      STrue  -> absurd $ succLeqAbsurd n Witness
       SFalse -> Refl
 
-  notLeqToLeq :: ((n :<= m) ~ 'False) => Sing (n :: nat) -> Sing m -> IsTrue (m :<= n)
+  notLeqToLeq :: ((n <= m) ~ 'False) => Sing (n :: nat) -> Sing m -> IsTrue (m <= n)
   notLeqToLeq n m =
     case sCompare n m of
       SLT -> eliminate $ ltToLeq n m Refl
       SEQ -> eliminate $ leqReflexive n m $ eqToRefl n m Refl
       SGT -> gtToLeq n m Refl
 
-  leqSucc' :: Sing (n :: nat) -> Sing m -> (n :<= m) :~: (Succ n :<= Succ m)
+  leqSucc' :: Sing (n :: nat) -> Sing m -> (n <= m) :~: (Succ n <= Succ m)
   leqSucc' n m =
-    case n %:<= m of
+    case n %<= m of
       STrue -> withWitness (leqSucc n m Witness) Refl
       SFalse ->
-        case sSucc n %:<= sSucc m of
+        case sSucc n %<= sSucc m of
           SFalse -> Refl
           STrue  ->
             case viewLeq (sSucc n) (sSucc m) Witness of
@@ -480,48 +481,48 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
               LeqSucc n' m' Witness ->
                 eliminate $
                 start STrue
-                  =~= (n' %:<= m')
-                  === (n  %:<= m)   `because` sLeqCong (succInj' n' n Refl) (succInj' m' m Refl)
+                  =~= (n' %<= m')
+                  === (n  %<= m)   `because` sLeqCong (succInj' n' n Refl) (succInj' m' m Refl)
                   =~= SFalse
 
-  leqToMin :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> Min n m :~: n
+  leqToMin :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> Min n m :~: n
   leqToMin n m nLEQm =
      leqAntisymm (sMin n m) n (minLeqL n m)
                  (minLargest n n m (leqRefl n) nLEQm)
 
-  geqToMin :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= n) -> Min n m :~: m
+  geqToMin :: Sing (n :: nat) -> Sing m -> IsTrue (m <= n) -> Min n m :~: m
   geqToMin n m mLEQn =
      leqAntisymm (sMin n m) m (minLeqR n m)
                  (minLargest m n m mLEQn (leqRefl m))
 
   minComm :: Sing (n :: nat) -> Sing m -> Min n m :~: Min m n
   minComm n m =
-    case n %:<= m of
+    case n %<= m of
       STrue -> start (sMin n m) === n        `because` leqToMin n m Witness
                                 === sMin m n `because` sym (geqToMin m n Witness)
       SFalse -> start (sMin n m) === m        `because` geqToMin n m (notLeqToLeq n m)
                                  === sMin m n `because` sym (leqToMin m n $ notLeqToLeq n m)
 
-  minLeqL :: Sing (n :: nat) -> Sing m -> IsTrue (Min n m :<= n)
+  minLeqL :: Sing (n :: nat) -> Sing m -> IsTrue (Min n m <= n)
   minLeqL n m =
-    case n %:<= m of
+    case n %<= m of
       STrue  -> leqReflexive (sMin n m) n $ leqToMin n m Witness
       SFalse -> let mLEQn = notLeqToLeq n m
                 in leqTrans (sMin n m) m n
                      (leqReflexive (sMin n m) m (geqToMin n m mLEQn)) $
                      mLEQn
 
-  minLeqR :: Sing (n :: nat) -> Sing m -> IsTrue (Min n m :<= m)
+  minLeqR :: Sing (n :: nat) -> Sing m -> IsTrue (Min n m <= m)
   minLeqR n m = leqTrans (sMin n m) (sMin m n) m
                   (leqReflexive (sMin n m) (sMin m n) $ minComm n m)
                   (minLeqL m n)
 
   minLargest :: Sing (l :: nat) ->  Sing n -> Sing m
-             -> IsTrue (l :<= n) -> IsTrue (l :<= m)
-             -> IsTrue (l :<= Min n m)
+             -> IsTrue (l <= n) -> IsTrue (l <= m)
+             -> IsTrue (l <= Min n m)
   minLargest l n m lLEQn lLEQm =
     withSingI l $ withSingI n $ withSingI m $ withSingI (sMin n m) $
-    case n %:<= m of
+    case n %<= m of
       STrue -> leqTrans l n (sMin n m) lLEQn $
                leqReflexive sing sing  $ sym $ leqToMin n m Witness
       SFalse ->
@@ -529,41 +530,41 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
         in leqTrans l m (sMin n m) lLEQm $
            leqReflexive sing sing  $ sym $ geqToMin n m mLEQn
 
-  leqToMax :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= m) -> Max n m :~: m
+  leqToMax :: Sing (n :: nat) -> Sing m -> IsTrue (n <= m) -> Max n m :~: m
   leqToMax n m nLEQm =
      leqAntisymm (sMax n m) m (maxLeast m n m nLEQm (leqRefl m)) (maxLeqR n m)
 
-  geqToMax :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= n) -> Max n m :~: n
+  geqToMax :: Sing (n :: nat) -> Sing m -> IsTrue (m <= n) -> Max n m :~: n
   geqToMax n m mLEQn =
      leqAntisymm (sMax n m) n (maxLeast n n m (leqRefl n) mLEQn) (maxLeqL n m)
 
   maxComm :: Sing (n :: nat) -> Sing m -> Max n m :~: Max m n
   maxComm n m =
-    case n %:<= m of
+    case n %<= m of
       STrue -> start (sMax n m) === m        `because` leqToMax n m Witness
                                 === sMax m n `because` sym (geqToMax m n Witness)
       SFalse -> start (sMax n m) === n        `because` geqToMax n m (notLeqToLeq n m)
                                  === sMax m n `because` sym (leqToMax m n $ notLeqToLeq n m)
 
-  maxLeqR :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= Max n m)
+  maxLeqR :: Sing (n :: nat) -> Sing m -> IsTrue (m <= Max n m)
   maxLeqR n m =
-    case n %:<= m of
+    case n %<= m of
       STrue  -> leqReflexive m (sMax n m) $ sym $ leqToMax n m Witness
       SFalse -> let mLEQn = notLeqToLeq n m
                 in leqTrans m n (sMax n m) mLEQn
                      (leqReflexive n (sMax n m) (sym $ geqToMax n m mLEQn))
 
-  maxLeqL :: Sing (n :: nat) -> Sing m -> IsTrue (n :<= Max n m)
+  maxLeqL :: Sing (n :: nat) -> Sing m -> IsTrue (n <= Max n m)
   maxLeqL n m = leqTrans n (sMax m n) (sMax n m)
                   (maxLeqR m n)
                   (leqReflexive (sMax m n) (sMax n m) $ maxComm m n)
 
   maxLeast :: Sing (l :: nat) ->  Sing n -> Sing m
-             -> IsTrue (n :<= l) -> IsTrue (m :<= l)
-             -> IsTrue (Max n m :<= l)
+             -> IsTrue (n <= l) -> IsTrue (m <= l)
+             -> IsTrue (Max n m <= l)
   maxLeast l n m lLEQn lLEQm =
     withSingI l $ withSingI n $ withSingI m $ withSingI (sMax n m) $
-    case n %:<= m of
+    case n %<= m of
       STrue -> leqTrans (sMax n m) m l
                (leqReflexive sing sing  $ leqToMax n m Witness)
                lLEQm
@@ -573,56 +574,56 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
            (leqReflexive sing sing  $ geqToMax n m mLEQn)
            lLEQn
 
-  leqReversed  :: Sing (n :: nat) -> Sing m -> (n :<= m) :~: (m :>= n)
-  lneqSuccLeq  :: Sing (n :: nat) -> Sing m -> (n :< m)  :~: (Succ n :<= m)
-  lneqReversed :: Sing (n :: nat) -> Sing m -> (n :< m)  :~: (m :> n)
+  leqReversed  :: Sing (n :: nat) -> Sing m -> (n <= m) :~: (m >= n)
+  lneqSuccLeq  :: Sing (n :: nat) -> Sing m -> (n < m)  :~: (Succ n <= m)
+  lneqReversed :: Sing (n :: nat) -> Sing m -> (n < m)  :~: (m > n)
 
-  lneqToLT :: Sing (n :: nat) -> Sing (m :: nat) -> IsTrue (n :< m)
+  lneqToLT :: Sing (n :: nat) -> Sing (m :: nat) -> IsTrue (n < m)
            -> Compare n m :~: 'LT
   lneqToLT n m nLNEm =
     succLeqToLT n m $ coerce (lneqSuccLeq n m) nLNEm
 
   ltToLneq :: Sing (n :: nat) -> Sing (m :: nat) -> Compare n m :~: 'LT
-           -> IsTrue (n :< m)
+           -> IsTrue (n < m)
   ltToLneq n m nLTm =
     coerce (sym $ lneqSuccLeq n m) $ ltToSuccLeq n m nLTm
 
-  lneqZero :: Sing (a :: nat) -> IsTrue (Zero nat :< Succ a)
+  lneqZero :: Sing (a :: nat) -> IsTrue (Zero nat < Succ a)
   lneqZero n = ltToLneq sZero (sSucc n) $ cmpZero n
 
-  lneqSucc :: Sing (n :: nat) -> IsTrue (n :< Succ n)
+  lneqSucc :: Sing (n :: nat) -> IsTrue (n < Succ n)
   lneqSucc n = ltToLneq n (sSucc n) $ ltSucc n
 
   succLneqSucc :: Sing (n :: nat) -> Sing (m :: nat)
-               -> (n :< m) :~: (Succ n :< Succ m)
+               -> (n < m) :~: (Succ n < Succ m)
   succLneqSucc n m =
-    start (n %:< m)
-      === (sSucc n %:<= m)               `because` lneqSuccLeq n m
-      === (sSucc (sSucc n) %:<= sSucc m) `because` leqSucc' (sSucc n) m
-      === (sSucc n %:< sSucc m)          `because` sym (lneqSuccLeq (sSucc n) (sSucc m))
+    start (n %< m)
+      === (sSucc n %<= m)               `because` lneqSuccLeq n m
+      === (sSucc (sSucc n) %<= sSucc m) `because` leqSucc' (sSucc n) m
+      === (sSucc n %< sSucc m)          `because` sym (lneqSuccLeq (sSucc n) (sSucc m))
 
-  lneqRightPredSucc :: Sing (n :: nat) -> Sing (m :: nat) -> IsTrue (n :< m)
+  lneqRightPredSucc :: Sing (n :: nat) -> Sing (m :: nat) -> IsTrue (n < m)
                     -> m :~: Succ (Pred m)
   lneqRightPredSucc n m nLNEQm = ltRightPredSucc n m $ lneqToLT n m nLNEQm
 
-  lneqSuccStepL :: Sing (n :: nat) -> Sing m -> IsTrue (Succ n :< m) -> IsTrue (n :< m)
+  lneqSuccStepL :: Sing (n :: nat) -> Sing m -> IsTrue (Succ n < m) -> IsTrue (n < m)
   lneqSuccStepL n m snLNEQm =
     coerce (sym $ lneqSuccLeq n m) $
     leqSuccStepL (sSucc n) m $
     coerce (lneqSuccLeq (sSucc n) m) snLNEQm
 
-  lneqSuccStepR :: Sing (n :: nat) -> Sing m -> IsTrue (n :< m) -> IsTrue (n :< Succ m)
+  lneqSuccStepR :: Sing (n :: nat) -> Sing m -> IsTrue (n < m) -> IsTrue (n < Succ m)
   lneqSuccStepR n m nLNEQm =
     coerce (sym $ lneqSuccLeq n (sSucc m)) $
     leqSuccStepR (sSucc n) m $
     coerce (lneqSuccLeq n m) nLNEQm
 
   plusStrictMonotone :: Sing (n :: nat) -> Sing m -> Sing l -> Sing k
-                     -> IsTrue (n :< m) -> IsTrue (l :< k)
-                     -> IsTrue (n :+ l :< m :+ k)
+                     -> IsTrue (n < m) -> IsTrue (l < k)
+                     -> IsTrue ((n + l) < (m + k))
   plusStrictMonotone n m l k nLNm lLNk =
-    coerce (sym $ lneqSuccLeq (n %:+ l) (m %:+ k)) $
-      flip coerceLeqL (m %:+ k) (plusSuccL n l) $
+    coerce (sym $ lneqSuccLeq (n %+ l) (m %+ k)) $
+      flip coerceLeqL (m %+ k) (plusSuccL n l) $
       plusMonotone (sSucc n) m l k
         (coerce (lneqSuccLeq n m) nLNm)
         (leqTrans l (sSucc l) k (leqSuccStepR l l (leqRefl l)) $
@@ -640,67 +641,67 @@ class (SOrd nat, IsPeano nat) => PeanoOrder nat where
   minZeroR  :: Sing n -> Min n (Zero nat) :~: Zero nat
   minZeroR n = geqToMin n sZero (leqZero n)
 
-  minusSucc :: Sing (n :: nat) -> Sing m -> IsTrue (m :<= n) -> Succ n :- m :~: Succ (n :- m)
+  minusSucc :: Sing (n :: nat) -> Sing m -> IsTrue (m <= n) -> Succ n - m :~: Succ (n - m)
   minusSucc n m mLEQn =
     case leqWitness m n mLEQn of
       DiffNat _ k ->
-        start (sSucc n %:- m)
-          =~= sSucc (m %:+ k) %:- m
-          === (m %:+ sSucc k) %:- m  `because` minusCongL (sym $ plusSuccR m k) m
-          === (sSucc k %:+ m) %:- m  `because` minusCongL (plusComm m (sSucc k)) m
+        start (sSucc n %- m)
+          =~= sSucc (m %+ k) %- m
+          === (m %+ sSucc k) %- m  `because` minusCongL (sym $ plusSuccR m k) m
+          === (sSucc k %+ m) %- m  `because` minusCongL (plusComm m (sSucc k)) m
           === sSucc k                `because` plusMinus (sSucc k) m
-          === sSucc (k %:+ m %:- m)  `because` succCong (sym $ plusMinus k m)
-          === sSucc (m %:+ k %:- m)  `because` succCong (minusCongL (plusComm k m) m)
-          =~= sSucc (n %:- m)
+          === sSucc (k %+ m %- m)  `because` succCong (sym $ plusMinus k m)
+          === sSucc (m %+ k %- m)  `because` succCong (minusCongL (plusComm k m) m)
+          =~= sSucc (n %- m)
 
-  lneqZeroAbsurd :: Sing n -> IsTrue (n :< Zero nat) -> Void
+  lneqZeroAbsurd :: Sing n -> IsTrue (n < Zero nat) -> Void
   lneqZeroAbsurd n leq =
     succLeqZeroAbsurd n (coerce (lneqSuccLeq n sZero) leq)
 
-  minusPlus :: forall (n :: nat) m .PeanoOrder nat => Sing (n :: nat) -> Sing m -> IsTrue (m :<= n)
-            -> n :- m :+ m :~: n
+  minusPlus :: forall (n :: nat) m .PeanoOrder nat => Sing (n :: nat) -> Sing m -> IsTrue (m <= n)
+            -> n - m + m :~: n
   minusPlus n m mLEQn =
     case leqWitness m n mLEQn of
       DiffNat _ k ->
-        start (n %:- m %:+ m)
-          =~= m %:+ k %:- m %:+ m
-          === k %:+ m %:- m %:+ m  `because` plusCongL (minusCongL (plusComm m k) m) m
-          === k %:+ m              `because` plusCongL (plusMinus k m) m
-          === m %:+ k              `because` plusComm  k m
+        start (n %- m %+ m)
+          =~= m %+ k %- m %+ m
+          === k %+ m %- m %+ m  `because` plusCongL (minusCongL (plusComm m k) m) m
+          === k %+ m              `because` plusCongL (plusMinus k m) m
+          === m %+ k              `because` plusComm  k m
           =~= n
 
 -- | Natural subtraction, truncated to zero if m > n.
-type n :-. m = Subt n m (m :<= n)
+type n -. m = Subt n m (m <= n)
 type family Subt (n :: nat) (m :: nat) (b :: Bool) :: nat where
-  Subt n          m 'True  = n :- m
+  Subt n          m 'True  = n - m
   Subt (n :: nat) m 'False = Zero nat
-infixl 6 :-.
+infixl 6 -.
 
-(%:-.) :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> Sing (n :-. m)
-n %:-. m =
-  case m %:<= n of
-    STrue -> n %:- m
+(%-.) :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> Sing (n -. m)
+n %-. m =
+  case m %<= n of
+    STrue  -> n %- m
     SFalse -> sZero
 
 minPlusTruncMinus :: (PeanoOrder nat) => Sing (n :: nat) -> Sing (m :: nat)
-                  -> Min n m :+ (n :-. m) :~: n
+                  -> Min n m + (n -. m) :~: n
 minPlusTruncMinus n m =
-  case m %:<= n of
+  case m %<= n of
     STrue ->
-      start (sMin n m %:+ (n %:-. m))
-        === m %:+ (n %:-. m) `because` plusCongL (geqToMin n m Witness) (n %:-. m)
-        =~= m %:+ (n %:- m)
-        === (n %:- m) %:+ m  `because` plusComm m (n %:- m)
+      start (sMin n m %+ (n %-. m))
+        === m %+ (n %-. m) `because` plusCongL (geqToMin n m Witness) (n %-. m)
+        =~= m %+ (n %- m)
+        === (n %- m) %+ m  `because` plusComm m (n %- m)
         === n                `because` minusPlus n m Witness
     SFalse ->
-      start (sMin n m %:+ (n %:-. m))
-        =~= sMin n m %:+ sZero
+      start (sMin n m %+ (n %-. m))
+        =~= sMin n m %+ sZero
         === sMin n m  `because` plusZeroR (sMin n m)
         === n         `because` leqToMin n m (notLeqToLeq m n)
 
-truncMinusLeq :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> IsTrue (n :-. m :<= n)
+truncMinusLeq :: PeanoOrder nat => Sing (n :: nat) -> Sing m -> IsTrue ((n -. m) <= n)
 truncMinusLeq n m =
-  case m %:<= n of
-    STrue  -> leqStep (n %:-. m) n m $ minusPlus n m Witness
+  case m %<= n of
+    STrue  -> leqStep (n %-. m) n m $ minusPlus n m Witness
     SFalse -> leqZero n
 
