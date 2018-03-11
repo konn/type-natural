@@ -12,21 +12,23 @@ module Data.Type.Ordinal.Peano
          -- $quasiquotes
          od,
          -- * Conversion from cardinals to ordinals.
-         sNatToOrd', sNatToOrd, ordToInt,
-         unsafeFromInt, inclusion, inclusion',
+         sNatToOrd', sNatToOrd, inclusion, inclusion',
+         ordToNatural, unsafeNaturalToOrd, naturalToOrd, naturalToOrd',
          -- * Ordinal arithmetics
          (@+), enumOrdinal,
          -- * Elimination rules for @'Ordinal' 'Z'@.
-         absurdOrd, vacuousOrd
+         absurdOrd, vacuousOrd,
+         -- * Deprecated Combinators
+         ordToInt, unsafeFromInt
        ) where
-import           Data.Kind
-import           Data.Singletons.Prelude      (POrd (..), SingI, Sing (..))
 import Data.Type.Natural.Singleton.Compat
+
+import Numeric.Natural (Natural)
+import           Data.Singletons.Prelude      (SingI, Sing (..))
 import           Data.Singletons.Prelude.Enum (PEnum (..))
 import qualified Data.Type.Ordinal            as O
 import           Data.Type.Natural
 import           Language.Haskell.TH.Quote    (QuasiQuoter)
-import           Data.Type.Monomorphic
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -149,3 +151,16 @@ absurdOrd = O.absurdOrd
 vacuousOrd :: Functor f => f (Ordinal 'Z) -> f a
 vacuousOrd = O.vacuousOrd
 {-# INLINE vacuousOrd #-}
+
+ordToNatural :: Ordinal (n :: Nat) -> Natural
+ordToNatural = O.ordToNatural
+{-# INLINE ordToNatural #-}
+
+unsafeNaturalToOrd :: SingI (n :: Nat) => Natural -> Ordinal n
+unsafeNaturalToOrd = O.unsafeNaturalToOrd
+
+naturalToOrd :: SingI (n :: Nat) => Natural -> Maybe (Ordinal n)
+naturalToOrd = O.naturalToOrd
+
+naturalToOrd' :: Sing (n :: Nat) -> Natural -> Maybe (Ordinal n)
+naturalToOrd' = O.naturalToOrd'

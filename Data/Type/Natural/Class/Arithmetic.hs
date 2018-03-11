@@ -541,6 +541,15 @@ class (SDecide nat, SNum nat, SEnum nat, SingKind nat, SingKind nat)
   sPred' :: proxy n -> Sing (Succ n) -> Sing (n :: nat)
   sPred' pxy sn = coerce (succInj $ succCong $ predSucc (sPred' pxy sn)) (sPred sn)
 
+  toNatural :: Sing (n :: nat) -> Natural
+  toNatural = getConst . induction (Const 0) (\_ (Const k) -> (Const k + 1)) 
+
+  fromNatural :: Natural -> SomeSing nat
+  fromNatural 0 = SomeSing sZero
+  fromNatural n =
+    case fromNatural (n - 1) of
+      SomeSing sn -> SomeSing (Succ sn)
+
 pattern Zero :: forall nat (n :: nat). IsPeano nat => n ~ Zero nat => Sing n
 pattern Zero <- (zeroOrSucc -> IsZero) where
   Zero = sZero

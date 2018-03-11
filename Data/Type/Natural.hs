@@ -65,7 +65,6 @@ import Data.Type.Natural.Singleton.Compat
 
 import Data.Singletons
 import Data.Singletons.Decide
-import Data.Type.Monomorphic
 import Data.Type.Natural.Class       hiding (One, Zero, sOne, sZero)
 import Data.Type.Natural.Core
 import Data.Type.Natural.Definitions hiding (type (<=))
@@ -94,14 +93,6 @@ natToInt (S n) = natToInt n + 1
 sNatToInt :: Num n => SNat x -> n
 sNatToInt SZ     = 0
 sNatToInt (SS n) = sNatToInt n + 1
-
-instance Monomorphicable (Sing :: Nat -> *) where
-  type MonomorphicRep (Sing :: Nat -> *) = Integer
-  demote  (Monomorphic sn) = sNatToInt sn
-  promote n
-      | n < 0     = error "negative integer!"
-      | n == 0    = Monomorphic SZ
-      | otherwise = withPolymorhic (n - 1) $ \sn -> Monomorphic $ SS sn
 
 --------------------------------------------------
 -- * Properties

@@ -40,8 +40,6 @@ import           Data.Singletons.Prelude.Ord  (POrd (..), SOrd (..))
 import           Data.Singletons.TH           (sCases)
 import           Data.Singletons.TypeLits     (withKnownNat)
 import           Data.Type.Equality           ((:~:) (..))
-import           Data.Type.Monomorphic        (Monomorphic (..))
-import           Data.Type.Monomorphic        (Monomorphicable (..))
 import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
 import qualified Data.Type.Natural            as PN
 import           Data.Void                    (absurd)
@@ -295,6 +293,10 @@ inductionNat base step sn =
 
 instance IsPeano TL.Nat where
   {-# SPECIALISE instance IsPeano TL.Nat #-}
+
+  toNatural = fromIntegral . fromSing
+  fromNatural = toSing . fromIntegral
+
   predSucc _ = Refl
   plusMinus _ _ = Refl
   succInj Refl = Refl
@@ -417,13 +419,13 @@ instance PeanoOrder TL.Nat where
           SFalse -> Refl
           STrue  -> eliminate $ succLeqToLT n m Witness
 
-instance Monomorphicable (Sing :: TL.Nat -> *) where
-  type MonomorphicRep (Sing :: TL.Nat -> *) = Integer
-  demote  (Monomorphic sn) = fromSing sn
-  {-# INLINE demote #-}
+-- instance Monomorphicable (Sing :: TL.Nat -> *) where
+--   type MonomorphicRep (Sing :: TL.Nat -> *) = Integer
+--   demote  (Monomorphic sn) = fromSing sn
+--   {-# INLINE demote #-}
 
-  promote n = case toSing n of SomeSing k -> Monomorphic k
-  {-# INLINE promote #-}
+--   promote n = case toSing n of SomeSing k -> Monomorphic k
+--   {-# INLINE promote #-}
 
 -- | Quotesi-quoter for singleton types for @'GHC.TypeLits.Nat'@. This can be used for an expression.
 --

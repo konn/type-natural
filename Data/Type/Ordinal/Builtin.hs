@@ -12,21 +12,24 @@ module Data.Type.Ordinal.Builtin
          -- $quasiquotes
          od,
          -- * Conversion from cardinals to ordinals.
-         sNatToOrd', sNatToOrd, ordToInt,
-         unsafeFromInt, inclusion, inclusion',
+         sNatToOrd', sNatToOrd, ordToNatural,
+         unsafeNaturalToOrd, naturalToOrd, naturalToOrd',
+         inclusion, inclusion',
          -- * Ordinal arithmetics
          (@+), enumOrdinal,
          -- * Elimination rules for @'Ordinal' 0'@.
-         absurdOrd, vacuousOrd
+         absurdOrd, vacuousOrd,
+         -- * Deprecated combinators
+         ordToInt, unsafeFromInt
        ) where
-import           Data.Kind
-import           Data.Singletons.Prelude      (POrd (..), Sing (..))
 import qualified Data.Type.Natural.Singleton.Compat as SC
+
+import Numeric.Natural (Natural)
+import           Data.Singletons (SingI, Sing)
 import           Data.Singletons.Prelude.Enum (PEnum (..))
 import qualified Data.Type.Ordinal            as O
 import           GHC.TypeLits
 import           Language.Haskell.TH.Quote    (QuasiQuoter)
-import           Data.Type.Monomorphic
 
 -- | Set-theoretic (finite) ordinals:
 --
@@ -100,26 +103,44 @@ sNatToOrd = O.sNatToOrd
 -- | Convert ordinal into @Int@.
 --   
 --   Since 0.7.0.0
-ordToInt :: Ordinal n -> Integer
+ordToInt :: Ordinal n -> Int
 ordToInt = O.ordToInt
 {-# INLINE ordToInt #-}
 
+{-# DEPRECATED unsafeFromInt "Use unsafeNaturalToOrd instead" #-}
 unsafeFromInt :: KnownNat n
-              => MonomorphicRep (Sing :: Nat -> Type) -> Ordinal n
+              => Int -> Ordinal n
 unsafeFromInt = O.unsafeFromInt
 {-# INLINE unsafeFromInt #-}
+
+ordToNatural :: Ordinal (n :: Nat) -> Natural
+ordToNatural = O.ordToNatural
+{-# INLINE ordToNatural #-}
+
+
+naturalToOrd :: SingI (n :: Nat) => Natural -> Maybe (Ordinal n)
+naturalToOrd = O.naturalToOrd
+{-# INLINE naturalToOrd #-}
+
+naturalToOrd' :: Sing (n :: Nat) -> Natural -> Maybe (Ordinal n)
+naturalToOrd' = O.naturalToOrd'
+{-# INLINE naturalToOrd' #-}
+
+unsafeNaturalToOrd :: SingI (n :: Nat) => Natural -> Ordinal n
+unsafeNaturalToOrd = O.unsafeNaturalToOrd
+{-# INLINE unsafeNaturalToOrd #-}
 
 -- | Inclusion function for ordinals.
 --
 --   Since 0.7.0.0
-inclusion :: (n :<= m) ~ 'True => Ordinal n -> Ordinal m
+inclusion :: (n SC.<= m) ~ 'True => Ordinal n -> Ordinal m
 inclusion = O.inclusion
 {-# INLINE inclusion #-}
 
 -- | Inclusion function for ordinals with codomain inferred.
 --
 --   Since 0.7.0.0
-inclusion' :: (n :<= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
+inclusion' :: (n SC.<= m) ~ 'True => Sing m -> Ordinal n -> Ordinal m
 inclusion' = O.inclusion'
 {-# INLINE inclusion' #-}
 
