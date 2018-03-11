@@ -10,7 +10,9 @@ allow-newer: true
 
 extra-deps: 
 - constraints-0.10
+- equational-reasoning-0.5.1.0
 - ghc-tcplugins-extra-0.2.2
+- ghc-typelits-presburger-0.2.0.0
 - hashable-1.2.7.0
 - monomorphic-0.0.3.3
 - primitive-0.6.3.0
@@ -30,14 +32,5 @@ extra-deps:
 - vector-0.12.0.1
 - void-0.7.2
 
-- git: https://github.com/konn/presburger.git
-  commit: fd7746dbc63d427ab5670341cd0fd13cb2c087b6
-
-- git: https://github.com/konn/equational-reasoning-in-haskell.git
-  commit: 6d4490d75f6f88d1918b7cef419792642e94eb56
-
 - git: https://github.com/konn/ghc-typelits-natnormalise.git
   commit: 46f25195b85057757f5aac4e31d07391c9a95ac2
-
-- git: https://github.com/konn/ghc-typelits-presburger.git
-  commit: c1426eb3d74030857fe9d744572a179c6f8274bb
