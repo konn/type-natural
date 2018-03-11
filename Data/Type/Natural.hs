@@ -152,8 +152,10 @@ sequalToRefl (SS n) (SS m) Witness = succCong $ sequalToRefl n m Witness
 sequalToRefl (SS _) SZ     witness = case witness of {}
 
 snequalToNoRefl :: SNat n -> SNat m -> IsTrue (Not (n == m)) -> n :~: m -> Void
-snequalToNoRefl SZ     _ Witness = \case  {}
-snequalToNoRefl (SS _) _ Witness = \case  {}
+snequalToNoRefl SZ     _      Witness = \case  {}
+snequalToNoRefl (SS _) SZ     Witness = \case {}
+snequalToNoRefl (SS n) (SS m) Witness = \case
+  Refl -> snequalToNoRefl n m Witness  Refl
 
 sequalSym :: SNat n -> SNat m -> (n == m) :~: (m == n)
 sequalSym SZ SZ         = Refl
