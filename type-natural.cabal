@@ -41,7 +41,7 @@ library
                      , Data.Type.Natural.Core
                      , Data.Type.Natural.Singleton.Compat
                      , Data.Type.Natural.Singleton.Compat.TH
-  build-depends:       base                      >= 4
+  build-depends:       base                      == 4.*
                      , equational-reasoning      >= 0.4.1.1
                      , template-haskell          >= 2.8
                      , constraints               >= 0.3
