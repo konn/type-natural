@@ -1,4 +1,4 @@
-resolver: ghc-8.4.1
+resolver: nightly-2018-03-17
 compiler: ghc-8.4.1
 skip-ghc-check: true
 
@@ -6,31 +6,8 @@ flags: {}
 packages:
 - '.'
 
-allow-newer: true
-
 extra-deps: 
-- constraints-0.10
 - equational-reasoning-0.5.1.0
-- ghc-tcplugins-extra-0.2.2
+- ghc-typelits-natnormalise-0.5.9
 - ghc-typelits-presburger-0.2.0.0
-- hashable-1.2.7.0
-- monomorphic-0.0.3.3
-- primitive-0.6.3.0
-- reflection-2.1.3
-- safe-0.3.16
-- semigroups-0.18.4
-- singletons-2.4.1
-- syb-0.7
-- th-desugar-1.8
-- th-expand-syns-0.4.4.0
-- th-extras-0.0.0.4
-- th-lift-0.7.8
-- th-lift-instances-0.1.11
-- th-orphans-0.13.5
-- th-reify-many-0.1.8
-- transformers-compat-0.6.0.6
-- vector-0.12.0.1
-- void-0.7.2
-
-- git: https://github.com/clash-lang/ghc-typelits-natnormalise.git
-  commit: 1178631cc6b78ea9b92fcf29e2944d1a148f2d71
+- ghc-tcplugins-extra-0.2.4
