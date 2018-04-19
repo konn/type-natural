@@ -135,10 +135,7 @@ enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
 
 -- | Enumerate all @'Ordinal'@s less than @n@.
 enumOrdinal :: (PeanoOrder nat) => Sing (n :: nat) -> [Ordinal n]
-enumOrdinal (Succ n) = withSingI n $
-  withWitness (lneqZero n) $
-      OLt sZero : map succOrd (enumOrdinal n)
-enumOrdinal _ = []
+enumOrdinal sn = withSingI sn $ map (reallyUnsafeNaturalToOrd Proxy) [0..toNatural sn - 1]
 
 succOrd :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
 succOrd (OLt n) =
