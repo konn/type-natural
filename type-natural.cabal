@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                type-natural
-version:             0.8.0.1
+version:             0.8.1.0
 synopsis:            Type-level natural and proofs of their properties.
 description:         Type-level natural numbers and proofs of their properties.
                      .
