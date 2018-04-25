@@ -9,7 +9,7 @@ module Data.Type.Natural.Builtin
        ( -- * Sysnonym to avoid confusion
          Peano,
          -- * Coercion between builtin type-level natural and peano numerals
-         FromPeano, ToPeano, sFromPeano, sToPeano,
+         FromPeano, ToPeano, sFromPeano, sToPeano, leqqAndLeq,
          -- * Properties of @'FromPeano'@ and @'ToPeano'@.
          fromPeanoInjective, toPeanoInjective,
          -- ** Bijection
@@ -96,11 +96,48 @@ toPeanoSuccCong :: Sing n -> ToPeano (Succ n) :~: 'S (ToPeano n)
 toPeanoSuccCong _ = unsafeCoerce (Refl :: () :~: ())
   -- We cannot prove this lemma within Haskell, so we assume it a priori.
 
+infix 4 %<=?
+(%<=?) :: Sing (n :: TL.Nat) -> Sing m -> Sing (n <=? m)
+n %<=? m = case sCompare n m of
+  SLT -> STrue
+  SEQ -> STrue
+  SGT -> SFalse
+
+natLeqSuccEq :: Sing n -> Sing m -> ((n TL.+ 1) <=? (m TL.+ 1)) :~: (n <=? m)
+natLeqSuccEq _ _ = Refl
+
+leqqCong :: n :~: m -> l :~: z -> (n <=? l) :~: (m <=? z)
+leqqCong Refl Refl = Refl
+
+leqqAndLeq :: Sing n -> Sing m -> (n <=? m) :~: (n PN.<= m)
+leqqAndLeq n m =
+  case sCompare n m of
+    SEQ -> Refl
+    SLT -> Refl
+    SGT -> Refl
+
+natSuccPred :: forall n. TL.KnownNat n => ((n :~: 0) -> Void) -> Succ (Pred n) :~: n
+natSuccPred refute =
+  case sCompare (sing :: Sing 1) (sing :: Sing n) of
+    SLT -> Refl
+    SEQ -> Refl
+    SGT -> absurd $ refute Refl
+
+neqZero1leqq :: forall n. TL.KnownNat n => ((n :~: 0) -> Void) -> IsTrue (1 <=? n)
+neqZero1leqq refute =
+  case sCompare (sing :: Sing 1) (sing :: Sing n) of
+    SLT -> Witness
+    SEQ -> Witness
+    SGT -> absurd $ refute Refl
+
 sToPeano :: Sing n -> Sing (ToPeano n)
 sToPeano sn =
   case sn %~ (sing :: Sing 0) of
     Proved eq     -> withRefl eq SZ
-    Disproved _pf -> coerce (sym (toPeanoSuccCong (sPred sn))) (SS (sToPeano (sPred sn)))
+    Disproved _pf ->
+      withKnownNat sn $
+      withRefl (natSuccPred _pf) $
+      coerce (sym (toPeanoSuccCong (sPred sn))) (SS (sToPeano (sPred sn)))
 
 -- litSuccInjective :: forall (n :: TL.Nat) (m :: TL.Nat).
 --                     Succ n :~: Succ m -> n :~: m
@@ -216,20 +253,6 @@ toPeanoMultCong sn sm =
         =~= SS (sToPeano psn) %* sToPeano sm
         === sToPeano (sSucc psn) %* sToPeano sm
             `because` multCongL (sym (toPeanoSuccCong psn)) (sToPeano sm)
-
-infix 4 %<=?
-(%<=?) :: Sing (n :: TL.Nat) -> Sing m -> Sing (n <=? m)
-n %<=? m = case sCompare n m of
-  SLT -> STrue
-  SEQ -> STrue
-  SGT -> SFalse
-
-natLeqSuccEq :: Sing n -> Sing m -> ((n TL.+ 1) <=? (m TL.+ 1)) :~: (n <=? m)
-natLeqSuccEq _ _ = Refl
-
-leqqCong :: n :~: m -> l :~: z -> (n <=? l) :~: (m <=? z)
-leqqCong Refl Refl = Refl
-
 leqCong :: n :~: m -> l :~: z -> (n PN.<= l) :~: (m PN.<= z)
 leqCong Refl Refl = Refl
 
@@ -251,12 +274,6 @@ natLeqZero :: (n TL.<= 0) => Sing n -> n :~: 0
 natLeqZero Zero = Refl
 natLeqZero _    = error "natLeqZero : bug in ghc"
 
--- | Currently, ghc-typelits-natnormalise reduces @(0 - 1) + 1@ to @0@,
---   which is contradictory to current GHC's behaviour.
---   So our assumption @((n :~: 0) -> Void)@ is simply disregarded.
-natSuccPred :: ((n :~: 0) -> Void) -> Succ (Pred n) :~: n
-natSuccPred _ = Refl
-
 myLeqPred :: Sing n -> Sing m -> ('S n PN.<= 'S m) :~: (n PN.<= m)
 myLeqPred SZ _          = Refl
 myLeqPred (SS _) (SS _) = Refl
@@ -267,12 +284,12 @@ toPeanoCong Refl = Refl
 
 toPeanoMonotone :: (n TL.<= m)
                 => Sing n -> Sing m -> ((ToPeano n) PN.<= (ToPeano m)) :~: 'True
-toPeanoMonotone sn sm =
+toPeanoMonotone sn sm =  withKnownNat sn $ withKnownNat sm $
   case sn %~ (sing :: Sing 0) of
     Proved eql -> withRefl eql Refl
-    Disproved nPos -> case sm %~ (sing :: Sing 0) of
+    Disproved nPos -> withWitness (neqZero1leqq nPos) $ case sm %~ (sing :: Sing 0) of
       Proved mEq0 -> withRefl mEq0 $ absurd $ nPos $ natLeqZero sn
-      Disproved mPos ->
+      Disproved mPos -> withWitness (neqZero1leqq mPos) $
         let pn = sPred sn
             pm = sPred sm
         in start (sToPeano sn %<= sToPeano sm)

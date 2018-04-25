@@ -1,5 +1,5 @@
-resolver: nightly-2018-03-17
-compiler: ghc-8.4.1
+resolver: nightly-2018-04-25
+compiler: ghc-8.4.2
 skip-ghc-check: true
 
 flags: {}
@@ -8,6 +8,6 @@ packages:
 
 extra-deps: 
 - equational-reasoning-0.5.1.0
-- ghc-typelits-natnormalise-0.5.9
+- ghc-typelits-natnormalise-0.6
 - ghc-typelits-presburger-0.2.0.0
-- ghc-tcplugins-extra-0.2.4
+- ghc-tcplugins-extra-0.2.5
