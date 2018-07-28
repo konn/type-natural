@@ -31,7 +31,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           -- * Conversion functions
                           natToInt, intToNat, sNatToInt,
                           -- * Quasi quotes for natural numbers
-                          snat,
+                          nat, snat,
                           -- * Properties of natural numbers
                           IsPeano(..),
                           plusCong, plusCongR, plusCongL,
@@ -70,6 +70,7 @@ import Data.Type.Natural.Core
 import Data.Type.Natural.Definitions hiding (type (<=))
 import Data.Void
 import Language.Haskell.TH.Quote
+import Language.Haskell.TH           (conT, appT, conP, conE, appE)
 import Proof.Equational
 import Proof.Propositional           hiding (Not)
 
@@ -277,6 +278,16 @@ plusNeutralL n m npmm = plusNeutralR m n (plusComm m n `trans` npmm)
 --------------------------------------------------
 -- * Quasi Quoter
 --------------------------------------------------
+
+-- | Quotesi-quoter for 'Nat'. This can be used for an expression, pattern and type.
+--
+--   for example: @sing :: SNat ([nat| 2 |] :+ [nat| 5 |])@
+nat :: QuasiQuoter
+nat = QuasiQuoter { quoteExp = foldr appE (conE 'Z) . flip replicate (conE 'S) . read
+                  , quotePat = foldr (\a b -> conP a [b]) (conP 'Z []) . flip replicate 'S . read
+                  , quoteType = foldr appT (conT 'Z) . flip replicate (conT 'S) . read
+                  , quoteDec = error "not implemented"
+                  }
 
 -- | Quotesi-quoter for 'SNat'. This can be used for an expression.
 --
