@@ -49,6 +49,7 @@ type Ordinal (n :: Nat) = O.Ordinal n
 pattern OLt :: () => forall  (n1 :: Nat). ((n1 < t) ~ 'True)
             => Sing n1 -> O.Ordinal t
 pattern OLt n = O.OLt n
+{-# COMPLETE OLt #-}
 
 -- | Pattern synonym representing the 0-th ordinal.
 --   

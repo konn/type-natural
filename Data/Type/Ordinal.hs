@@ -56,6 +56,8 @@ import           Unsafe.Coerce
 data Ordinal (n :: nat) where
   OLt :: (IsPeano nat, (n < m) ~ 'True) => Sing (n :: nat) -> Ordinal m
 
+{-# COMPLETE OLt #-}
+
 fromOLt :: forall nat n m. (PeanoOrder nat, (Succ n < Succ m) ~ 'True, SingI m)
         => Sing (n :: nat) -> Ordinal m
 fromOLt  n =
