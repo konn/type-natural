@@ -1,8 +1,8 @@
-{-# LANGUAGE CPP, DataKinds, EmptyCase, ExplicitForAll, FlexibleContexts   #-}
-{-# LANGUAGE FlexibleInstances, GADTs, KindSignatures                      #-}
+{-# LANGUAGE CPP, DataKinds, EmptyCase, ExplicitForAll, ExplicitNamespaces #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures    #-}
 {-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies            #-}
-{-# LANGUAGE TypeInType, ViewPatterns , ExplicitNamespaces                 #-}
+{-# LANGUAGE TypeInType, ViewPatterns                                      #-}
 module Data.Type.Natural.Class.Arithmetic
        (Zero, One, S, sZero, sOne, ZeroOrSucc(..),
         plusCong, plusCongR, plusCongL, succCong,
@@ -11,22 +11,25 @@ module Data.Type.Natural.Class.Arithmetic
         IsPeano(..), pattern Zero, pattern Succ,
         module Data.Type.Natural.Singleton.Compat
        ) where
-import Data.Type.Natural.Singleton.Compat
-  (type (/=), type (==), type (+), type (*), type (-)
-  ,type (/=@#@$) ,type (/=@#@$$), type (/=@#@$$$)
-  ,type (==@#@$) ,type (==@#@$$), type (==@#@$$$)
-  ,type (+@#@$) ,type (+@#@$$), type (+@#@$$$)
-  ,type (*@#@$) ,type (*@#@$$), type (*@#@$$$)
-  ,type (-@#@$) ,type (-@#@$$), type (-@#@$$$)
-  ,(%==), (%/=), (%+), (%*), (%-)
-  , FromInteger, FromIntegerSym0, FromIntegerSym1
-  ,SNum(..), PNum(..)
-  )
+import Data.Type.Natural.Singleton.Compat (type (*), type (*@#@$),
+                                           type (*@#@$$), type (*@#@$$$),
+                                           type (+), type (+@#@$),
+                                           type (+@#@$$), type (+@#@$$$),
+                                           type (-), type (-@#@$),
+                                           type (-@#@$$), type (-@#@$$$),
+                                           type (/=), type (/=@#@$),
+                                           type (/=@#@$$), type (/=@#@$$$),
+                                           type (==), type (==@#@$),
+                                           type (==@#@$$), type (==@#@$$$),
+                                           FromInteger, FromIntegerSym0,
+                                           FromIntegerSym1, PNum (..),
+                                           SNum (..), (%*), (%+), (%-), (%/=),
+                                           (%==))
 
 import Data.Functor.Const           (Const (..))
 import Data.Singletons.Decide       (SDecide (..))
-import Data.Singletons.Prelude      (Apply, SingI (..), SingKind (..),
-                                     SomeSing (..), Sing)
+import Data.Singletons.Prelude      (Apply, Sing, SingI (..), SingKind (..),
+                                     SomeSing (..))
 import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ, sPred, sSucc)
 import Data.Type.Equality           ((:~:) (..))
 import Data.Void                    (Void, absurd)
@@ -570,3 +573,4 @@ pattern Succ :: forall nat (n :: nat). IsPeano nat => forall (n1 :: nat). n ~ Su
 pattern Succ n <- (zeroOrSucc -> IsSucc n) where
   Succ n = sSucc n
 
+{-# COMPLETE Zero, Succ #-}
