@@ -10,7 +10,6 @@ module Data.Type.Natural.Definitions
        ) where
 import Data.Type.Natural.Singleton.Compat
 
-import Data.Promotion.Prelude.Enum
 import Data.Singletons.Prelude
 import Data.Singletons.Prelude.Enum
 import Data.Singletons.TH
