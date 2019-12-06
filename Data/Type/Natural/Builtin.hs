@@ -376,7 +376,13 @@ instance PeanoOrder TL.Nat where
   {-# SPECIALISE instance PeanoOrder TL.Nat #-}
   eqlCmpEQ _ _ Refl = Refl
   ltToLeq _ _ Refl = Witness
-  succLeqToLT _ _ Witness = Refl
+  succLeqToLT m n Witness =
+    case sCompare (sSucc m) n of
+      SLT -> Refl
+      SEQ -> Refl
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 800
+      _   -> bugInGHC
+#endif
   cmpZero _ = Refl
   leqRefl _ = Witness
   eqToRefl _ _ Refl = Refl
@@ -391,7 +397,7 @@ instance PeanoOrder TL.Nat where
 
   leqToMin _ _ Witness = Refl
   leqToMax _ _ Witness = Refl
-  geqToMax n m mLEQn@Witness =
+  geqToMax n m mLEQn =
     case leqToCmp m n mLEQn of
       Left eql   -> withRefl eql Refl
       Right mLTn ->
@@ -431,8 +437,6 @@ instance PeanoOrder TL.Nat where
         case sSucc n %<= m of
           SFalse -> Refl
           STrue  -> eliminate $ succLeqToLT n m Witness
-
-  minusPlus _ _ Witness = Refl
 
 -- instance Monomorphicable (Sing :: TL.Nat -> *) where
 --   type MonomorphicRep (Sing :: TL.Nat -> *) = Integer
