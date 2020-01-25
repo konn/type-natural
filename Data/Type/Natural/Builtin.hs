@@ -376,7 +376,16 @@ instance PeanoOrder TL.Nat where
   {-# SPECIALISE instance PeanoOrder TL.Nat #-}
   eqlCmpEQ _ _ Refl = Refl
   ltToLeq _ _ Refl = Witness
-  succLeqToLT _ _ Witness = Refl
+  succLeqToLT n m w = case sCompare n m of
+    SEQ -> eliminate $
+           start SLT === sCompare n m `because` sym (leqToLT n m w)
+                     === sFlipOrdering (sCompare n m) `because` sym (flipCompare n m)
+                     =~= SEQ
+    SGT -> eliminate $
+           start SLT === sCompare n m `because` sym (leqToLT n m w)
+                     =~= SGT
+    SLT -> Refl
+
   cmpZero _ = Refl
   leqRefl _ = Witness
   eqToRefl _ _ Refl = Refl
@@ -431,8 +440,6 @@ instance PeanoOrder TL.Nat where
         case sSucc n %<= m of
           SFalse -> Refl
           STrue  -> eliminate $ succLeqToLT n m Witness
-
-  minusPlus _ _ Witness = Refl
 
 -- instance Monomorphicable (Sing :: TL.Nat -> *) where
 --   type MonomorphicRep (Sing :: TL.Nat -> *) = Integer
