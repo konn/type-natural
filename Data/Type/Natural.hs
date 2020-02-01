@@ -11,7 +11,12 @@ module Data.Type.Natural (-- * Re-exported modules.
                           Nat(..),
                           SSym0, SSym1, ZSym0,
                           -- | Singleton type for 'Nat'.
-                          SNat, Sing (SZ, SS),
+                          SNat,
+#if MIN_VERSION_singletons(2,6,0)
+                          SNat (SZ, SS),
+#else
+                          Sing(SZ,SS),
+#endif
                           -- ** Arithmetic functions and their singletons.
                           min, Min, sMin, max, Max, sMax,
                           MinSym0, MinSym1, MinSym2,
@@ -23,7 +28,7 @@ module Data.Type.Natural (-- * Re-exported modules.
                           (%*), type (-),
                           type (**), (%**),
                           type (-@#@$), type (-@#@$$), type (-@#@$$$),
-                          (%-), 
+                          (%-),
                           -- ** Type-level predicate & judgements
                           Leq(..), type (<=), LeqInstance,
                           boolToPropLeq, boolToClassLeq, propToClassLeq,
@@ -69,8 +74,8 @@ import Data.Type.Natural.Class       hiding (One, Zero, sOne, sZero)
 import Data.Type.Natural.Core
 import Data.Type.Natural.Definitions hiding (type (<=))
 import Data.Void
+import Language.Haskell.TH           (appE, appT, conE, conP, conT)
 import Language.Haskell.TH.Quote
-import Language.Haskell.TH           (conT, appT, conP, conE, appE)
 import Proof.Equational
 import Proof.Propositional           hiding (Not)
 

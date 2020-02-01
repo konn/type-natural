@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, EmptyCase, ExplicitForAll, ExplicitNamespaces       #-}
+{-# LANGUAGE CPP, DataKinds, EmptyCase, ExplicitForAll, ExplicitNamespaces  #-}
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures     #-}
 {-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes  #-}
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies, TypeInType #-}
@@ -21,11 +21,25 @@ import Data.Type.Natural.Singleton.Compat (type (<), type (<=), type (<=@#@$),
                                            type MinSym0, type MinSym1, type MinSym2,
                                            type MaxSym0, type MaxSym1, type MaxSym2,
                                            type CompareSym0, type CompareSym1, type CompareSym2,
-                                           Sing (SLT, SEQ, SGT), SOrd(..), POrd(..),
+#if MIN_VERSION_singletons(2,6,0)
+                                           SOrdering (SLT, SEQ, SGT),
+#else
+                                           Sing (SLT, SEQ, SGT),
+#endif
+
+                                           SOrd(..), POrd(..),
                                            LTSym0, GTSym0, EQSym0,
                                            (%<), (%<=), (%>), (%>=))
 
-import Data.Singletons.Prelude      (Sing (SFalse, STrue), sing, withSingI)
+import Data.Singletons.Prelude
+  (Sing,
+#if MIN_VERSION_singletons(2,6,0)
+  SBool (SFalse, STrue),
+#else
+  Sing (SFalse, STrue),
+#endif
+  sing, withSingI
+  )
 import Data.Singletons.Prelude.Enum (Pred, SEnum (..), Succ)
 import Data.Singletons.TH           (singletonsOnly)
 import Data.Type.Equality           ((:~:) (..))

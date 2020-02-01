@@ -2,7 +2,11 @@
 {-# LANGUAGE FlexibleContexts, GADTs, InstanceSigs, PolyKinds, RankNTypes   #-}
 {-# LANGUAGE TemplateHaskell, TypeFamilies, TypeOperators                   #-}
 {-# LANGUAGE UndecidableInstances                                           #-}
+#if MIN_VERSION_singletons(2,6,0)
+{-# OPTIONS_GHC -fplugin Data.Singletons.TypeNats.Presburger #-}
+#else
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
+#endif
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 -- | Coercion between Peano Numerals @'Data.Type.Natural.Nat'@ and builtin naturals @'GHC.TypeLits.Nat'@
 module Data.Type.Natural.Builtin
@@ -35,14 +39,19 @@ import Data.Type.Natural.Class
 
 import           Data.Singletons.Decide       (SDecide (..))
 import           Data.Singletons.Decide       (Decision (..))
-import           Data.Singletons.Prelude      (Sing (..), SingKind(..))
+import           Data.Singletons.Prelude      (Sing (..), SingKind(..), SBool(..))
 import           Data.Singletons.Prelude      (SingI (..))
 import           Data.Singletons.Prelude.Enum (PEnum (..), SEnum (..))
 import           Data.Singletons.Prelude.Ord  (POrd (..), SOrd (..))
 import           Data.Singletons.TH           (sCases)
 import           Data.Singletons.TypeLits     (withKnownNat)
 import           Data.Type.Equality           ((:~:) (..))
+#if MIN_VERSION_singletons(2,6,0)
+import           Data.Type.Natural            (Nat (S, Z), SNat (SS, SZ))
+#else
 import           Data.Type.Natural            (Nat (S, Z), Sing (SS, SZ))
+#endif
+
 import qualified Data.Type.Natural            as PN
 import           Data.Void                    (absurd)
 import           Data.Void                    (Void)

@@ -8,3 +8,4 @@ allow-newer: true
 extra-deps:
 - equational-reasoning-0.6.0.1
 - ghc-typelits-presburger-0.3.0.0
+- singletons-presburger-0.3.0.0
