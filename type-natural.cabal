@@ -64,6 +64,8 @@ library
                        FlexibleInstances
   if impl(ghc >= 8.6)
     default-extensions: NoStarIsType
+  if impl(ghc >= 8.8)
+    default-extensions: NoStarIsType, TypeApplications
   if impl(ghc >= 8.4)
     build-depends:     ghc-typelits-presburger   >= 0.3 && <0.4
   else
