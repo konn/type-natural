@@ -5,37 +5,47 @@
 
 packages:
 - completed:
-    subdir: ghc-typelits-presburger
-    cabal-file:
+    hackage: overloaded-0.2@sha256:b9633525dad87f53f847a279c526ec0851878004b22826fe981bcb4603180d66,3993
+    pantry-tree:
       size: 2182
-      sha256: dfe720feeb55584a88e1333bc8b368144c30b84f50f45f4acd43c42f5ca200c9
-    name: ghc-typelits-presburger
-    version: 0.2.0.5
-    git: git@github.com:konn/ghc-typelits-presburger.git
-    pantry-tree:
-      size: 386
-      sha256: 88a8067cd8893b564933d9886cf9808ce4fb2635ccc3283b67f0fae88d874f29
-    commit: 9c39a7fd0307dbffb4f4a1cfd05e2f0c689b1aca
+      sha256: 1407cef5b48a1dabcb69a2e51a647470496e6768374b129186ea112ea0e6d1a4
   original:
-    subdir: ghc-typelits-presburger
-    git: git@github.com:konn/ghc-typelits-presburger.git
-    commit: 9c39a7fd0307dbffb4f4a1cfd05e2f0c689b1aca
+    hackage: overloaded-0.2
 - completed:
-    subdir: ghc-typelits-presburger-core
-    cabal-file:
-      size: 2495
-      sha256: dc8f1545a31e3fc5fc6887e57ca67cf55d75b8fc313e9b4c2786620d252a9638
-    name: ghc-typelits-presburger-core
-    version: 0.3.0.0
-    git: git@github.com:konn/ghc-typelits-presburger.git
+    hackage: bin-0.1@sha256:e19a0fc86f93f6849ad7e02247149bbc6d15abdc04fa5d51ab43eb744dd72a7f,2010
     pantry-tree:
-      size: 790
-      sha256: 6072c0dcbe6c1ed5f4cd5f88a06e3cf8ffe072649d28fe77799b9b9bb30b9212
-    commit: 9c39a7fd0307dbffb4f4a1cfd05e2f0c689b1aca
+      size: 566
+      sha256: 3b91ae0cebb6236630722dc9809787e7936887a129631890c1347fea5db8740b
   original:
-    subdir: ghc-typelits-presburger-core
-    git: git@github.com:konn/ghc-typelits-presburger.git
-    commit: 9c39a7fd0307dbffb4f4a1cfd05e2f0c689b1aca
+    hackage: bin-0.1
+- completed:
+    hackage: optics-core-0.2@sha256:cfdf39871553769b59fcc54863a3521d262ea25d8d05d0f41ab87296c560cfa6,4392
+    pantry-tree:
+      size: 4818
+      sha256: 77521681ab5e6fd84a31b7cf9c5f51233141eecd7b9545a1c9eef6b1015776bc
+  original:
+    hackage: optics-core-0.2
+- completed:
+    hackage: ral-0.1@sha256:6ba222a41e21ef14d6542e997bbc43c79a1bb31366f62516be5648fdf5b3e354,3216
+    pantry-tree:
+      size: 805
+      sha256: d7f9f1ee0389e4ccb85b45ce1a6c3a1a49aefbf61e5c1053dcce4f591f47805d
+  original:
+    hackage: ral-0.1
+- completed:
+    hackage: symbols-0.3.0.0@sha256:5d051bccbd4bcb33fa8ce076bd3cd2bacc90973682f7340976758947eaa128a9,964
+    pantry-tree:
+      size: 529
+      sha256: 06746077732f4d49d3277821303292314d51df9a63efecd47217fc0946233026
+  original:
+    hackage: symbols-0.3.0.0
+- completed:
+    hackage: indexed-profunctors-0.1@sha256:ddf618d0d4c58319c1e735e746bc69a1021f13b6f475dc9614b80af03432e6d4,1016
+    pantry-tree:
+      size: 235
+      sha256: cfd66c0a53be1b45eae72df112ea1158614458bb7b1c9cbbe3410b04ab011ec6
+  original:
+    hackage: indexed-profunctors-0.1
 - completed:
     hackage: equational-reasoning-0.6.0.1@sha256:8a1422fb4a79f19d3e95e73f721aa764968e12768b5e2d2e2940e2db71d2e452,1737
     pantry-tree:
@@ -43,6 +53,22 @@ packages:
       sha256: 9ffa610397f60afd6f8843eaa4ab4b0b4fa69cdf26f6107990f07822b845a643
   original:
     hackage: equational-reasoning-0.6.0.1
+- completed:
+    subdir: ghc-typelits-presburger
+    cabal-file:
+      size: 2629
+      sha256: dc3ff32b1cb0fc82b1bfa1c21d84dc55adca027ffb818ea67ec7c99859c5b522
+    name: ghc-typelits-presburger
+    version: 0.3.0.0
+    git: git@github.com:konn/ghc-typelits-presburger.git
+    pantry-tree:
+      size: 663
+      sha256: 6f4a092a1154244c7979a100bc9ca8618ee6b4fa106488e4c941715de7cad562
+    commit: 6245fefde1b65b0df9b946748fe3f584504c8c79
+  original:
+    subdir: ghc-typelits-presburger
+    git: git@github.com:konn/ghc-typelits-presburger.git
+    commit: 6245fefde1b65b0df9b946748fe3f584504c8c79
 snapshots:
 - completed:
     size: 524162

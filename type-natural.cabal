@@ -48,6 +48,7 @@ library
                      , ghc-typelits-natnormalise >= 0.4
                      , ghc-typelits-presburger   >= 0.2.0.0
                      , singletons                >= 2.2 && < 2.6
+                     , overloaded
 
   default-language:    Haskell2010
   default-extensions:  DataKinds
