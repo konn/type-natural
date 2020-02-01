@@ -7,7 +7,4 @@ packages:
 allow-newer: true
 extra-deps:
 - equational-reasoning-0.6.0.1
-- git: git@github.com:konn/ghc-typelits-presburger.git
-  commit: 6245fefde1b65b0df9b946748fe3f584504c8c79
-  subdirs:
-  - ghc-typelits-presburger
+- ghc-typelits-presburger-0.3.0.0
