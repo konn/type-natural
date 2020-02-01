@@ -6,10 +6,9 @@ packages:
 
 allow-newer: true
 extra-deps:
-
-- git: https://github.com/serokell/ghc-typelits-presburger.git
-  commit: e1da2a7710ab7848229ddf0f0df93d30cd49dcbe
-- git: https://github.com/goldfirere/th-desugar.git
-  commit: 0f0a45f7b1f290a6005e6d9d849247f8c3d35429
-- git: https://github.com/konn/equational-reasoning-in-haskell.git
-  commit: 1784d53bc45eee308fb42ede52774c18235a3cf7
+- git: git@github.com:konn/ghc-typelits-presburger.git
+  commit: 9c39a7fd0307dbffb4f4a1cfd05e2f0c689b1aca
+  subdirs:
+  - ghc-typelits-presburger
+  - ghc-typelits-presburger-core
+- equational-reasoning-0.6.0.1
