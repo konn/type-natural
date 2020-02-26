@@ -294,7 +294,7 @@ class (SDecide nat, SNum nat, SEnum nat, SingKind nat, SingKind nat)
   multZeroR sn0 = multZeroRProof $ induction base step sn0
     where
       base :: MultZeroR (Zero nat)
-      base = MultZeroR (multZeroR sZero)
+      base = MultZeroR (multZeroL sZero)
 
       step :: Sing (k :: nat) -> MultZeroR k ->  MultZeroR (S k)
       step sk (MultZeroR ih) = MultZeroR $
