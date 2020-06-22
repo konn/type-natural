@@ -5,8 +5,5 @@ packages:
 - '.'
 
 extra-deps:
-- git: https://github.com/konn/ghc-typelits-presburger
-  commit: b2118bb3ab1baea8ce2c0ae7b8360ae2161a0134
-  subdirs:
-  - ghc-typelits-presburger
-  - singletons-presburger
+- ghc-typelits-presburger-0.3.0.1
+- singletons-presburger-0.3.0.1
