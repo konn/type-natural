@@ -2,6 +2,10 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, KindSignatures     #-}
 {-# LANGUAGE MultiParamTypeClasses, PatternSynonyms, PolyKinds, RankNTypes  #-}
 {-# LANGUAGE ScopedTypeVariables, TemplateHaskell, TypeFamilies, TypeInType #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 810
+{-# LANGUAGE StandaloneKindSignatures #-}
+#endif
+
 module Data.Type.Natural.Class.Order
        (PeanoOrder(..), DiffNat(..), LeqView(..),
         FlipOrdering, sFlipOrdering, coerceLeqL, coerceLeqR,
@@ -62,12 +66,28 @@ succDiffNat :: IsPeano nat
             => Sing n -> Sing m -> DiffNat (n :: nat) m -> DiffNat (Succ n) (Succ m)
 succDiffNat _ _ (DiffNat n m) = coerce (plusSuccL n m) $ DiffNat (sSucc n) m
 
-coerceLeqL :: forall (n :: nat) m l . IsPeano nat => n :~: m -> Sing l
-           -> IsTrue (n <= l) -> IsTrue (m <= l)
+-- | Since 0.9.0.0 (type changed)
+coerceLeqL
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 810
+  :: forall nat (n :: nat) m l.
+#else
+  :: forall (n :: nat) m l .
+#endif
+      IsPeano nat
+  => n :~: m -> Sing l
+  -> IsTrue (n <= l) -> IsTrue (m <= l)
 coerceLeqL Refl _ Witness = Witness
 
-coerceLeqR :: forall (n :: nat) m l . IsPeano nat =>  Sing l -> n :~: m
-           -> IsTrue (l <= n) -> IsTrue (l <= m)
+-- | Since 0.9.0.0 (type changed)
+coerceLeqR
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 810
+  :: forall nat (n :: nat) m l .
+#else
+  :: forall (n :: nat) m l .
+#endif
+      IsPeano nat
+  =>  Sing l -> n :~: m
+  -> IsTrue (l <= n) -> IsTrue (l <= m)
 coerceLeqR _ Refl Witness = Witness
 
 singletonsOnly [d|

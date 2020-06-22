@@ -40,6 +40,12 @@ matrix:
         apt:
           packages:
             - libgmp3-dev
+    - env: STACK_YAML=stack-810.yaml
+      compiler: ": #GHC 8.10.1"
+      addons:
+        apt:
+          packages:
+            - libgmp3-dev
 
 
 before_install:

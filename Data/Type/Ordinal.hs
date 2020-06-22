@@ -122,7 +122,8 @@ instance (HasOrdinal nat, SingI n)
   enumFrom = enumFromOrd
   enumFromTo = enumFromToOrd
 
-enumFromToOrd :: forall (n :: nat).
+-- | Since 0.9.0.0 (type changed)
+enumFromToOrd :: forall nat (n :: nat).
                  (HasOrdinal nat, SingI n)
               => Ordinal n -> Ordinal n -> [Ordinal n]
 enumFromToOrd ok ol =
@@ -130,7 +131,8 @@ enumFromToOrd ok ol =
       l = ordToInt ol
   in genericTake (l - k + 1) $ enumFromOrd ok
 
-enumFromOrd :: forall (n :: nat).
+-- | Since 0.9.0.0 (type changed)
+enumFromOrd :: forall nat (n :: nat).
                (HasOrdinal nat, SingI n)
             => Ordinal n -> [Ordinal n]
 enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
@@ -139,7 +141,8 @@ enumFromOrd ord = genericDrop (ordToInt ord) $ enumOrdinal (sing :: Sing n)
 enumOrdinal :: (PeanoOrder nat) => Sing (n :: nat) -> [Ordinal n]
 enumOrdinal sn = withSingI sn $ map (reallyUnsafeNaturalToOrd Proxy) [0..toNatural sn - 1]
 
-succOrd :: forall (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
+-- | Since 0.9.0.0 (type changed)
+succOrd :: forall nat (n :: nat). (PeanoOrder nat, SingI n) => Ordinal n -> Ordinal (Succ n)
 succOrd (OLt n) =
   withRefl (succLneqSucc n (sing :: Sing n)) $
   OLt (sSucc n)
@@ -163,8 +166,8 @@ instance (SingI m, SingI n, n ~ (m + 1)) => Bounded (Ordinal n) where
   {-# INLINE maxBound #-}
 
 {-# DEPRECATED unsafeFromInt "Use unsafeNaturalToOrd instead" #-}
--- | Since 0.8.0.0
-unsafeFromInt :: forall (n :: nat). (HasOrdinal nat, SingI (n :: nat))
+-- | Since 0.9.0.0 (type changed)
+unsafeFromInt :: forall nat (n :: nat). (HasOrdinal nat, SingI (n :: nat))
               => Int -> Ordinal n
 unsafeFromInt = unsafeNaturalToOrd . fromIntegral
 
@@ -172,7 +175,7 @@ unsafeFromInt = unsafeNaturalToOrd . fromIntegral
 --   If the given natural is greater or equal to @n@, raises exception.
 --
 --   Since 0.8.0.0
-unsafeNaturalToOrd :: forall (n :: nat). (HasOrdinal nat, SingI (n :: nat))
+unsafeNaturalToOrd :: forall nat (n :: nat). (HasOrdinal nat, SingI (n :: nat))
                   => Natural -> Ordinal n
 unsafeNaturalToOrd k =
     fromMaybe (error "unsafeNaturalToOrd Out of bound") $
@@ -180,12 +183,12 @@ unsafeNaturalToOrd k =
 
 {-# DEPRECATED unsafeFromInt' "Use unsafeNaturalToOrd' instead" #-}
 -- | Since 0.8.0.0
-unsafeFromInt' :: forall proxy (n :: nat). (HasOrdinal nat, SingI n)
+unsafeFromInt' :: forall proxy nat (n :: nat). (HasOrdinal nat, SingI n)
               => proxy nat -> Int -> Ordinal n
 unsafeFromInt' p = unsafeNaturalToOrd' p . fromIntegral
 
 -- | Since 0.8.0.0
-unsafeNaturalToOrd' :: forall proxy (n :: nat). (HasOrdinal nat, SingI n)
+unsafeNaturalToOrd' :: forall proxy nat (n :: nat). (HasOrdinal nat, SingI n)
                    => proxy nat -> Natural -> Ordinal n
 unsafeNaturalToOrd' _ n =
     case fromNatural n of
@@ -269,7 +272,9 @@ inclusion = unsafeCoerce
 
 
 -- | Ordinal addition.
-(@+) :: forall n m. (PeanoOrder nat, SingI (n :: nat), SingI m)
+--
+--   Since 0.9.0.0 (type changed)
+(@+) :: forall nat (n :: nat) m. (PeanoOrder nat, SingI n, SingI m)
      => Ordinal n -> Ordinal m -> Ordinal (n + m)
 OLt k @+ OLt l =
   let (n, m) = (n :: Sing n, m :: Sing m)

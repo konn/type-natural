@@ -3,6 +3,10 @@
 {-# LANGUAGE KindSignatures, MultiParamTypeClasses, PolyKinds, RankNTypes  #-}
 {-# LANGUAGE ScopedTypeVariables, StandaloneDeriving, TemplateHaskell      #-}
 {-# LANGUAGE TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 810
+{-# LANGUAGE StandaloneKindSignatures #-}
+#endif
+
 module Data.Type.Natural.Definitions
        (module Data.Type.Natural.Definitions,
         module Data.Singletons.Prelude,
