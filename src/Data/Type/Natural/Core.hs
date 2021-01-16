@@ -91,10 +91,10 @@ withKnownNat (SNat n) act =
 (%+) = coerce $ (+) @Natural
 
 (%-) :: SNat n -> SNat m -> SNat (n - m)
-(%-) = coerce $ (+) @Natural
+(%-) = coerce $ (-) @Natural
 
 (%*) :: SNat n -> SNat m -> SNat (n * m)
-(%*) = coerce $ (+) @Natural
+(%*) = coerce $ (*) @Natural
 
 sDiv :: SNat n -> SNat m -> SNat (Div n m)
 sDiv = coerce $ div @Natural
