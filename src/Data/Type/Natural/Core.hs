@@ -19,7 +19,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE NoStarIsType #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 
 module Data.Type.Natural.Core
