@@ -12,12 +12,12 @@ packages:
   original:
     hackage: equational-reasoning-0.6.0.1
 - completed:
-    hackage: ghc-typelits-presburger-0.3.0.0@sha256:dc3ff32b1cb0fc82b1bfa1c21d84dc55adca027ffb818ea67ec7c99859c5b522,2629
+    hackage: ghc-typelits-presburger-0.4.0.0@sha256:90f1c1607a867ebd87a83f8aaa963ea208e1b968e852603efa9b7349a422814b,3203
     pantry-tree:
-      size: 528
-      sha256: 8957e953ef6bb403633b0f53e5038733fee2f8e0874d1f5662683242e874f5e9
+      size: 835
+      sha256: 894a95c9812c35ea5e98975affffabc1c1b6484a7c9bcbc008f72a3e1cd57f26
   original:
-    hackage: ghc-typelits-presburger-0.3.0.0
+    hackage: ghc-typelits-presburger-0.4.0.0
 snapshots:
 - completed:
     size: 524162
