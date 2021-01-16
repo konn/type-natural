@@ -64,3 +64,28 @@ library
                        FlexibleContexts
                        FlexibleInstances
                        NoStarIsType
+
+test-suite type-natural-test
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  other-modules: 
+    Shared
+    Data.Type.NaturalSpec
+    Data.Type.NaturalSpec.TH
+    Data.Type.OrdinalSpec
+  hs-source-dirs: tests
+  build-tools: tasty-discover
+  build-depends: 
+    tasty,
+    QuickCheck,
+    tasty-quickcheck,
+    quickcheck-instances,
+    integer-logarithms,
+    tasty-hunit,
+    tasty-discover,
+    template-haskell,
+    tasty-expected-failure,
+    base,
+    type-natural,
+    equational-reasoning
+

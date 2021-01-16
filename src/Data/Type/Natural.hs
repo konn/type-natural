@@ -7,6 +7,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -51,6 +52,8 @@ module Data.Type.Natural
     Succ,
     sSucc,
     S,
+    Pred,
+    sPred,
     sS,
     Zero,
     sZero,
@@ -62,7 +65,9 @@ module Data.Type.Natural
     (%-),
     type (*),
     (%*),
+    Div,
     sDiv,
+    Mod,
     sMod,
     type (^),
     (%^),
@@ -141,6 +146,12 @@ toNatural = coerce
 
 data SomeSNat where
   SomeSNat :: KnownNat n => SNat n -> SomeSNat
+
+deriving instance Show SomeSNat
+
+instance Eq SomeSNat where
+  SomeSNat (SNat n) == SomeSNat (SNat m) = n == m
+  SomeSNat (SNat n) /= SomeSNat (SNat m) = n /= m
 
 toSomeSNat :: Natural -> SomeSNat
 toSomeSNat n = case someNatVal n of
