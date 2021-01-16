@@ -18,7 +18,6 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE NoStarIsType #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 
 module Data.Type.Natural.Lemma.Presburger where
