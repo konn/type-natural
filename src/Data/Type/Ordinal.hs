@@ -66,12 +66,9 @@ import Data.Proxy (Proxy (Proxy))
 import Data.Type.Equality
 import Data.Type.Natural
 import Data.Type.Natural.Core (SNat (..))
-import Data.Type.Natural.Lemma.Order
 import Data.Typeable (Typeable)
-import Data.Void (absurd)
 import Language.Haskell.TH.Quote
 import Numeric.Natural
-import Proof.Propositional
 import Unsafe.Coerce
 
 {- | Set-theoretic (finite) ordinals:
@@ -99,10 +96,7 @@ fromOLt n = OLt n
    Since 1.0.0.0
 -}
 pattern OZ :: forall (n :: Nat). (0 < n) => Ordinal n
-pattern OZ <-
-  OLt Zero
-  where
-    OZ = OLt sZero
+pattern OZ <- OLt Zero where OZ = OLt sZero
 
 {- | Pattern synonym @'OS' n@ represents (n+1)-th ordinal.
 
@@ -303,22 +297,20 @@ inclusion (OLt a) = OLt a
   Ordinal n ->
   Ordinal m ->
   Ordinal (n + m)
-OLt k @+ OLt l =
-  let (n, m) = (n :: SNat n, m :: SNat m)
-   in withWitness (plusStrictMonotone k n l m Witness Witness) $ OLt $ k %+ l
+OLt k @+ OLt l = OLt $ k %+ l
 
 {- | Since @Ordinal 'Z@ is logically not inhabited, we can coerce it to any value.
 
  Since 1.0.0.0
 -}
-absurdOrd :: Ordinal (0) -> a
-absurdOrd (OLt n) = absurd $ lneqZeroAbsurd n Witness
+absurdOrd :: Ordinal 0 -> a
+absurdOrd (OLt _) = case (Refl :: 0 :~: 1) of
 
 {- | @'absurdOrd'@ for value in 'Functor'.
 
    Since 1.0.0.0
 -}
-vacuousOrd :: (Functor f) => f (Ordinal (0)) -> f a
+vacuousOrd :: (Functor f) => f (Ordinal 0) -> f a
 vacuousOrd = fmap absurdOrd
 
 {- $quasiquotes #quasiquoters#
