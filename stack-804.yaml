@@ -7,3 +7,4 @@ packages:
 allow-newer: true
 extra-deps:
 - ghc-typelits-presburger-0.4.0.0
+- equational-reasoning-0.6.0.3
