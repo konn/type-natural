@@ -70,6 +70,7 @@ test-suite type-natural-test
     main-is:        test.hs
     build-tools:    tasty-discover -any
     hs-source-dirs: tests
+    default-language:   Haskell2010
     other-modules:
         Shared
         Data.Type.NaturalSpec
