@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: ghc-typelits-presburger-0.4.0.0@sha256:90f1c1607a867ebd87a83f8aaa963ea208e1b968e852603efa9b7349a422814b,3203
+    hackage: ghc-typelits-presburger-0.5.0.0@sha256:887ead204dbb31e478ee082f128eb72ebe774e356838d1f89cb2044035b7f4fe,3203
     pantry-tree:
       size: 835
-      sha256: 894a95c9812c35ea5e98975affffabc1c1b6484a7c9bcbc008f72a3e1cd57f26
+      sha256: 39e0d4a163723912acacc67b58b277a8a5eb00c1314d5c6e8a018b4790d6b993
   original:
-    hackage: ghc-typelits-presburger-0.4.0.0
+    hackage: ghc-typelits-presburger-0.5.0.0
 - completed:
     hackage: equational-reasoning-0.6.0.3@sha256:a59f45b15118add889948c3a3b25ed8cc324e01c088616302a5265db9ac451c8,1772
     pantry-tree:

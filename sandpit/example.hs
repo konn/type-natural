@@ -12,5 +12,4 @@ import Data.Type.Ordinal
 twelve :: SNat 12
 twelve = sNat @4 %* sNat @3
 
--- >>> twelve
--- 7
+-- >>> 15 :: Ordinal 0

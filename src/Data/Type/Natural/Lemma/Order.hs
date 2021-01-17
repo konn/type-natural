@@ -223,13 +223,13 @@ sMin = coerce $ min @Natural
 sMax :: SNat n -> SNat m -> SNat (Max n m)
 sMax = coerce $ max @Natural
 
-type family MinAux p n m where
+type family MinAux (p :: Bool) (n :: Nat) (m :: Nat) :: Nat where
   MinAux 'True n _ = n
   MinAux 'False _ m = m
 
 type Max n m = MaxAux (n >=? m) n m
 
-type family MaxAux p n m where
+type family MaxAux (p :: Bool) (n :: Nat) (m :: Nat) :: Nat where
   MaxAux 'True n _ = n
   MaxAux 'False _ m = m
 

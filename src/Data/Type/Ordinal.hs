@@ -334,3 +334,5 @@ od =
     , quotePat = \s -> [p|OLt ((%~ $(quoteExp snat s)) -> Equal)|]
     , quoteDec = error "No declaration quoter for Ordinals"
     }
+
+-- >>> 42
