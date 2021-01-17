@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -13,6 +14,7 @@ import GHC.TypeNats
 import Shared
 import Test.Tasty
 import Test.Tasty.QuickCheck
+import Test.QuickCheck
 import Control.Monad (join)
 
 test_arith :: TestTree
@@ -113,6 +115,10 @@ test_order =
 
 tabulateDigits :: Testable prop => [Natural] -> prop -> Property
 tabulateDigits =
+#if MIN_VERSION_QuickCheck(2,12,0)
   tabulate
     "# of input digits"
     . map (show . succ . naturalLogBase 10 . (+ 1))
+#else
+  const property
+#endif
