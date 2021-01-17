@@ -1,9 +1,0 @@
-resolver: lts-11.18
-skip-ghc-check: true
-flags: {}
-packages:
-- '.'
-
-extra-deps: 
-- ghc-typelits-presburger-0.2.0.3
-- equational-reasoning-0.5.1.0

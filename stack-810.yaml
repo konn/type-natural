@@ -1,9 +1,8 @@
-resolver: nightly-2020-06-21
+resolver: nightly-2021-01-15
 
 flags: {}
 packages:
 - '.'
 
 extra-deps:
-- ghc-typelits-presburger-0.3.0.1
-- singletons-presburger-0.3.0.1
+- ghc-typelits-presburger-0.5.0.0

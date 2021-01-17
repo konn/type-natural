@@ -5,22 +5,22 @@
 
 packages:
 - completed:
-    hackage: equational-reasoning-0.6.0.1@sha256:8a1422fb4a79f19d3e95e73f721aa764968e12768b5e2d2e2940e2db71d2e452,1737
+    hackage: ghc-typelits-presburger-0.5.0.0@sha256:887ead204dbb31e478ee082f128eb72ebe774e356838d1f89cb2044035b7f4fe,3203
+    pantry-tree:
+      size: 835
+      sha256: 39e0d4a163723912acacc67b58b277a8a5eb00c1314d5c6e8a018b4790d6b993
+  original:
+    hackage: ghc-typelits-presburger-0.5.0.0
+- completed:
+    hackage: equational-reasoning-0.6.0.3@sha256:a59f45b15118add889948c3a3b25ed8cc324e01c088616302a5265db9ac451c8,1772
     pantry-tree:
       size: 496
-      sha256: 9ffa610397f60afd6f8843eaa4ab4b0b4fa69cdf26f6107990f07822b845a643
+      sha256: dcc6f905630156b0c7581abf770f99af110eabd2809945a20ef90407a391d2b2
   original:
-    hackage: equational-reasoning-0.6.0.1
-- completed:
-    hackage: ghc-typelits-presburger-0.3.0.0@sha256:dc3ff32b1cb0fc82b1bfa1c21d84dc55adca027ffb818ea67ec7c99859c5b522,2629
-    pantry-tree:
-      size: 528
-      sha256: 8957e953ef6bb403633b0f53e5038733fee2f8e0874d1f5662683242e874f5e9
-  original:
-    hackage: ghc-typelits-presburger-0.3.0.0
+    hackage: equational-reasoning-0.6.0.3
 snapshots:
 - completed:
-    size: 524162
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/14/21.yaml
-    sha256: 9a55dd75853718f2bbbe951872b36a3b7802fcd71796e0f25b8664f24e34c666
-  original: lts-14.21
+    size: 524996
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/14/27.yaml
+    sha256: 7ea31a280c56bf36ff591a7397cc384d0dff622e7f9e4225b47d8980f019a0f0
+  original: lts-14.27

@@ -10,18 +10,6 @@ cache:
 
 matrix:
   include:
-    - env: STACK_YAML=stack-800.yaml
-      compiler: ": #GHC 8.0.2"
-      addons:
-        apt:
-          packages:
-            - libgmp3-dev
-    - env: STACK_YAML=stack-802.yaml
-      compiler: ": #GHC 8.2.2"
-      addons:
-        apt:
-          packages:
-            - libgmp3-dev
     - env: STACK_YAML=stack-804.yaml
       compiler: ": #GHC 8.4.3"
       addons:
@@ -29,19 +17,19 @@ matrix:
           packages:
             - libgmp3-dev
     - env: STACK_YAML=stack-806.yaml
-      compiler: ": #GHC 8.6.1"
+      compiler: ": #GHC 8.6.5"
       addons:
         apt:
           packages:
             - libgmp3-dev
     - env: STACK_YAML=stack-808.yaml
-      compiler: ": #GHC 8.8.2"
+      compiler: ": #GHC 8.8.4"
       addons:
         apt:
           packages:
             - libgmp3-dev
     - env: STACK_YAML=stack-810.yaml
-      compiler: ": #GHC 8.10.1"
+      compiler: ": #GHC 8.10.3"
       addons:
         apt:
           packages:
