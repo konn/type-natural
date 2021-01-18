@@ -9,6 +9,8 @@ cache:
     - $TRAVIS_BUILD_DIR/.stack-work
 
 matrix:
+  allow_failures:
+    - env: STACK_YAML=stack-9.0.1.yaml
   include:
     - env: STACK_YAML=stack-804.yaml
       compiler: ": #GHC 8.4.3"
@@ -34,7 +36,12 @@ matrix:
         apt:
           packages:
             - libgmp3-dev
-
+    - env: STACK_YAML=stack-9.0.1.yaml
+      compiler: ": #GHC 9.0.1-rc1"
+      addons:
+        apt:
+          packages:
+            - libgmp3-dev
 
 before_install:
  # install Stack
