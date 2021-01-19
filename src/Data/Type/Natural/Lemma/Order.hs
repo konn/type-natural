@@ -502,16 +502,17 @@ ltSucc = proofLTSucc . induction base step
           === SLT `because` ih
 
 cmpSuccStepR ::
+  forall n m.
   SNat n ->
   SNat m ->
   CmpNat n m :~: 'LT ->
   CmpNat n (Succ m) :~: 'LT
-cmpSuccStepR = proofCmpSuccStepR . induction base step
+cmpSuccStepR = \sn -> proofCmpSuccStepR (induction base step sn) @m
   where
     base :: CmpSuccStepR 0
     base = CmpSuccStepR $ \m _ -> cmpZero m
 
-    step :: SNat n -> CmpSuccStepR n -> CmpSuccStepR (Succ n)
+    step :: SNat x -> CmpSuccStepR x -> CmpSuccStepR (Succ x)
     step n (CmpSuccStepR ih) = CmpSuccStepR $ \m snltm ->
       case zeroOrSucc m of
         IsZero -> absurd $ zeroNoLT (sSucc n) snltm
@@ -579,26 +580,26 @@ viewLeq n m nLEQm =
           n'LTm' = cmpSucc n' m' `trans` compareCongR n (sym sm'EQm) `trans` nLTm
        in gcastWith (sym sm'EQm) $ LeqSucc n' m' $ ltToLeq n' m' n'LTm'
 
-leqWitness :: SNat n -> SNat m -> IsTrue (n <=? m) -> DiffNat n m
-leqWitness = leqWitPf . induction base step
+leqWitness :: forall n m. SNat n -> SNat m -> IsTrue (n <=? m) -> DiffNat n m
+leqWitness = \sn -> leqWitPf (induction base step sn) @m
   where
     base :: LeqWitPf 0
     base = LeqWitPf $ \sm _ -> gcastWith (plusZeroL sm) $ DiffNat sZero sm
 
-    step :: SNat n -> LeqWitPf n -> LeqWitPf (Succ n)
-    step (n :: SNat n) (LeqWitPf ih) = LeqWitPf $ \m snLEQm ->
+    step :: SNat x -> LeqWitPf x -> LeqWitPf (Succ x)
+    step (n :: SNat x) (LeqWitPf ih) = LeqWitPf $ \m snLEQm ->
       case viewLeq (sSucc n) m snLEQm of
         LeqZero _ -> absurd $ succNonCyclic n Refl
         LeqSucc (_ :: SNat n') pm nLEQpm ->
-          succDiffNat n pm $ ih pm $ coerceLeqL (succInj Refl :: n' :~: n) pm nLEQpm
+          succDiffNat n pm $ ih pm $ coerceLeqL (succInj Refl :: n' :~: x) pm nLEQpm
 
-leqStep :: SNat n -> SNat m -> SNat l -> n + l :~: m -> IsTrue (n <=? m)
-leqStep = leqStepPf . induction base step
+leqStep :: forall n m l. SNat n -> SNat m -> SNat l -> n + l :~: m -> IsTrue (n <=? m)
+leqStep sn = leqStepPf (induction base step sn) @m @l
   where
     base :: LeqStepPf 0
     base = LeqStepPf $ \k _ _ -> leqZero k
 
-    step :: SNat n -> LeqStepPf n -> LeqStepPf (Succ n)
+    step :: forall k. SNat k -> LeqStepPf k -> LeqStepPf (Succ k)
     step n (LeqStepPf ih) =
       LeqStepPf $ \k l snPlEqk ->
         let kEQspk =
