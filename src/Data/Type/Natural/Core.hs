@@ -185,9 +185,9 @@ pattern Succ n <-
 
 viewNat :: forall n. SNat n -> ZeroOrSucc n
 viewNat n =
-  case n `testEquality` sNat @0 of
-    Just Refl -> IsZero
-    Nothing -> gcastWith (trustMe @(1 <=? n) @ 'True) $ IsSucc (sPred n)
+  case n %~ sNat @0 of
+    Equal -> IsZero
+    NonEqual -> IsSucc (sPred n)
 
 type family FlipOrdering ord where
   FlipOrdering 'LT = 'GT
