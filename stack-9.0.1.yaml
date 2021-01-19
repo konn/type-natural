@@ -17,8 +17,7 @@ allow-newer: true
 
 flags: {}
 packages:
-  - "ghc-typelits-presburger"
-#  - "singletons-presburger"
+- .
 
 extra-deps:
 - github: dreixel/syb
