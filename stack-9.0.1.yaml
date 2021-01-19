@@ -30,3 +30,5 @@ extra-deps:
   commit: f1f1dbc376e5ce544b6535b851cda5404fe0a5ae
 - github: konn/ghc-typelits-presburger
   commit: a018211a992cf90f17a5bb0dff01137df0da712f
+  subdirs:
+  - ghc-type-lits-presburger
