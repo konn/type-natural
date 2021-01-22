@@ -1,8 +1,10 @@
-resolver: nightly-2021-01-15
+resolver: lts-12.26
 
 flags: {}
 packages:
 - '.'
 
+allow-newer: true
 extra-deps:
 - ghc-typelits-presburger-0.5.0.0
+- equational-reasoning-0.6.0.3

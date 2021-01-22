@@ -1,0 +1,8 @@
+resolver: nightly-2021-01-20
+
+flags: {}
+packages:
+- '.'
+
+extra-deps:
+- ghc-typelits-presburger-0.5.2.0
