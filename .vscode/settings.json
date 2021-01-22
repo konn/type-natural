@@ -1,3 +1,6 @@
 {
-  "haskell.serverExecutablePath": "/Users/hiromi/Documents/Programming/Haskell/git/haskell-language-server/.stack-work/install/x86_64-osx/646dfbb1422d7c2bfa3a267d60b0919661541f00370d5b1a6cea365221b8edf3/8.6.5/bin/haskell-language-server"
+  "haskell.serverExecutablePath": "/Users/hiromi/Documents/Programming/Haskell/git/haskell-language-server/.stack-work/install/x86_64-osx/646dfbb1422d7c2bfa3a267d60b0919661541f00370d5b1a6cea365221b8edf3/8.6.5/bin/haskell-language-server",
+  "github-actions.workflows.pinned.workflows": [
+  ".github/workflows/haskell.yml"
+  ]
 }
