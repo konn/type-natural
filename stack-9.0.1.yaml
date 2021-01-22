@@ -26,9 +26,7 @@ extra-deps:
   commit: 6a64927ebd6b85cc3c67c00c88c3c7c019d31573
 - github: goldfirere/th-desugar
   commit: e22709ebfc43c12fb690622eb0da09d2b3c4ba73
-- github: konn/equational-reasoning-in-haskell
-  commit: f1f1dbc376e5ce544b6535b851cda5404fe0a5ae
-- github: konn/ghc-typelits-presburger
-  commit: a018211a992cf90f17a5bb0dff01137df0da712f
-  subdirs:
-  - ghc-typelits-presburger
+- syb-0.7.2.1
+- equational-reasoning-0.7.0.0
+- indexed-traversable-instances-0.1
+- ghc-typelits-presburger-0.5.2.0
