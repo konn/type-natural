@@ -20,8 +20,6 @@ packages:
 - .
 
 extra-deps:
-- github: dreixel/syb
-  commit: 61db19714933ce532f5579a9ce34d52a9efe2c76
 - github: mgsloan/th-expand-syns
   commit: 6a64927ebd6b85cc3c67c00c88c3c7c019d31573
 - github: goldfirere/th-desugar
