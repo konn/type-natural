@@ -73,7 +73,7 @@ jobs:
       run: |
         stack build --only-dependencies --test --bench --no-run-tests --no-run-benchmarks
     - name: Build
-      run: stack build --flag singletons-presburger:examples --flag ghc-typelits-presburger:examples --test --bench --no-run-tests --no-run-benchmarks
+      run: stack build --test --bench --no-run-tests --no-run-benchmarks
 
   test:
     continue-on-error: ${{ matrix.HEAD }}
@@ -135,4 +135,4 @@ jobs:
           ${{ runner.os }}-build-${{ env.cache-name }}-
 
     - name: Run tests
-      run: stack test --flag singletons-presburger:examples --flag ghc-typelits-presburger:examples --test --bench --no-run-benchmarks
+      run: stack test --test --bench --no-run-benchmarks
