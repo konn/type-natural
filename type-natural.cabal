@@ -55,7 +55,7 @@ library
         template-haskell >=2.8,
         constraints >=0.3,
         ghc-typelits-natnormalise >=0.4,
-        ghc-typelits-presburger >=0.5,
+        ghc-typelits-presburger >=0.5.1,
         ghc-typelits-knownnat -any,
         integer-logarithms -any
 
@@ -88,7 +88,6 @@ test-suite type-natural-test
         tasty-hunit -any,
         tasty-discover -any,
         template-haskell -any,
-        tasty-expected-failure -any,
         base -any,
         type-natural -any,
         equational-reasoning -any

@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 {- | This module provides a variant of `ghc-typelits-presburger`,
  which can be also solve symbols added in this package, such as
  @Min@, @Max@, @<@, @>@, and @>=@.
@@ -5,8 +7,19 @@
 module Data.Type.Natural.Presburger.MinMaxSolver (plugin) where
 
 import Control.Monad (mzero)
-import GHC.TypeLits.Presburger.Compat (lookupModule)
+import GHC.TypeLits.Presburger.Compat
 import GHC.TypeLits.Presburger.Types
+
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Plugins
+  ( Plugin,
+    fsLit,
+    mkModuleName,
+    mkTcOcc,
+    splitTyConApp_maybe,
+  )
+import GHC.Tc.Plugin
+#else
 import GhcPlugins
   ( Plugin,
     fsLit,
@@ -15,6 +28,7 @@ import GhcPlugins
     splitTyConApp_maybe,
   )
 import TcPluginM
+#endif
 
 plugin :: Plugin
 plugin =
