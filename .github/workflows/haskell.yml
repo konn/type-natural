@@ -71,7 +71,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        stack build --only-dependencies --test --bench --no-run-tests --no-run-benchmarks
+        stack update && stack build --only-dependencies --test --bench --no-run-tests --no-run-benchmarks
     - name: Build
       run: stack build --test --bench --no-run-tests --no-run-benchmarks
 
