@@ -24,4 +24,4 @@ maxComm :: q m -> p n -> Max n m :~: Max m n
 maxComm _ _ = Refl
 
 falsity :: n <= m => p n -> q m -> Min n m :~: m
-falsity = Refl
+falsity _ _  = Refl
