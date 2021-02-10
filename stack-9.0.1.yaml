@@ -1,17 +1,6 @@
-resolver: nightly-2021-01-17
-compiler: ghc-9.0.0.20201227
+resolver: nightly-2021-02-07
+compiler: ghc-9.0.1
 compiler-check: match-exact
-setup-info:
- ghc:
-  linux64:
-   9.0.0.20201227:
-    url: https://downloads.haskell.org/ghc/9.0.1-rc1/ghc-9.0.0.20201227-x86_64-deb9-linux.tar.xz
-    sha256: 53f1d9b1cd7cbac4f4e683b5bcf2d08dd45852bd55218c7c5e965b5a78704f15
-
-  macosx:
-   9.0.0.20201227:
-    url: https://downloads.haskell.org/ghc/9.0.1-rc1/ghc-9.0.0.20201227-x86_64-apple-darwin.tar.xz
-    sha256: e6e5bf34c002d52d7108b9d4c8621ae3d21059509f8868bb81b0ba4fda6320da
 
 allow-newer: true
 

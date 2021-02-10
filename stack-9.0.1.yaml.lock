@@ -5,28 +5,6 @@
 
 packages:
 - completed:
-    size: 10318
-    url: https://github.com/mgsloan/th-expand-syns/archive/6a64927ebd6b85cc3c67c00c88c3c7c019d31573.tar.gz
-    name: th-expand-syns
-    version: 0.4.6.0
-    sha256: 66f97fd3861e75797e55ae54009f291885214da483f56e96fa6d33174b70b010
-    pantry-tree:
-      size: 810
-      sha256: 9107aadbfde7409ad08d517e465347e05bd1adaa5a3a36ad7a469be3c096662e
-  original:
-    url: https://github.com/mgsloan/th-expand-syns/archive/6a64927ebd6b85cc3c67c00c88c3c7c019d31573.tar.gz
-- completed:
-    size: 93941
-    url: https://github.com/goldfirere/th-desugar/archive/e22709ebfc43c12fb690622eb0da09d2b3c4ba73.tar.gz
-    name: th-desugar
-    version: '1.12'
-    sha256: 49c524359c0bb3e76902677dea29865573de7cae1fe9efd6b9469b99aeccf57c
-    pantry-tree:
-      size: 1952
-      sha256: f97b30053ee05d4a6461ec6f7ae23f9cf0617eca2a23103a92c09bec37a47860
-  original:
-    url: https://github.com/goldfirere/th-desugar/archive/e22709ebfc43c12fb690622eb0da09d2b3c4ba73.tar.gz
-- completed:
     hackage: syb-0.7.2.1@sha256:bf42655a213402215299e435c52f799e76cbec0b984cd7153d6b9af8a1c0803f,3815
     pantry-tree:
       size: 3396

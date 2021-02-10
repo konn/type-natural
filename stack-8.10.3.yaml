@@ -1,8 +1,5 @@
-resolver: nightly-2021-01-20
+resolver: lts-17.2
 
 flags: {}
 packages:
 - '.'
-
-extra-deps:
-- ghc-typelits-presburger-0.5.2.0

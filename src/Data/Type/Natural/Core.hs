@@ -48,6 +48,7 @@ module Data.Type.Natural.Core
     sZero,
     sOne,
     Equality (..),
+    equalAbsurdFromBool,
     type (===),
     (%~),
     sFlipOrdering,
@@ -122,11 +123,16 @@ instance TestEquality SNat where
       then Just trustMe
       else Nothing
 
+-- | Since 1.1.0.0 (Type changed)
 data Equality n m where
   Equal :: ((n == n) ~ 'True) => Equality n n
   NonEqual ::
-    ((n === m) ~ 'False, (n == m) ~ 'False, Empty (n :~: m)) =>
+    ((n === m) ~ 'False, (n == m) ~ 'False) =>
     Equality n m
+
+equalAbsurdFromBool ::
+  (x === y) ~ 'False => x :~: y -> a
+equalAbsurdFromBool = \case
 
 type family a === b where
   a === a = 'True
