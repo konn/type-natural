@@ -7,7 +7,7 @@ copyright:     (C) Hiromi ISHII 2013-2014
 maintainer:    konn.jinro_at_gmail.com
 author:        Hiromi ISHII
 tested-with:
-    ghc ==8.4.3 ghc ==8.6.5 ghc ==8.8.3 ghc ==8.10.3
+    GHC ==8.6.5, GHC ==8.8.3, GHC ==8.10.4, GHC ==9.0.1
 
 homepage:      https://github.com/konn/type-natural
 synopsis:      Type-level natural and proofs of their properties.

@@ -1,17 +1,15 @@
-resolver: nightly-2021-02-10
+resolver: nightly-2021-03-12
 compiler: ghc-9.0.1
 compiler-check: match-exact
-
-allow-newer: true
 
 flags: {}
 packages:
 - .
 
 extra-deps:
-- github: mgsloan/th-expand-syns
-  commit: 6a64927ebd6b85cc3c67c00c88c3c7c019d31573
-- github: goldfirere/th-desugar
-  commit: e22709ebfc43c12fb690622eb0da09d2b3c4ba73
+- th-expand-syns-0.4.8.0
+- th-desugar-1.12
 - syb-0.7.2.1
+- equational-reasoning-0.7.0.0@rev:1
 - indexed-traversable-instances-0.1
+- ghc-typelits-presburger-0.6.0.0
