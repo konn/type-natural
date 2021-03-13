@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: ['8.4.3', '8.6.5', '8.8.4', '8.10.3']
+        ghc: ['8.6.5', '8.8.4', '8.10.4']
         HEAD: [false]
         include:
         - ghc: '9.0.1'
@@ -85,8 +85,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: ['8.4.4', '8.6.5', '8.8.4', '8.10.3', '9.0.1']
+        ghc: ['8.6.5', '8.8.4', '8.10.4']
         HEAD: [false]
+        include:
+        - ghc: '9.0.1'
+          HEAD: true
 
     runs-on: ubuntu-latest
     needs:
