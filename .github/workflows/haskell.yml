@@ -17,8 +17,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: ['8.4.3', '8.6.5', '8.8.4', '8.10.3', '9.0.1']
+        ghc: ['8.4.3', '8.6.5', '8.8.4', '8.10.3']
         HEAD: [false]
+        include:
+        - ghc: '9.0.1'
+          HEAD: true
+
 
     runs-on: ubuntu-latest
     name: Haskell GHC ${{ matrix.ghc }} Build
@@ -31,6 +35,7 @@ jobs:
       with:
         stack-no-global: true
         enable-stack: true
+        stack-version: "2.5.1"
 
     - name: Cache
       uses: actions/cache@v2
@@ -71,16 +76,16 @@ jobs:
 
     - name: Install dependencies
       run: |
-        stack build --only-dependencies --test --bench --no-run-tests --no-run-benchmarks
+        stack update && stack build --only-dependencies --test --bench --no-run-tests --no-run-benchmarks
     - name: Build
-      run: stack build --flag singletons-presburger:examples --flag ghc-typelits-presburger:examples --test --bench --no-run-tests --no-run-benchmarks
+      run: stack build --test --bench --no-run-tests --no-run-benchmarks
 
   test:
     continue-on-error: ${{ matrix.HEAD }}
     strategy:
       fail-fast: false
       matrix:
-        ghc: ['8.4.3', '8.6.5', '8.8.4', '8.10.3', '9.0.1']
+        ghc: ['8.4.4', '8.6.5', '8.8.4', '8.10.3', '9.0.1']
         HEAD: [false]
 
     runs-on: ubuntu-latest
@@ -135,4 +140,4 @@ jobs:
           ${{ runner.os }}-build-${{ env.cache-name }}-
 
     - name: Run tests
-      run: stack test --flag singletons-presburger:examples --flag ghc-typelits-presburger:examples --test --bench --no-run-benchmarks
+      run: stack test --test --bench --no-run-benchmarks
