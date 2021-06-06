@@ -10,6 +10,6 @@ extra-deps:
 - th-expand-syns-0.4.8.0
 - th-desugar-1.12
 - syb-0.7.2.1
-- equational-reasoning-0.7.0.0@rev:1
+- equational-reasoning-0.7.0.0@rev:2
 - indexed-traversable-instances-0.1
 - ghc-typelits-presburger-0.6.0.0
