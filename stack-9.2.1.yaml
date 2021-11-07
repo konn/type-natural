@@ -1,0 +1,14 @@
+resolver: nightly-2021-11-06
+compiler: ghc-9.2.1
+system-ghc: true
+
+flags: {}
+packages:
+- .
+
+extra-deps:
+- th-desugar-1.13
+- singletons-th-3.1
+- singletons-3.0.1
+- singletons-base-3.1
+- ghc-typelits-presburger-0.6.1.0

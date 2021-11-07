@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ExplicitNamespaces #-}
@@ -589,7 +590,9 @@ leqWitness = \sn -> leqWitPf (induction base step sn) @m
     step :: SNat x -> LeqWitPf x -> LeqWitPf (Succ x)
     step (n :: SNat x) (LeqWitPf ih) = LeqWitPf $ \m snLEQm ->
       case viewLeq (sSucc n) m snLEQm of
+#if !MIN_VERSION_ghc(9,2,0)
         LeqZero _ -> absurd $ succNonCyclic n Refl
+#endif
         LeqSucc (_ :: SNat n') pm nLEQpm ->
           succDiffNat n pm $ ih pm $ coerceLeqL (succInj Refl :: n' :~: x) pm nLEQpm
 
@@ -697,7 +700,9 @@ leqZeroElim :: SNat n -> IsTrue (n <=? 0) -> n :~: 0
 leqZeroElim n nLE0 =
   case viewLeq n sZero nLE0 of
     LeqZero _ -> Refl
+#if !MIN_VERSION_ghc(9,2,0)
     LeqSucc _ pZ _ -> absurd $ succNonCyclic pZ Refl
+#endif
 
 plusMonotoneL ::
   SNat n ->
@@ -773,12 +778,16 @@ succLeqAbsurd' n =
     STrue -> absurd $ succLeqAbsurd n Witness
     SFalse -> Refl
 
-notLeqToLeq :: ((n <=? m) ~ 'False) => SNat n -> SNat m -> IsTrue (m <=? n)
+notLeqToLeq :: forall n m. ((n <=? m) ~ 'False) => SNat n -> SNat m -> IsTrue (m <=? n)
+#if MIN_VERSION_ghc(9,2,0)
+notLeqToLeq n m = gtToLeq n m Refl
+#else
 notLeqToLeq n m =
   case sCmpNat n m of
     SLT -> eliminate $ ltToLeq n m Refl
     SEQ -> eliminate $ leqReflexive n m $ eqToRefl n m Refl
     SGT -> gtToLeq n m Refl
+#endif
 
 leqSucc' :: SNat n -> SNat m -> (n <=? m) :~: (Succ n <=? Succ m)
 leqSucc' _ _ = Refl
