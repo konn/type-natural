@@ -6,7 +6,7 @@ license-file:  LICENSE
 copyright:     (C) Hiromi ISHII 2013-2014
 maintainer:    konn.jinro_at_gmail.com
 author:        Hiromi ISHII
-tested-with:   GHC ==8.6.5 || ==8.8.3 || ==8.10.4 || ==9.0.1
+tested-with:   GHC ==8.6.5 || ==8.8.3 || ==8.10.7 || ==9.0.1 || ==9.2.1
 homepage:      https://github.com/konn/type-natural
 synopsis:      Type-level natural and proofs of their properties.
 description:
