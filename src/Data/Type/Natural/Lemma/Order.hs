@@ -214,9 +214,10 @@ data Leq n m where
 
 type LeqWitness n m = IsTrue (n <=? m)
 
+-- | Since 1.2.0 (argument changed)
 data a :<: b where
-  ZeroLtSucc :: 0 :<: (m + 1)
-  SuccLtSucc :: n :<: m -> (n + 1) :<: (m + 1)
+  ZeroLtSucc :: SNat m -> 0 :<: (m + 1)
+  SuccLtSucc :: SNat n -> SNat m -> n :<: m -> (n + 1) :<: (m + 1)
 
 deriving instance Show (a :<: b)
 
@@ -244,14 +245,24 @@ leqLhs (ZeroLeq _) = Zero
 leqLhs (SuccLeqSucc leq) = sSucc $ leqLhs leq
 
 propToBoolLt :: n :<: m -> IsTrue (n <? m)
-propToBoolLt ZeroLtSucc = Witness
-propToBoolLt (SuccLtSucc lt) =
+propToBoolLt (ZeroLtSucc (sm :: SNat m)) = 
+  gcastWith (cmpZero sm) Witness
+propToBoolLt (SuccLtSucc sn sm lt) =
+  gcastWith (cmpSucc sn sm) $
   withWitness (propToBoolLt lt) Witness
 
 boolToPropLt :: n < m => SNat n -> SNat m -> n :<: m
-boolToPropLt Zero (Succ _) = ZeroLtSucc
-boolToPropLt (Succ _) Zero = eliminate (Refl :: 0 :~: 1)
-boolToPropLt (Succ n) (Succ m) = SuccLtSucc (boolToPropLt n m)
+boolToPropLt Zero (Succ sn) = ZeroLtSucc sn
+boolToPropLt (Succ n) Zero = eliminate $
+  start STrue
+  =~= (Succ n %<? Zero)
+  =~= sOrdCond (sCmpNat (Succ n) Zero) STrue SFalse SFalse
+  === sOrdCond SGT STrue SFalse SFalse
+    `because` sOrdCondCong1 (cmpSuccZeroGT n) STrue SFalse SFalse
+  =~= SFalse
+boolToPropLt (Succ n) (Succ m) = 
+  gcastWith (cmpSucc n m) $
+  SuccLtSucc n m (boolToPropLt n m)
 
 #if MIN_VERSION_ghc(9,2,1)
 type Min m n = DTO.Min @Nat m n
@@ -273,7 +284,52 @@ type Max m n = OrdCond (CmpNat m n) n n m
 
 infix 4 <?, <, >=?, >=, >, >?
 
-type n <? m = n + 1 <=? m
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) <? m = n DTO.<? m
+#else
+type n <? m = OrdCond (CmpNat n m) 'True 'False 'False
+#endif
+
+(%<?) :: SNat n -> SNat m -> SBool (n <? m)
+n %<? m = sOrdCond (sCmpNat n m) STrue SFalse SFalse
+
+#if MIN_VERSION_ghc(9,2,2)
+type (n :: Nat) < m = n DTO.< m
+#else
+type n < m = (n <? m) ~ 'True
+#endif
+
+#if MIN_VERSION_ghc(9,2,1)
+type n >=? m = (DTO.>=?) @Nat n m
+#else
+type n >=? m = OrdCond (CmpNat n m) 'False 'True 'True
+#endif
+
+(%>=?) :: SNat n -> SNat m -> SBool (n >=? m)
+n %>=? m = sOrdCond (sCmpNat n m) SFalse STrue STrue
+
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) >= m = n DTO.>= m
+#else
+type n >= m = (n >=? m) ~ 'True
+#endif
+
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) >? m = n DTO.>? m
+#else
+type n >? m = OrdCond (CmpNat n m) 'False 'False 'True
+#endif
+
+(%>?) :: SNat n -> SNat m -> SBool (n >? m)
+n %>? m = sOrdCond (sCmpNat n m) SFalse SFalse STrue
+
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) > m = n DTO.> m
+#else
+type n > m = (n >? m) ~ 'True
+#endif
+
+infix 4 %>?, %<?, %>=?
 
 ordCondDistrib :: proxy f -> SOrdering o -> p l -> p' e -> p'' g ->
   OrdCond o (f l) (f e) (f g) :~: f (OrdCond o l e g)
@@ -300,28 +356,6 @@ leqOrdCond (Succ m) (Succ n) =
   === (m %<=? n) `because` sym (leqSucc' m n)
   === sOrdCond (sCmpNat m n) STrue STrue SFalse `because` leqOrdCond m n
 #endif
-
-
-(%<?) :: SNat n -> SNat m -> SBool (n <? m)
-(%<?) = (%<=?) . sSucc
-
-type n < m = (n <? m) ~ 'True
-
-type n >=? m = m <=? n
-
-(%>=?) :: SNat n -> SNat m -> SBool (n >=? m)
-(%>=?) = flip (%<=?)
-
-type n >= m = (n >=? m) ~ 'True
-
-type n >? m = m <? n
-
-(%>?) :: SNat n -> SNat m -> SBool (n >? m)
-(%>?) = flip (%<?)
-
-type n > m = (n >? m) ~ 'True
-
-infix 4 %>?, %<?, %>=?
 
 data LeqView n m where
   LeqZero :: SNat n -> LeqView 0 n
@@ -776,27 +810,52 @@ maxLeast _ n m nLEQl mLEQl =
     Left Refl -> mLEQl
     Right Refl -> nLEQl
 
-lneqSuccLeq :: SNat n -> SNat m -> (n < m) :~: (Succ n <= m)
-lneqSuccLeq _ _ = Refl
 
-lneqReversed :: SNat n -> SNat m -> (n < m) :~: (m > n)
+-- | Since 1.2.0.0 (type changed)
+lneqSuccLeq :: SNat n -> SNat m -> (n <? m) :~: (Succ n <=? m)
+#if MIN_VERSION_ghc(9,2,1)
+lneqSuccLeq _ _ = Refl
+#else
+lneqSuccLeq n m = isTrueRefl (n %<? m) (Succ n %<=? m)
+  (ltToSuccLeq n m . lneqToLT n m)
+  (ltToLneq n m . succLeqToLT n m)
+
+isTrueRefl :: SBool a -> SBool b 
+  -> (IsTrue a -> IsTrue b)
+  -> (IsTrue b -> IsTrue a)
+  -> a :~: b
+isTrueRefl SFalse SFalse _ _ = Refl
+isTrueRefl STrue _ f _ = withWitness (f Witness) Refl
+isTrueRefl _ STrue _ g = withWitness (g Witness) Refl
+#endif
+
+-- | Since 1.2.0.0 (type changed)
+lneqReversed :: SNat n -> SNat m -> (n <? m) :~: (m >? n)
+#if MIN_VERSION_ghc(9,2,1)
 lneqReversed _ _ = Refl
+#else
+lneqReversed n m = 
+  case sCmpNat n m of
+    SLT -> gcastWith (flipCmpNat n m) Refl
+    SEQ -> gcastWith (flipCmpNat n m) Refl
+    SGT -> gcastWith (flipCmpNat n m) Refl
+#endif
 
 lneqToLT ::
   SNat n ->
   SNat m ->
   IsTrue (n <? m) ->
   CmpNat n m :~: 'LT
-lneqToLT n m nLNEm =
-  succLeqToLT n m $ gcastWith (lneqSuccLeq n m) nLNEm
+lneqToLT n m Witness =
+  case sCmpNat n m of
+    SLT -> Refl
 
 ltToLneq ::
   SNat n ->
   SNat m ->
   CmpNat n m :~: 'LT ->
   IsTrue (n <? m)
-ltToLneq n m nLTm =
-  gcastWith (sym $ lneqSuccLeq n m) $ ltToSuccLeq n m nLTm
+ltToLneq _ _ Refl = Witness
 
 lneqZero :: SNat a -> IsTrue (0 <? Succ a)
 lneqZero n = ltToLneq sZero (sSucc n) $ cmpZero n
@@ -808,7 +867,17 @@ succLneqSucc ::
   SNat n ->
   SNat m ->
   (n <? m) :~: (Succ n <? Succ m)
-succLneqSucc _ _ = Refl
+succLneqSucc n m = 
+  start (n %<? m)
+  =~=
+  sOrdCond (sCmpNat n m)  STrue SFalse SFalse
+  === sOrdCond (sCmpNat (Succ n) (Succ m)) STrue SFalse SFalse 
+    `because` sOrdCondCong1 (cmpSucc n m) STrue SFalse SFalse
+  =~= (Succ n %<? Succ m)
+
+sOrdCondCong1 :: o :~: o' -> proxy a -> proxy' b -> proxy' c 
+  -> OrdCond o a b c :~: OrdCond o' a b c
+sOrdCondCong1 Refl _ _ _ = Refl
 
 lneqRightPredSucc ::
   SNat n ->
