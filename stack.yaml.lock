@@ -3,7 +3,14 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: ghc-typelits-presburger-0.6.1.0@sha256:4bce66e47c97779dc528b21e8295ab6e5a8d5b602bad9f2111301ae9dcb698ce,3204
+    pantry-tree:
+      size: 836
+      sha256: d59bf376630b74dcf5fa2eda7f03f25ccf30ee377a7ee30516096fc7f970f9f3
+  original:
+    hackage: ghc-typelits-presburger-0.6.1.0
 snapshots:
 - completed:
     size: 594850

@@ -48,14 +48,18 @@ genTypeNatsTranslation = do
 
   singMin <- tcLookupTyCon =<< lookupOrig orderMod (mkTcOcc "Min")
   singMax <- tcLookupTyCon =<< lookupOrig orderMod (mkTcOcc "Max")
-  caseMinAux <- tcLookupTyCon =<< lookupOrig orderMod (mkTcOcc "MinAux")
-  caseMaxAux <- tcLookupTyCon =<< lookupOrig orderMod (mkTcOcc "MaxAux")
+#if !MIN_VERSION_ghc(9,2,1)
+  ordCondTyCon <- tcLookupTyCon =<< lookupOrig orderMod (mkTcOcc "OrdCond")
+#endif
   return
     mempty
       { natGeqBool = [singNatGeq]
       , natLtBool = [singNatLt]
       , natGtBool = [singNatGt]
       , natMin = [singMin]
+#if !MIN_VERSION_ghc(9,2,1)
+      , ordCond = [ordCondTyCon]
+#endif
       , natMax = [singMax]
       , parsePred = \toE ty ->
           case splitTyConApp_maybe ty of
@@ -63,13 +67,5 @@ genTypeNatsTranslation = do
               | con == singNatLtProp -> (:<) <$> toE l <*> toE r
               | con == singNatGtProp -> (:>) <$> toE l <*> toE r
               | con == singNatGeqProp -> (:>=) <$> toE l <*> toE r
-            _ -> mzero
-      , parseExpr = \toE ty ->
-          case splitTyConApp_maybe ty of
-            Just (con, [_, n, m])
-              | con == caseMinAux ->
-                Min <$> toE n <*> toE m
-              | con == caseMaxAux ->
-                Max <$> toE n <*> toE m
             _ -> mzero
       }

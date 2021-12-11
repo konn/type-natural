@@ -461,6 +461,12 @@ test_Lemmas =
         "truncMinusLeq terminates"
         $ \(SomeSNat n) (SomeSNat m) ->
           totalWitness $ truncMinusLeq n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property)
+      "leqOrdCond terminates"
+      $ \(SomeSNat n) (SomeSNat m) -> totalRefl $ leqOrdCond n m
+    , testProperty @(SomeSNat -> Property)
+      "cmpSuccZeroGT terminates"
+      $ \(SomeSNat n) -> totalRefl $ cmpSuccZeroGT n
     ]
 
 totalWitness :: IsTrue p -> Property
