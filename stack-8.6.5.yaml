@@ -5,5 +5,5 @@ packages:
 - '.'
 
 extra-deps:
-- ghc-typelits-presburger-0.5.2.0
 - equational-reasoning-0.6.0.3
+- ghc-typelits-presburger-0.6.2.0

@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE EmptyDataDecls #-}
@@ -21,6 +22,10 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
+#if !MIN_VERSION_ghc(9,2,1)
+{-# OPTIONS_GHC -fplugin Data.Type.Natural.Presburger.MinMaxSolver #-}
+{-# OPTIONS_GHC -fobject-code #-}
+#endif
 
 {- | Set-theoretic ordinals for built-in type-level naturals
 
@@ -64,11 +69,13 @@ import Data.Ord (comparing)
 import Data.Proxy (Proxy (Proxy))
 import Data.Type.Equality
 import Data.Type.Natural
-import Data.Type.Natural.Core (SNat (..))
 import Data.Typeable (Typeable)
 import Language.Haskell.TH.Quote
-import Numeric.Natural
+import Numeric.Natural ( Natural )
 import Unsafe.Coerce
+import Proof.Propositional (IsTrue (Witness))
+import Data.Type.Natural.Lemma.Order (lneqZeroAbsurd)
+import Data.Void (absurd)
 
 {- | Set-theoretic (finite) ordinals:
 
@@ -178,10 +185,9 @@ enumFromOrd ord =
 enumOrdinal :: SNat (n :: Nat) -> [Ordinal n]
 enumOrdinal sn = withKnownNat sn $ map (reallyUnsafeNaturalToOrd Proxy) [0 .. toNatural sn - 1]
 
--- | Since 1.0.0.0(type changed)
+-- | Since 1.0.0.0 (type changed)
 succOrd :: forall (n :: Nat). (KnownNat n) => Ordinal n -> Ordinal (Succ n)
-succOrd (OLt n) =
-  OLt (sSucc n)
+succOrd (OLt k) = OLt (sSucc k)
 {-# INLINE succOrd #-}
 
 instance (KnownNat n, 0 < n) => Bounded (Ordinal n) where
@@ -303,7 +309,7 @@ OLt k @+ OLt l = OLt $ k %+ l
  Since 1.0.0.0
 -}
 absurdOrd :: Ordinal 0 -> a
-absurdOrd (OLt _) = case (Refl :: 0 :~: 1) of
+absurdOrd (OLt sn) = absurd $ lneqZeroAbsurd sn Witness
 
 {- | @'absurdOrd'@ for value in 'Functor'.
 

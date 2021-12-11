@@ -36,8 +36,12 @@ module Data.Type.Natural.Lemma.Order
     sMin,
     Max,
     sMax,
+    OrdCond,
+    sOrdCond,
 
     -- * Lemmas
+    ordCondDistrib,
+    leqOrdCond,
     sFlipOrdering,
     coerceLeqL,
     coerceLeqR,
@@ -58,6 +62,7 @@ module Data.Type.Natural.Lemma.Order
     congFlipOrdering,
     ltToSuccLeq,
     cmpZero,
+    cmpSuccZeroGT,
     leqToGT,
     cmpZero',
     zeroNoLT,
@@ -118,6 +123,8 @@ module Data.Type.Natural.Lemma.Order
     lneqSuccStepL,
     lneqSuccStepR,
     plusStrictMonotone,
+    minCase,
+    maxCase,
     maxZeroL,
     maxZeroR,
     minZeroL,
@@ -162,12 +169,43 @@ import Proof.Equational
     (=~=),
   )
 import Proof.Propositional (IsTrue (..), eliminate, withWitness)
+#if MIN_VERSION_ghc(9,2,1)
+import qualified Data.Type.Ord as DTO
+import Data.Type.Ord (OrdCond)
+#endif
+
 
 --------------------------------------------------
 
 -- ** Type-level predicate & judgements.
 
 --------------------------------------------------
+
+#if !MIN_VERSION_ghc(9,2,1)
+type family OrdCond (o :: Ordering) (lt :: k) (eq :: k) (gt :: k) where
+  OrdCond 'LT lt eq gt = lt
+  OrdCond 'EQ lt eq gt = eq
+  OrdCond 'GT lt eq gt = gt
+#endif
+
+sOrdCond :: SOrdering o -> f lt -> f eq -> f gt -> f (OrdCond o lt eq gt)
+sOrdCond SLT lt _ _ = lt
+sOrdCond SEQ _ eq _ = eq
+sOrdCond SGT _ _ gt = gt
+
+minCase :: SNat n -> SNat m -> Either (Min n m :~: n) (Min n m :~: m)
+minCase n m =
+  case sCmpNat n m of
+    SLT -> Left Refl
+    SEQ -> Left Refl
+    SGT -> Right Refl
+
+maxCase :: SNat n -> SNat m -> Either (Max n m :~: m) (Max n m :~: n)
+maxCase n m =
+  case sCmpNat n m of
+    SLT -> Left Refl
+    SEQ -> Left Refl
+    SGT -> Right Refl
 
 -- | Comparison via GADTs.
 data Leq n m where
@@ -176,9 +214,10 @@ data Leq n m where
 
 type LeqWitness n m = IsTrue (n <=? m)
 
+-- | Since 1.2.0 (argument changed)
 data a :<: b where
-  ZeroLtSucc :: 0 :<: (m + 1)
-  SuccLtSucc :: n :<: m -> (n + 1) :<: (m + 1)
+  ZeroLtSucc :: SNat m -> 0 :<: (m + 1)
+  SuccLtSucc :: SNat n -> SNat m -> n :<: m -> (n + 1) :<: (m + 1)
 
 deriving instance Show (a :<: b)
 
@@ -206,16 +245,30 @@ leqLhs (ZeroLeq _) = Zero
 leqLhs (SuccLeqSucc leq) = sSucc $ leqLhs leq
 
 propToBoolLt :: n :<: m -> IsTrue (n <? m)
-propToBoolLt ZeroLtSucc = Witness
-propToBoolLt (SuccLtSucc lt) =
+propToBoolLt (ZeroLtSucc (sm :: SNat m)) = 
+  gcastWith (cmpZero sm) Witness
+propToBoolLt (SuccLtSucc sn sm lt) =
+  gcastWith (cmpSucc sn sm) $
   withWitness (propToBoolLt lt) Witness
 
 boolToPropLt :: n < m => SNat n -> SNat m -> n :<: m
-boolToPropLt Zero (Succ _) = ZeroLtSucc
-boolToPropLt (Succ _) Zero = eliminate (Refl :: 0 :~: 1)
-boolToPropLt (Succ n) (Succ m) = SuccLtSucc (boolToPropLt n m)
+boolToPropLt Zero (Succ sn) = ZeroLtSucc sn
+boolToPropLt (Succ n) Zero = eliminate $
+  start STrue
+  =~= (Succ n %<? Zero)
+  =~= sOrdCond (sCmpNat (Succ n) Zero) STrue SFalse SFalse
+  === sOrdCond SGT STrue SFalse SFalse
+    `because` sOrdCondCong1 (cmpSuccZeroGT n) STrue SFalse SFalse
+  =~= SFalse
+boolToPropLt (Succ n) (Succ m) = 
+  gcastWith (cmpSucc n m) $
+  SuccLtSucc n m (boolToPropLt n m)
 
-type Min n m = MinAux (n <=? m) n m
+#if MIN_VERSION_ghc(9,2,1)
+type Min m n = DTO.Min @Nat m n
+#else
+type Min m n = OrdCond (CmpNat m n) m m n
+#endif
 
 sMin :: SNat n -> SNat m -> SNat (Min n m)
 sMin = coerce $ min @Natural
@@ -223,40 +276,86 @@ sMin = coerce $ min @Natural
 sMax :: SNat n -> SNat m -> SNat (Max n m)
 sMax = coerce $ max @Natural
 
-type family MinAux (p :: Bool) (n :: Nat) (m :: Nat) :: Nat where
-  MinAux 'True n _ = n
-  MinAux 'False _ m = m
-
-type Max n m = MaxAux (n >=? m) n m
-
-type family MaxAux (p :: Bool) (n :: Nat) (m :: Nat) :: Nat where
-  MaxAux 'True n _ = n
-  MaxAux 'False _ m = m
+#if MIN_VERSION_ghc(9,2,1)
+type Max m n = DTO.Max @Nat m n
+#else
+type Max m n = OrdCond (CmpNat m n) n n m
+#endif
 
 infix 4 <?, <, >=?, >=, >, >?
 
-type n <? m = n + 1 <=? m
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) <? m = n DTO.<? m
+#else
+type n <? m = OrdCond (CmpNat n m) 'True 'False 'False
+#endif
 
 (%<?) :: SNat n -> SNat m -> SBool (n <? m)
-(%<?) = (%<=?) . sSucc
+n %<? m = sOrdCond (sCmpNat n m) STrue SFalse SFalse
 
+#if MIN_VERSION_ghc(9,2,2)
+type (n :: Nat) < m = n DTO.< m
+#else
 type n < m = (n <? m) ~ 'True
+#endif
 
-type n >=? m = m <=? n
+#if MIN_VERSION_ghc(9,2,1)
+type n >=? m = (DTO.>=?) @Nat n m
+#else
+type n >=? m = OrdCond (CmpNat n m) 'False 'True 'True
+#endif
 
 (%>=?) :: SNat n -> SNat m -> SBool (n >=? m)
-(%>=?) = flip (%<=?)
+n %>=? m = sOrdCond (sCmpNat n m) SFalse STrue STrue
 
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) >= m = n DTO.>= m
+#else
 type n >= m = (n >=? m) ~ 'True
+#endif
 
-type n >? m = m <? n
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) >? m = n DTO.>? m
+#else
+type n >? m = OrdCond (CmpNat n m) 'False 'False 'True
+#endif
 
 (%>?) :: SNat n -> SNat m -> SBool (n >? m)
-(%>?) = flip (%<?)
+n %>? m = sOrdCond (sCmpNat n m) SFalse SFalse STrue
 
+#if MIN_VERSION_ghc(9,2,1)
+type (n :: Nat) > m = n DTO.> m
+#else
 type n > m = (n >? m) ~ 'True
+#endif
 
 infix 4 %>?, %<?, %>=?
+
+ordCondDistrib :: proxy f -> SOrdering o -> p l -> p' e -> p'' g ->
+  OrdCond o (f l) (f e) (f g) :~: f (OrdCond o l e g)
+ordCondDistrib _ SLT _ _ _ = Refl
+ordCondDistrib _ SEQ _ _ _ = Refl
+ordCondDistrib _ SGT _ _ _ = Refl
+
+leqOrdCond
+  :: SNat n -> SNat m -> (n <=? m) :~: OrdCond (CmpNat n m) 'True 'True 'False
+#if MIN_VERSION_ghc(9,2,1)
+leqOrdCond _ _ = Refl
+#else
+leqOrdCond Zero n =
+  case cmpZero' n of
+    Left Refl -> Refl
+    Right Refl -> Refl
+leqOrdCond (Succ m) Zero = 
+  gcastWith (succLeqZeroAbsurd' m) $
+  gcastWith (cmpSuccZeroGT m) $
+  Refl
+leqOrdCond (Succ m) (Succ n) =
+  gcastWith (cmpSucc m n) $
+  start (Succ m %<=? Succ n)
+  === (m %<=? n) `because` sym (leqSucc' m n)
+  === sOrdCond (sCmpNat m n) STrue STrue SFalse `because` leqOrdCond m n
+#endif
 
 data LeqView n m where
   LeqZero :: SNat n -> LeqView 0 n
@@ -372,6 +471,9 @@ ltToSuccLeq _ _ Refl = Witness
 
 cmpZero :: SNat a -> CmpNat 0 (Succ a) :~: 'LT
 cmpZero _ = Refl
+
+cmpSuccZeroGT :: SNat a -> CmpNat (Succ a) 0 :~: 'GT
+cmpSuccZeroGT _ = Refl
 
 leqToGT ::
   SNat a ->
@@ -595,13 +697,17 @@ leqSucc' :: SNat n -> SNat m -> (n <=? m) :~: (Succ n <=? Succ m)
 leqSucc' _ _ = Refl
 
 leqToMin :: SNat n -> SNat m -> IsTrue (n <=? m) -> Min n m :~: n
-leqToMin _ _ Witness = Refl
+leqToMin n m Witness =
+  case leqToCmp n m Witness of
+    Left Refl -> Refl
+    Right Refl -> Refl
 
 geqToMin :: SNat n -> SNat m -> IsTrue (m <=? n) -> Min n m :~: m
 geqToMin n m Witness =
-  case n %<=? m of
-    SFalse -> Refl
-    STrue -> Refl
+  case leqToCmp m n Witness of
+    Left Refl -> Refl
+    Right Refl -> 
+      gcastWith (flipCmpNat m n) Refl
 
 minComm :: SNat n -> SNat m -> Min n m :~: Min m n
 minComm n m =
@@ -642,25 +748,23 @@ minLargest ::
   IsTrue (l <=? n) ->
   IsTrue (l <=? m) ->
   IsTrue (l <=? Min n m)
-minLargest l n m lLEQn lLEQm =
-  withKnownNat l $
-    withKnownNat n $
-      withKnownNat m $
-        withKnownNat (sMin n m) $
-          case n %<=? m of
-            STrue -> lLEQn
-            SFalse -> lLEQm
+minLargest _ n m lLEQn lLEQm =
+  case minCase n m of
+    Left Refl -> lLEQn
+    Right Refl -> lLEQm
 
 leqToMax :: SNat n -> SNat m -> IsTrue (n <=? m) -> Max n m :~: m
-leqToMax n m Witness =
-  case n %>=? m of
-    STrue -> Refl
-    SFalse -> Refl
+leqToMax n m lLeqm =
+  case leqToCmp n m lLeqm of
+    Left Refl -> Refl
+    Right Refl -> Refl
 
 geqToMax :: SNat n -> SNat m -> IsTrue (m <=? n) -> Max n m :~: n
 geqToMax n m Witness =
-  case n %>=? m of
-    STrue -> Refl
+  case sCmpNat n m of
+    SLT -> Refl
+    SEQ -> Refl
+    SGT -> Refl
 
 maxComm :: SNat n -> SNat m -> Max n m :~: Max m n
 maxComm n m =
@@ -701,36 +805,57 @@ maxLeast ::
   IsTrue (n <=? l) ->
   IsTrue (m <=? l) ->
   IsTrue (Max n m <=? l)
-maxLeast l n m lLEQn lLEQm =
-  withKnownNat l $
-    withKnownNat n $
-      withKnownNat m $
-        withKnownNat (sMax n m) $
-          case n %>=? m of
-            STrue -> lLEQn
-            SFalse -> lLEQm
+maxLeast _ n m nLEQl mLEQl =
+  case maxCase n m of
+    Left Refl -> mLEQl
+    Right Refl -> nLEQl
 
-lneqSuccLeq :: SNat n -> SNat m -> (n < m) :~: (Succ n <= m)
+
+-- | Since 1.2.0.0 (type changed)
+lneqSuccLeq :: SNat n -> SNat m -> (n <? m) :~: (Succ n <=? m)
+#if MIN_VERSION_ghc(9,2,1)
 lneqSuccLeq _ _ = Refl
+#else
+lneqSuccLeq n m = isTrueRefl (n %<? m) (Succ n %<=? m)
+  (ltToSuccLeq n m . lneqToLT n m)
+  (ltToLneq n m . succLeqToLT n m)
 
-lneqReversed :: SNat n -> SNat m -> (n < m) :~: (m > n)
+isTrueRefl :: SBool a -> SBool b 
+  -> (IsTrue a -> IsTrue b)
+  -> (IsTrue b -> IsTrue a)
+  -> a :~: b
+isTrueRefl SFalse SFalse _ _ = Refl
+isTrueRefl STrue _ f _ = withWitness (f Witness) Refl
+isTrueRefl _ STrue _ g = withWitness (g Witness) Refl
+#endif
+
+-- | Since 1.2.0.0 (type changed)
+lneqReversed :: SNat n -> SNat m -> (n <? m) :~: (m >? n)
+#if MIN_VERSION_ghc(9,2,1)
 lneqReversed _ _ = Refl
+#else
+lneqReversed n m = 
+  case sCmpNat n m of
+    SLT -> gcastWith (flipCmpNat n m) Refl
+    SEQ -> gcastWith (flipCmpNat n m) Refl
+    SGT -> gcastWith (flipCmpNat n m) Refl
+#endif
 
 lneqToLT ::
   SNat n ->
   SNat m ->
   IsTrue (n <? m) ->
   CmpNat n m :~: 'LT
-lneqToLT n m nLNEm =
-  succLeqToLT n m $ gcastWith (lneqSuccLeq n m) nLNEm
+lneqToLT n m Witness =
+  case sCmpNat n m of
+    SLT -> Refl
 
 ltToLneq ::
   SNat n ->
   SNat m ->
   CmpNat n m :~: 'LT ->
   IsTrue (n <? m)
-ltToLneq n m nLTm =
-  gcastWith (sym $ lneqSuccLeq n m) $ ltToSuccLeq n m nLTm
+ltToLneq _ _ Refl = Witness
 
 lneqZero :: SNat a -> IsTrue (0 <? Succ a)
 lneqZero n = ltToLneq sZero (sSucc n) $ cmpZero n
@@ -742,7 +867,17 @@ succLneqSucc ::
   SNat n ->
   SNat m ->
   (n <? m) :~: (Succ n <? Succ m)
-succLneqSucc _ _ = Refl
+succLneqSucc n m = 
+  start (n %<? m)
+  =~=
+  sOrdCond (sCmpNat n m)  STrue SFalse SFalse
+  === sOrdCond (sCmpNat (Succ n) (Succ m)) STrue SFalse SFalse 
+    `because` sOrdCondCong1 (cmpSucc n m) STrue SFalse SFalse
+  =~= (Succ n %<? Succ m)
+
+sOrdCondCong1 :: o :~: o' -> proxy a -> proxy' b -> proxy' c 
+  -> OrdCond o a b c :~: OrdCond o' a b c
+sOrdCondCong1 Refl _ _ _ = Refl
 
 lneqRightPredSucc ::
   SNat n ->

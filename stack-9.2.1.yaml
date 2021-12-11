@@ -11,4 +11,4 @@ extra-deps:
 - singletons-th-3.1
 - singletons-3.0.1
 - singletons-base-3.1
-- ghc-typelits-presburger-0.6.1.0
+- ghc-typelits-presburger-0.6.2.0
