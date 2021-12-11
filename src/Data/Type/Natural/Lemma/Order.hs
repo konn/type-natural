@@ -357,11 +357,7 @@ gtToLeq ::
   SNat b ->
   CmpNat a b :~: 'GT ->
   IsTrue (b <=? a)
-gtToLeq n m nGTm =
-  ltToLeq m n $
-    start (sCmpNat m n) === sFlipOrdering (sCmpNat n m) `because` sym (flipCmpNat n m)
-      === sFlipOrdering SGT `because` congFlipOrdering nGTm
-      =~= SLT
+gtToLeq _ _ Refl = Witness
 
 congFlipOrdering ::
   a :~: b -> FlipOrdering a :~: FlipOrdering b

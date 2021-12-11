@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -24,7 +25,25 @@ someNat' = toSomeSNat . fromInteger . getNonNegative
 data SomeLeqNat where
   MkSomeLeqNat :: n <= m => SNat n -> SNat m -> SomeLeqNat
 
+data SomeLtNat where
+  MkSomeLtNat ::
+    CmpNat n m ~ 'LT =>
+    SNat n ->
+    SNat m ->
+    SomeLtNat
+
+data SomeGtNat where
+  MkSomeGtNat ::
+    CmpNat n m ~ 'GT =>
+    SNat n ->
+    SNat m ->
+    SomeGtNat
+
 deriving instance Show SomeLeqNat
+
+deriving instance Show SomeLtNat
+
+deriving instance Show SomeGtNat
 
 instance Arbitrary SomeLeqNat where
   arbitrary = do
@@ -37,15 +56,34 @@ instance Arbitrary SomeLeqNat where
           STrue -> pure $ MkSomeLeqNat m n
           SFalse -> error "Impossible!"
 
+instance Arbitrary SomeLtNat where
+  arbitrary = do
+    MkSomeLeqNat (n :: SNat n) (m :: SNat m) <- arbitrary
+    let m' = Succ m
+    case sCmpNat n m' of
+      SLT -> pure $ MkSomeLtNat n m'
+      _ -> error "impossible"
+
+instance Arbitrary SomeGtNat where
+  arbitrary = do
+    MkSomeLeqNat (m :: SNat n) (n :: SNat m) <- arbitrary
+    let m' = Succ m
+    case sCmpNat m' n of
+      SGT -> pure $ MkSomeGtNat m' n
+      _ -> error "impossible"
+
 test_Lemmas :: TestTree
 test_Lemmas =
   testGroup
     "Lemmas"
-    [ testProperty @(SomeLeqNat -> Property) "coerceLeqL terminates" $ \(MkSomeLeqNat (_ :: SNat n) sm) -> coerceLeqL (Refl :: n :~: n) sm Witness === Witness
-    , testProperty @(SomeLeqNat -> Property) "coerceLeqR terminates" $ \(MkSomeLeqNat sn (_ :: SNat m)) -> coerceLeqR sn (Refl :: m :~: m) Witness === Witness
+    [ testProperty @(SomeLeqNat -> Property) "coerceLeqL terminates" $ \(MkSomeLeqNat (_ :: SNat n) sm) -> case coerceLeqL (Refl :: n :~: n) sm Witness of
+        Witness -> property True
+    , testProperty @(SomeLeqNat -> Property) "coerceLeqR terminates" $ \(MkSomeLeqNat sn (_ :: SNat m)) -> case coerceLeqR sn (Refl :: m :~: m) Witness of
+        Witness -> property True
     , testProperty @(SomeSNat -> SomeSNat -> Property) "sLeqCong terminates" $
         \(SomeSNat (_ :: SNat n)) (SomeSNat (_ :: SNat m)) ->
-          sLeqCong (Refl @n) (Refl @m) === Refl
+          case sLeqCong (Refl @n) (Refl @m) of
+            Refl -> property True
     , testProperty @(SomeSNat -> SomeSNat -> Property) "succDiffNat terminates and gives the correct value" $
         \(SomeSNat sn) (SomeSNat sm) ->
           case succDiffNat sn (sn %+ sm) (DiffNat sn sm) of
@@ -55,7 +93,8 @@ test_Lemmas =
     , testProperty @(SomeSNat -> SomeSNat -> Property)
         "compareCongR terminates"
         $ \(SomeSNat a) (SomeSNat (_ :: SNat b)) ->
-          compareCongR a (Refl @b) === Refl
+          case compareCongR a (Refl @b) of
+            Refl -> property True
     , testProperty @(SomeLeqNat -> Property)
         "leqToCmp works properly"
         $ \case
@@ -93,4 +132,22 @@ test_Lemmas =
             NonEqual ->
               case leqNeqToLT n m Witness (\case {}) of
                 Refl -> property True
+    , testProperty @(SomeLeqNat -> Property)
+        "succLeqToLT terminates"
+        $ \(MkSomeLeqNat n' m) ->
+          case n' of
+            Succ n ->
+              case succLeqToLT n m Witness of
+                Refl -> property True
+            _ -> discard
+    , testProperty @(SomeLtNat -> Property)
+        "ltToLeq terminates"
+        $ \(MkSomeLtNat n m) ->
+          case ltToLeq n m Refl of
+            Witness -> property True
+    , testProperty @(SomeGtNat -> Property)
+        "gtToLeq terminates"
+        $ \(MkSomeGtNat n m) ->
+          case gtToLeq n m Refl of
+            Witness -> property True
     ]
