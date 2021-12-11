@@ -5,4 +5,4 @@ packages:
 - '.'
 
 extra-deps:
-- ghc-typelits-presburger-0.6.1.0
+- ghc-typelits-presburger-0.6.2.0
