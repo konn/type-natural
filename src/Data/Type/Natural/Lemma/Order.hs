@@ -158,7 +158,6 @@ import Proof.Equational
     start,
     sym,
     trans,
-    withRefl,
     (===),
     (=~=),
   )
@@ -268,8 +267,6 @@ data DiffNat n m where
 
 newtype LeqWitPf n = LeqWitPf {leqWitPf :: forall m. SNat m -> IsTrue (n <=? m) -> DiffNat n m}
 
-newtype LeqStepPf n = LeqStepPf {leqStepPf :: forall m l. SNat m -> SNat l -> n + l :~: m -> IsTrue (n <=? m)}
-
 succDiffNat :: SNat n -> SNat m -> DiffNat n m -> DiffNat (Succ n) (Succ m)
 succDiffNat _ _ (DiffNat n m) = gcastWith (plusSuccL n m) $ DiffNat (sSucc n) m
 
@@ -302,16 +299,6 @@ sLeqCongL Refl _ = Refl
 
 sLeqCongR :: SNat a -> b :~: c -> (a <= b) :~: (a <= c)
 sLeqCongR _ Refl = Refl
-
-newtype LTSucc n = LTSucc {proofLTSucc :: CmpNat n (Succ n) :~: 'LT}
-
-newtype CmpSuccStepR n = CmpSuccStepR
-  { proofCmpSuccStepR ::
-      forall m.
-      SNat m ->
-      CmpNat n m :~: 'LT ->
-      CmpNat n (Succ m) :~: 'LT
-  }
 
 newtype LeqViewRefl n = LeqViewRefl {proofLeqViewRefl :: LeqView n n}
 
@@ -356,25 +343,7 @@ leqNeqToLT :: SNat a -> SNat b -> IsTrue (a <=? b) -> (a :~: b -> Void) -> CmpNa
 leqNeqToLT a b aLEQb aNEQb = either (absurd . aNEQb) id $ leqToCmp a b aLEQb
 
 succLeqToLT :: SNat a -> SNat b -> IsTrue (S a <=? b) -> CmpNat a b :~: 'LT
-succLeqToLT a b saLEQb =
-  case leqWitness (sSucc a) b saLEQb of
-    DiffNat _ k ->
-      let aLEQb =
-            leqStep a b (sSucc k) $
-              start (a %+ sSucc k)
-                === sSucc (a %+ k) `because` plusSuccR a k
-                === sSucc a %+ k `because` sym (plusSuccL a k)
-                =~= b
-          aNEQb aeqb =
-            succNonCyclic k $
-              plusEqCancelL a (sSucc k) sZero $
-                start (a %+ sSucc k)
-                  === sSucc (a %+ k) `because` plusSuccR a k
-                  === sSucc a %+ k `because` sym (plusSuccL a k)
-                  =~= b
-                  === a `because` sym aeqb
-                  === a %+ sZero `because` sym (plusZeroR a)
-       in leqNeqToLT a b aLEQb aNEQb
+succLeqToLT _ _ Witness = Refl
 
 ltToLeq ::
   SNat a ->
@@ -407,23 +376,14 @@ ltToSuccLeq n m nLTm =
   leqNeqToSuccLeq n m (ltToLeq n m nLTm) (ltToNeq n m nLTm)
 
 cmpZero :: SNat a -> CmpNat 0 (Succ a) :~: 'LT
-cmpZero sn =
-  leqToLT sZero (sSucc sn) $
-    leqStep (sSucc sZero) (sSucc sn) sn $
-      start (sSucc sZero %+ sn)
-        === sSucc (sZero %+ sn) `because` plusSuccL sZero sn
-        === sSucc sn `because` succCong (plusZeroL sn)
+cmpZero _ = Refl
 
 leqToGT ::
   SNat a ->
   SNat b ->
   IsTrue (Succ b <=? a) ->
   CmpNat a b :~: 'GT
-leqToGT a b sbLEQa =
-  start (sCmpNat a b)
-    === sFlipOrdering (sCmpNat b a) `because` sym (flipCmpNat b a)
-    === sFlipOrdering SLT `because` congFlipOrdering (leqToLT b a sbLEQa)
-    =~= SGT
+leqToGT _ _ Witness = Refl
 
 cmpZero' :: SNat a -> Either (CmpNat 0 a :~: 'EQ) (CmpNat 0 a :~: 'LT)
 cmpZero' n =
@@ -450,57 +410,13 @@ zeroNoLT n eql =
           === SLT `because` cmp0nLT
 
 ltRightPredSucc :: SNat a -> SNat b -> CmpNat a b :~: 'LT -> b :~: Succ (Pred b)
-ltRightPredSucc a b aLTb =
-  case zeroOrSucc b of
-    IsZero -> absurd $ zeroNoLT a aLTb
-    IsSucc b' ->
-      sym $
-        start (sSucc (sPred b))
-          =~= sSucc (sPred (sSucc b'))
-          === sSucc b' `because` succCong (predSucc b')
-          =~= b
+ltRightPredSucc _ _ Refl = Refl
 
 cmpSucc :: SNat n -> SNat m -> CmpNat n m :~: CmpNat (Succ n) (Succ m)
-cmpSucc n m =
-  case sCmpNat n m of
-    SEQ ->
-      let nEQm = eqToRefl n m Refl
-       in sym $ eqlCmpEQ (sSucc n) (sSucc m) $ succCong nEQm
-    SLT -> case leqWitness (sSucc n) m $ ltToSuccLeq n m Refl of
-      DiffNat _ k ->
-        sym $
-          succLeqToLT (sSucc n) (sSucc m) $
-            leqStep (sSucc (sSucc n)) (sSucc m) k $
-              start (sSucc (sSucc n) %+ k)
-                === sSucc (sSucc n %+ k) `because` plusSuccL (sSucc n) k
-                =~= sSucc m
-    SGT -> case leqWitness (sSucc m) n $ ltToSuccLeq m n (sym $ flipCmpNat n m) of
-      DiffNat _ k ->
-        let pf =
-              ( succLeqToLT (sSucc m) (sSucc n) $
-                  leqStep (sSucc (sSucc m)) (sSucc n) k $
-                    start (sSucc (sSucc m) %+ k)
-                      === sSucc (sSucc m %+ k) `because` plusSuccL (sSucc m) k
-                      =~= sSucc n
-              )
-         in start (sCmpNat n m)
-              =~= SGT
-              =~= sFlipOrdering SLT
-              === sFlipOrdering (sCmpNat (sSucc m) (sSucc n)) `because` congFlipOrdering (sym pf)
-              === sCmpNat (sSucc n) (sSucc m) `because` flipCmpNat (sSucc m) (sSucc n)
+cmpSucc _ _ = Refl
 
 ltSucc :: SNat a -> CmpNat a (Succ a) :~: 'LT
-ltSucc = proofLTSucc . induction base step
-  where
-    base :: LTSucc 0
-    base = LTSucc $ cmpZero (sZero :: SNat 0)
-
-    step :: SNat n -> LTSucc n -> LTSucc (Succ n)
-    step n (LTSucc ih) =
-      LTSucc $
-        start (sCmpNat (sSucc n) (sSucc (sSucc n)))
-          === sCmpNat n (sSucc n) `because` sym (cmpSucc n (sSucc n))
-          === SLT `because` ih
+ltSucc _ = Refl
 
 cmpSuccStepR ::
   forall n m.
@@ -508,21 +424,7 @@ cmpSuccStepR ::
   SNat m ->
   CmpNat n m :~: 'LT ->
   CmpNat n (Succ m) :~: 'LT
-cmpSuccStepR = \sn -> proofCmpSuccStepR (induction base step sn) @m
-  where
-    base :: CmpSuccStepR 0
-    base = CmpSuccStepR $ \m _ -> cmpZero m
-
-    step :: SNat x -> CmpSuccStepR x -> CmpSuccStepR (Succ x)
-    step n (CmpSuccStepR ih) = CmpSuccStepR $ \m snltm ->
-      case zeroOrSucc m of
-        IsZero -> absurd $ zeroNoLT (sSucc n) snltm
-        IsSucc m' ->
-          let nLTm' = trans (cmpSucc n m') snltm
-           in start (sCmpNat (sSucc n) (sSucc m))
-                =~= sCmpNat (sSucc n) (sSucc (sSucc m'))
-                === sCmpNat n (sSucc m') `because` sym (cmpSucc n (sSucc m'))
-                === SLT `because` ih m' nLTm'
+cmpSuccStepR _ _ Refl = Refl
 
 ltSuccLToLT ::
   SNat n ->
@@ -542,14 +444,7 @@ leqToLT ::
   SNat b ->
   IsTrue (Succ a <=? b) ->
   CmpNat a b :~: 'LT
-leqToLT n m snLEQm =
-  case leqToCmp (sSucc n) m snLEQm of
-    Left eql ->
-      withRefl eql $
-        start (sCmpNat n m)
-          =~= sCmpNat n (sSucc n)
-          === SLT `because` ltSucc n
-    Right nLTm -> ltSuccLToLT n m nLTm
+leqToLT _ _ Witness = Refl
 
 leqZero :: SNat n -> IsTrue (0 <=? n)
 leqZero _ = Witness
@@ -597,20 +492,7 @@ leqWitness = \sn -> leqWitPf (induction base step sn) @m
           succDiffNat n pm $ ih pm $ coerceLeqL (succInj Refl :: n' :~: x) pm nLEQpm
 
 leqStep :: forall n m l. SNat n -> SNat m -> SNat l -> n + l :~: m -> IsTrue (n <=? m)
-leqStep sn = leqStepPf (induction base step sn) @m @l
-  where
-    base :: LeqStepPf 0
-    base = LeqStepPf $ \k _ _ -> leqZero k
-
-    step :: forall k. SNat k -> LeqStepPf k -> LeqStepPf (Succ k)
-    step n (LeqStepPf ih) =
-      LeqStepPf $ \k l snPlEqk ->
-        let kEQspk =
-              start k
-                === sSucc n %+ l `because` sym snPlEqk
-                === sSucc (n %+ l) `because` plusSuccL n l
-            pk = n %+ l
-         in coerceLeqR (sSucc n) (sym kEQspk) $ leqSucc n pk $ ih pk l Refl
+leqStep _ _ _ Refl = Witness
 
 leqNeqToSuccLeq :: SNat n -> SNat m -> IsTrue (n <=? m) -> (n :~: m -> Void) -> IsTrue (Succ n <=? m)
 leqNeqToSuccLeq n m nLEQm nNEQm =
@@ -629,44 +511,19 @@ leqRefl :: SNat n -> IsTrue (n <=? n)
 leqRefl sn = leqStep sn sn sZero (plusZeroR sn)
 
 leqSuccStepR :: SNat n -> SNat m -> IsTrue (n <=? m) -> IsTrue (n <=? Succ m)
-leqSuccStepR n m nLEQm =
-  case leqWitness n m nLEQm of
-    DiffNat _ k ->
-      leqStep n (sSucc m) (sSucc k) $
-        start (n %+ sSucc k) === sSucc (n %+ k) `because` plusSuccR n k =~= sSucc m
+leqSuccStepR _ _ Witness = Witness
 
 leqSuccStepL :: SNat n -> SNat m -> IsTrue (Succ n <=? m) -> IsTrue (n <=? m)
-leqSuccStepL n m snLEQm =
-  leqTrans n (sSucc n) m (leqSuccStepR n n $ leqRefl n) snLEQm
+leqSuccStepL _ _ Witness = Witness
 
 leqReflexive :: SNat n -> SNat m -> n :~: m -> IsTrue (n <=? m)
-leqReflexive n _ Refl = leqRefl n
+leqReflexive _ _ Refl = Witness
 
 leqTrans :: SNat n -> SNat m -> SNat l -> IsTrue (n <=? m) -> IsTrue (m <=? l) -> IsTrue (n <=? l)
-leqTrans n m k nLEm mLEk =
-  case leqWitness n m nLEm of
-    DiffNat _ mMn -> case leqWitness m k mLEk of
-      DiffNat _ kMn -> leqStep n k (mMn %+ kMn) (sym $ plusAssoc n mMn kMn)
+leqTrans _ _ _ Witness Witness = Witness
 
 leqAntisymm :: SNat n -> SNat m -> IsTrue (n <=? m) -> IsTrue (m <=? n) -> n :~: m
-leqAntisymm n m nLEm mLEn =
-  case (leqWitness n m nLEm, leqWitness m n mLEn) of
-    (DiffNat _ mMn, DiffNat _ nMm) ->
-      let pEQ0 =
-            plusEqCancelL n (mMn %+ nMm) sZero $
-              start (n %+ (mMn %+ nMm))
-                === (n %+ mMn) %+ nMm
-                  `because` sym (plusAssoc n mMn nMm)
-                =~= m %+ nMm
-                =~= n
-                === n %+ sZero
-                  `because` sym (plusZeroR n)
-          nMmEQ0 = plusEqZeroL mMn nMm pEQ0
-       in sym $
-            start m
-              =~= n %+ mMn
-              === n %+ sZero `because` plusCongR n nMmEQ0
-              === n `because` plusZeroR n
+leqAntisymm _ _ Witness Witness = Refl
 
 plusMonotone ::
   SNat n ->
@@ -676,33 +533,10 @@ plusMonotone ::
   IsTrue (n <=? m) ->
   IsTrue (l <=? k) ->
   IsTrue ((n + l) <=? (m + k))
-plusMonotone n m l k nLEm lLEk =
-  case (leqWitness n m nLEm, leqWitness l k lLEk) of
-    (DiffNat _ mMINn, DiffNat _ kMINl) ->
-      let r = mMINn %+ kMINl
-       in leqStep (n %+ l) (m %+ k) r $
-            start (n %+ l %+ r)
-              === n %+ (l %+ r)
-                `because` plusAssoc n l r
-              =~= n %+ (l %+ (mMINn %+ kMINl))
-              === n %+ (l %+ (kMINl %+ mMINn))
-                `because` plusCongR n (plusCongR l (plusComm mMINn kMINl))
-              === n %+ ((l %+ kMINl) %+ mMINn)
-                `because` plusCongR n (sym $ plusAssoc l kMINl mMINn)
-              =~= n %+ (k %+ mMINn)
-              === n %+ (mMINn %+ k)
-                `because` plusCongR n (plusComm k mMINn)
-              === n %+ mMINn %+ k
-                `because` sym (plusAssoc n mMINn k)
-              =~= m %+ k
+plusMonotone _ _ _ _ Witness Witness = Witness
 
 leqZeroElim :: SNat n -> IsTrue (n <=? 0) -> n :~: 0
-leqZeroElim n nLE0 =
-  case viewLeq n sZero nLE0 of
-    LeqZero _ -> Refl
-#if !MIN_VERSION_ghc(9,2,0)
-    LeqSucc _ pZ _ -> absurd $ succNonCyclic pZ Refl
-#endif
+leqZeroElim _ Witness = Refl
 
 plusMonotoneL ::
   SNat n ->
@@ -710,7 +544,7 @@ plusMonotoneL ::
   SNat l ->
   IsTrue (n <=? m) ->
   IsTrue ((n + l) <=? (m + l))
-plusMonotoneL n m l leq = plusMonotone n m l l leq (leqRefl l)
+plusMonotoneL _ _ _ Witness = Witness
 
 plusMonotoneR ::
   SNat n ->
@@ -718,13 +552,13 @@ plusMonotoneR ::
   SNat l ->
   IsTrue (m <=? l) ->
   IsTrue ((n + m) <=? (n + l))
-plusMonotoneR n m l leq = plusMonotone n n m l (leqRefl n) leq
+plusMonotoneR _ _ _ Witness = Witness
 
 plusLeqL :: SNat n -> SNat m -> IsTrue (n <=? (n + m))
-plusLeqL n m = leqStep n (n %+ m) m Refl
+plusLeqL _ _  = Witness
 
 plusLeqR :: SNat n -> SNat m -> IsTrue (m <=? (n + m))
-plusLeqR n m = leqStep m (n %+ m) n $ plusComm m n
+plusLeqR _ _ = Witness
 
 plusCancelLeqR ::
   SNat n ->
@@ -732,17 +566,7 @@ plusCancelLeqR ::
   SNat l ->
   IsTrue ((n + l) <=? (m + l)) ->
   IsTrue (n <=? m)
-plusCancelLeqR n m l nlLEQml =
-  case leqWitness (n %+ l) (m %+ l) nlLEQml of
-    DiffNat _ k ->
-      let pf =
-            plusEqCancelR (n %+ k) m l $
-              start ((n %+ k) %+ l)
-                === n %+ (k %+ l) `because` plusAssoc n k l
-                === n %+ (l %+ k) `because` plusCongR n (plusComm k l)
-                === n %+ l %+ k `because` sym (plusAssoc n l k)
-                =~= m %+ l
-       in leqStep n m k pf
+plusCancelLeqR _ _ _ Witness = Witness
 
 plusCancelLeqL ::
   SNat n ->
@@ -750,20 +574,14 @@ plusCancelLeqL ::
   SNat l ->
   IsTrue ((n + m) <=? (n + l)) ->
   IsTrue (m <=? l)
-plusCancelLeqL n m l nmLEQnl =
-  plusCancelLeqR m l n $
-    coerceLeqL (plusComm n m) (l %+ n) $
-      coerceLeqR (n %+ m) (plusComm n l) nmLEQnl
+plusCancelLeqL _ _ _ Witness = Witness
 
 succLeqZeroAbsurd :: SNat n -> IsTrue (S n <=? 0) -> Void
 succLeqZeroAbsurd n leq =
   succNonCyclic n (leqZeroElim (sSucc n) leq)
 
 succLeqZeroAbsurd' :: SNat n -> (S n <=? 0) :~: 'False
-succLeqZeroAbsurd' n =
-  case sSucc n %<=? sZero of
-    STrue -> absurd $ succLeqZeroAbsurd n Witness
-    SFalse -> Refl
+succLeqZeroAbsurd' _ = Refl
 
 succLeqAbsurd :: SNat n -> IsTrue (S n <=? n) -> Void
 succLeqAbsurd n snLEQn =
@@ -773,21 +591,10 @@ succLeqAbsurd n snLEQn =
       === SEQ `because` eqlCmpEQ n n Refl
 
 succLeqAbsurd' :: SNat n -> (S n <=? n) :~: 'False
-succLeqAbsurd' n =
-  case sSucc n %<=? n of
-    STrue -> absurd $ succLeqAbsurd n Witness
-    SFalse -> Refl
+succLeqAbsurd' _ = Refl
 
 notLeqToLeq :: forall n m. ((n <=? m) ~ 'False) => SNat n -> SNat m -> IsTrue (m <=? n)
-#if MIN_VERSION_ghc(9,2,0)
-notLeqToLeq n m = gtToLeq n m Refl
-#else
-notLeqToLeq n m =
-  case sCmpNat n m of
-    SLT -> eliminate $ ltToLeq n m Refl
-    SEQ -> eliminate $ leqReflexive n m $ eqToRefl n m Refl
-    SGT -> gtToLeq n m Refl
-#endif
+notLeqToLeq _ _ = Witness
 
 leqSucc' :: SNat n -> SNat m -> (n <=? m) :~: (Succ n <=? Succ m)
 leqSucc' _ _ = Refl
