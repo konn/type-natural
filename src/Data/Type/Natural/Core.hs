@@ -19,6 +19,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE NoStarIsType #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 
 module Data.Type.Natural.Core
@@ -73,7 +74,6 @@ import GHC.Exts (Proxy#, proxy#)
 import GHC.TypeNats
 import Math.NumberTheory.Logarithms (naturalLog2)
 import Numeric.Natural (Natural)
-import Proof.Propositional (Empty)
 import Type.Reflection (Typeable)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -132,7 +132,7 @@ data Equality n m where
 
 equalAbsurdFromBool ::
   (x === y) ~ 'False => x :~: y -> a
-equalAbsurdFromBool = \case
+equalAbsurdFromBool = \case {}
 
 type family a === b where
   a === a = 'True

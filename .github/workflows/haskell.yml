@@ -35,7 +35,7 @@ jobs:
       with:
         stack-no-global: true
         enable-stack: true
-        stack-version: "2.5.1"
+        stack-version: "2.7.3"
 
     - name: Cache
       uses: actions/cache@v2
@@ -100,10 +100,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: haskell/actions/setup@v1.1.7
+    - uses: haskell/actions/setup@v1.2.7
       with:
         stack-no-global: true
         enable-stack: true
+        stack-version: '2.7.3'
 
     - name: Cache
       uses: actions/cache@v2
