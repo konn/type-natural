@@ -35,7 +35,7 @@ jobs:
       with:
         stack-no-global: true
         enable-stack: true
-        stack-version: "2.5.1"
+        stack-version: "2.7.3"
 
     - name: Cache
       uses: actions/cache@v2
@@ -104,7 +104,7 @@ jobs:
       with:
         stack-no-global: true
         enable-stack: true
-        stack-version: 'latest'
+        stack-version: '2.7.3'
 
     - name: Cache
       uses: actions/cache@v2
