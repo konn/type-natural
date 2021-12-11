@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE EmptyDataDecls #-}
@@ -21,8 +22,11 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
+#if !MIN_VERSION_ghc(9,2,1)
 {-# OPTIONS_GHC -fplugin Data.Type.Natural.Presburger.MinMaxSolver #-}
 {-# OPTIONS_GHC -fobject-code #-}
+#endif
+
 {- | Set-theoretic ordinals for built-in type-level naturals
 
   Since 1.0.0.0
@@ -65,13 +69,12 @@ import Data.Ord (comparing)
 import Data.Proxy (Proxy (Proxy))
 import Data.Type.Equality
 import Data.Type.Natural
-import Data.Type.Natural.Core (SNat (..))
 import Data.Typeable (Typeable)
 import Language.Haskell.TH.Quote
 import Numeric.Natural ( Natural )
 import Unsafe.Coerce
 import Proof.Propositional (IsTrue (Witness))
-import Data.Type.Natural.Lemma.Order (lneqZeroAbsurd, succLneqSucc)
+import Data.Type.Natural.Lemma.Order (lneqZeroAbsurd)
 import Data.Void (absurd)
 
 {- | Set-theoretic (finite) ordinals:
