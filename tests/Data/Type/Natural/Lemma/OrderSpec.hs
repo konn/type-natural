@@ -2,6 +2,7 @@
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
@@ -37,6 +38,13 @@ data SomeLtNat where
     SNat m ->
     SomeLtNat
 
+data SomeLneqNat where
+  MkSomeLneqNat ::
+    n < m =>
+    SNat n ->
+    SNat m ->
+    SomeLneqNat
+
 data SomeGtNat where
   MkSomeGtNat ::
     CmpNat n m ~ 'GT =>
@@ -47,6 +55,8 @@ data SomeGtNat where
 deriving instance Show SomeLeqNat
 
 deriving instance Show SomeLtNat
+
+deriving instance Show SomeLneqNat
 
 deriving instance Show SomeGtNat
 
@@ -67,6 +77,14 @@ instance Arbitrary SomeLtNat where
     let m' = Succ m
     case sCmpNat n m' of
       SLT -> pure $ MkSomeLtNat n m'
+      _ -> error "impossible"
+
+instance Arbitrary SomeLneqNat where
+  arbitrary = do
+    MkSomeLtNat (n :: SNat n) (m :: SNat m) <- arbitrary
+    let m' = Succ m
+    case n %<? m' of
+      STrue -> pure $ MkSomeLneqNat n m'
       _ -> error "impossible"
 
 instance Arbitrary SomeGtNat where
@@ -123,7 +141,7 @@ test_Lemmas =
     , testProperty @(SomeLeqNat -> Property) "coerceLeqR terminates" $ \(MkSomeLeqNat sn (_ :: SNat m)) -> totalWitness $ coerceLeqR sn (Refl :: m :~: m) Witness
     , testProperty @(SomeSNat -> SomeSNat -> Property) "sLeqCong terminates" $
         \(SomeSNat (_ :: SNat n)) (SomeSNat (_ :: SNat m)) ->
-          total $ sLeqCong (Refl @n) (Refl @m)
+          totalRefl $ sLeqCong (Refl @n) (Refl @m)
     , testProperty @(SomeSNat -> SomeSNat -> Property) "succDiffNat terminates and gives the correct value" $
         \(SomeSNat sn) (SomeSNat sm) ->
           case succDiffNat sn (sn %+ sm) (DiffNat sn sm) of
@@ -133,7 +151,7 @@ test_Lemmas =
     , testProperty @(SomeSNat -> SomeSNat -> Property)
         "compareCongR terminates"
         $ \(SomeSNat a) (SomeSNat (_ :: SNat b)) ->
-          total $ compareCongR a (Refl @b)
+          totalRefl $ compareCongR a (Refl @b)
     , testProperty @(SomeLeqNat -> Property)
         "leqToCmp works properly"
         $ \case
@@ -145,15 +163,15 @@ test_Lemmas =
     , testProperty @(SomeSNat -> Property)
         "eqlCmpEQ terminates"
         $ \(SomeSNat n) ->
-          total $ eqlCmpEQ n n Refl
+          totalRefl $ eqlCmpEQ n n Refl
     , testProperty @(SomeSNat -> Property)
         "eqToRefl terminates"
         $ \(SomeSNat n) ->
-          total $ eqToRefl n n Refl
+          totalRefl $ eqToRefl n n Refl
     , testProperty @(SomeSNat -> SomeSNat -> Property)
         "flipCmpNat terminates"
         $ \(SomeSNat n) (SomeSNat m) ->
-          total $ flipCmpNat n m
+          totalRefl $ flipCmpNat n m
     , testProperty @(SomeSNat -> Property)
         "ltToNeq works as expected"
         $ \(SomeSNat n) ->
@@ -165,13 +183,13 @@ test_Lemmas =
           case n %~ m of
             Equal -> discard
             NonEqual ->
-              total $ leqNeqToLT n m Witness (\case {})
+              totalRefl $ leqNeqToLT n m Witness (\case {})
     , testProperty @(SomeLeqNat -> Property)
         "succLeqToLT terminates"
         $ \(MkSomeLeqNat n' m) ->
           case n' of
             Succ n ->
-              total $ succLeqToLT n m Witness
+              totalRefl $ succLeqToLT n m Witness
             _ -> discard
     , testProperty @(SomeLtNat -> Property)
         "ltToLeq terminates"
@@ -189,11 +207,11 @@ test_Lemmas =
     , testProperty @(SomeLtNat -> Property) "ltToSuccLeq terminates" $ \(MkSomeLtNat n m) ->
         totalWitness $ ltToSuccLeq n m Refl
     , testProperty @(SomeSNat -> Property) "cmpZero terminates" $ \(SomeSNat n) ->
-        total $ cmpZero n
+        totalRefl $ cmpZero n
     , testProperty @(SomeLeqNat -> Property) "leqToGT terminates" $ \(MkSomeLeqNat b0 a) ->
         case b0 of
           Succ b ->
-            total $ leqToGT a b Witness
+            totalRefl $ leqToGT a b Witness
           Zero -> discard
     , testProperty @(SomeSNat -> Property) "cmpZero' works as expected" $ \(SomeSNat n) ->
         case n of
@@ -206,20 +224,20 @@ test_Lemmas =
         $ \(SomeSNat n) ->
           givesImpossibleVoid $ zeroNoLT n (unsafeCoerce $ Refl @())
     , testProperty @(SomeLtNat -> Property) "ltRightPredSucc terminates" $ \(MkSomeLtNat a b) ->
-        total $ ltRightPredSucc a b Refl
+        totalRefl $ ltRightPredSucc a b Refl
     , testProperty @(SomeSNat -> SomeSNat -> Property) "cmpSucc terminates" $ \(SomeSNat a) (SomeSNat b) ->
-        total $ cmpSucc a b
+        totalRefl $ cmpSucc a b
     , testProperty @(SomeSNat -> Property) "ltSucc terminates" $ \(SomeSNat a) ->
-        total $ ltSucc a
+        totalRefl $ ltSucc a
     , testProperty @(SomeLtNat -> Property) "cmpSuccStepR terminates" $ \(MkSomeLtNat a b) ->
-        total $ cmpSuccStepR a b Refl
+        totalRefl $ cmpSuccStepR a b Refl
     , testProperty @(SomeLtNat -> Property) "ltSuccLToLT terminates" $ \(MkSomeLtNat a0 b) ->
         case a0 of
-          Succ a -> total $ ltSuccLToLT a b Refl
+          Succ a -> totalRefl $ ltSuccLToLT a b Refl
           Zero -> discard
     , testProperty @(SomeLeqNat -> Property) "leqToLT terminates" $ \(MkSomeLeqNat a0 b) ->
         case a0 of
-          Succ a -> total $ leqToLT a b Witness
+          Succ a -> totalRefl $ leqToLT a b Witness
           Zero -> discard
     , testProperty @(SomeSNat -> Property) "leqZero terminates" $ \(SomeSNat n) ->
         totalWitness $ leqZero n
@@ -274,12 +292,16 @@ test_Lemmas =
         \(SomeSNat n) ->
           totalWitness $ leqReflexive n n Refl
     , testProperty @(SomeLeqNat -> SomeSNat -> Property) "leqTrans terminates" $
-        \(MkSomeLeqNat n m) (SomeSNat l) ->
-          totalWitness $
-            leqTrans n m (m %+ l) Witness (unsafeCoerce Witness)
+        \(MkSomeLeqNat (n :: SNat n) (m :: SNat m)) (SomeSNat (l0 :: SNat lMinsM)) ->
+          let l = m %+ l0
+           in case m %<=? l of
+                STrue ->
+                  totalWitness $
+                    leqTrans n m l Witness (Witness :: IsTrue (m <=? (m + lMinsM)))
+                SFalse -> error "impossible"
     , testProperty @(SomeSNat -> Property) "leqAntisymm terminates" $
         \(SomeSNat n) ->
-          total $ leqAntisymm n n Witness Witness
+          totalRefl $ leqAntisymm n n Witness Witness
     , testProperty @(SomeLeqNat -> SomeLeqNat -> Property) "plusMonotone terminates" $
         \(MkSomeLeqNat n m) (MkSomeLeqNat l k) ->
           totalWitness $ plusMonotone n m l k Witness Witness
@@ -316,11 +338,11 @@ test_Lemmas =
     , testProperty @(SomeSNat -> Property) "succLeqZeroAbsurd works properly" $ \(SomeSNat n) ->
         givesImpossibleVoid $ succLeqZeroAbsurd n (unsafeCoerce Witness)
     , testProperty @(SomeSNat -> Property) "succLeqZeroAbsurd' works properly" $ \(SomeSNat n) ->
-        total $ succLeqZeroAbsurd' n
+        totalRefl $ succLeqZeroAbsurd' n
     , testProperty @(SomeSNat -> Property) "succLeqAbsurd works properly" $ \(SomeSNat n) ->
         givesImpossibleVoid $ succLeqAbsurd n (unsafeCoerce Witness)
     , testProperty @(SomeSNat -> Property) "succLeqAbsurd' works properly" $ \(SomeSNat n) ->
-        total $ succLeqAbsurd' n
+        totalRefl $ succLeqAbsurd' n
     , testProperty @(SomeGtNat -> Property)
         "notLeqToLeq terminates"
         $ \(MkSomeGtNat n m) ->
@@ -332,16 +354,16 @@ test_Lemmas =
         @(SomeSNat -> SomeSNat -> Property)
         "leqSucc' terminates"
         $ \(SomeSNat n) (SomeSNat m) ->
-          total $ leqSucc' n m
+          totalRefl $ leqSucc' n m
     , testProperty @(SomeLeqNat -> Property) "leqToMin terminates" $
         \(MkSomeLeqNat n m) ->
-          total $ leqToMin n m Witness
+          totalRefl $ leqToMin n m Witness
     , testProperty @(SomeLeqNat -> Property) "geqToMin terminates" $
         \(MkSomeLeqNat n m) ->
-          total $ geqToMin m n Witness
+          totalRefl $ geqToMin m n Witness
     , testProperty @(SomeSNat -> SomeSNat -> Property) "minComm terminates" $
         \(SomeSNat n) (SomeSNat m) ->
-          total $ minComm n m
+          totalRefl $ minComm n m
     , testProperty @(SomeSNat -> SomeSNat -> Property) "minLeqL terminates" $
         \(SomeSNat n) (SomeSNat m) ->
           totalWitness $ minLeqL n m
@@ -355,13 +377,13 @@ test_Lemmas =
                 minLargest l n m Witness (unsafeCoerce Witness)
     , testProperty @(SomeLeqNat -> Property) "leqToMax termaxates" $
         \(MkSomeLeqNat n m) ->
-          total $ leqToMax n m Witness
+          totalRefl $ leqToMax n m Witness
     , testProperty @(SomeLeqNat -> Property) "geqToMax termaxates" $
         \(MkSomeLeqNat n m) ->
-          total $ geqToMax m n Witness
+          totalRefl $ geqToMax m n Witness
     , testProperty @(SomeSNat -> SomeSNat -> Property) "maxComm termaxates" $
         \(SomeSNat n) (SomeSNat m) ->
-          total $ maxComm n m
+          totalRefl $ maxComm n m
     , testProperty @(SomeSNat -> SomeSNat -> Property) "maxLeqL termaxates" $
         \(SomeSNat n) (SomeSNat m) ->
           totalWitness $ maxLeqL n m
@@ -375,13 +397,52 @@ test_Lemmas =
               SomeSNat m ->
                 totalWitness $
                   maxLeast l n m Witness (unsafeCoerce Witness)
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "lneqSuccLeq terminates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          totalRefl $ lneqSuccLeq n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "lneqReversed terminates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          totalRefl $ lneqReversed n m
+    , testProperty @(SomeLneqNat -> Property) "lneqToLT terminates" $
+        \(MkSomeLneqNat n m) ->
+          totalRefl $ lneqToLT n m Witness
+    , testProperty @(SomeLtNat -> Property) "ltToLneq terminates" $
+        \(MkSomeLtNat n m) ->
+          totalWitness $ ltToLneq n m Refl
+    , testProperty @(SomeSNat -> Property) "lneqZero terminates" $
+        \(SomeSNat n) -> totalWitness $ lneqZero n
+    , testProperty @(SomeSNat -> Property) "lneqSucc terminates" $
+        \(SomeSNat n) -> totalWitness $ lneqSucc n
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "succLneqSucc terminates" $
+        \(SomeSNat n) (SomeSNat m) -> totalRefl $ succLneqSucc n m
+    , testProperty @(SomeLneqNat -> Property) "lneqRightPredSucc terminates" $
+        \(MkSomeLneqNat n m) ->
+          totalRefl $ lneqRightPredSucc n m Witness
+    , testProperty @(SomeLneqNat -> Property) "lneqSuccStepL and lneqSuccStepR works properly" $
+        \(MkSomeLneqNat n m) ->
+          conjoin
+            [ totalWitness (lneqSuccStepR n m Witness)
+            , case n of
+                Succ n' ->
+                  label "lneqSuccStepL checked" $
+                    totalWitness (lneqSuccStepL n' m Witness)
+                Zero -> property True
+            ]
+    , testProperty @(SomeLneqNat -> SomeLneqNat -> Property)
+        "plusStrictMonotone terminates"
+        $ \(MkSomeLneqNat n m) (MkSomeLneqNat l k) ->
+          totalWitness $
+            plusStrictMonotone n m l k Witness Witness
     ]
 
 totalWitness :: IsTrue p -> Property
 totalWitness w =
-  counterexample "Witness is not total!" $
+  counterexample "Witness is not totalRefl!" $
     within
       10000
       ( (case w of Witness -> True :: Bool) ::
           Bool
       )
+
+totalRefl :: a :~: b -> Property
+totalRefl = total
