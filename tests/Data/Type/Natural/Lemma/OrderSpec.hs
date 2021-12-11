@@ -441,6 +441,26 @@ test_Lemmas =
         \(SomeSNat n) -> totalRefl $ minZeroL n
     , testProperty @(SomeSNat -> Property) "minZeroR terminates" $
         \(SomeSNat n) -> totalRefl $ minZeroR n
+    , testProperty @(SomeLeqNat -> Property) "minusSucc terminates" $
+        \(MkSomeLeqNat m n) ->
+          totalRefl $ minusSucc n m Witness
+    , testProperty @(SomeSNat -> Property) "lneqZeroAbsurd is absurd" $
+        \(SomeSNat n) ->
+          givesImpossibleVoid $
+            lneqZeroAbsurd n $ unsafeCoerce Witness
+    , testProperty @(SomeLeqNat -> Property)
+        "minusPlus terminates"
+        $ \(MkSomeLeqNat m n) ->
+          totalRefl $
+            minusPlus n m Witness
+    , testProperty @(SomeSNat -> SomeSNat -> Property)
+        "minPlusTruncMinus terminates"
+        $ \(SomeSNat n) (SomeSNat m) ->
+          totalRefl $ minPlusTruncMinus n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property)
+        "truncMinusLeq terminates"
+        $ \(SomeSNat n) (SomeSNat m) ->
+          totalWitness $ truncMinusLeq n m
     ]
 
 totalWitness :: IsTrue p -> Property
