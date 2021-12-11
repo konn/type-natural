@@ -433,6 +433,14 @@ test_Lemmas =
         $ \(MkSomeLneqNat n m) (MkSomeLneqNat l k) ->
           totalWitness $
             plusStrictMonotone n m l k Witness Witness
+    , testProperty @(SomeSNat -> Property) "maxZeroL terminates" $
+        \(SomeSNat n) -> totalRefl $ maxZeroL n
+    , testProperty @(SomeSNat -> Property) "maxZeroR terminates" $
+        \(SomeSNat n) -> totalRefl $ maxZeroR n
+    , testProperty @(SomeSNat -> Property) "minZeroL terminates" $
+        \(SomeSNat n) -> totalRefl $ minZeroL n
+    , testProperty @(SomeSNat -> Property) "minZeroR terminates" $
+        \(SomeSNat n) -> totalRefl $ minZeroR n
     ]
 
 totalWitness :: IsTrue p -> Property
