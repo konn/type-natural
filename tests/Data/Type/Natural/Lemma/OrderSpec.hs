@@ -66,7 +66,7 @@ instance Arbitrary SomeLtNat where
 
 instance Arbitrary SomeGtNat where
   arbitrary = do
-    MkSomeLeqNat (m :: SNat n) (n :: SNat m) <- arbitrary
+    MkSomeLeqNat (n :: SNat n) (m :: SNat m) <- arbitrary
     let m' = Succ m
     case sCmpNat m' n of
       SGT -> pure $ MkSomeGtNat m' n
