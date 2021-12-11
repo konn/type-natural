@@ -79,7 +79,9 @@ jobs:
         stack update && stack build --only-dependencies --test --bench --no-run-tests --no-run-benchmarks
     - name: "Clean GHC 9.0.1 cache tentatively"
       run: |
-        [ "${{ matrix.ghc }}" = "9.0.1" ] && rm -rf **/.stack-work
+        if [ "${{ matrix.ghc }}" = "9.0.1" ]; then
+          stack clean
+        fi
     - name: Build
       run: stack build --test --bench --no-run-tests --no-run-benchmarks
 
