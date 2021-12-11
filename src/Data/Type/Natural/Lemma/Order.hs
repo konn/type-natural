@@ -503,7 +503,7 @@ leqNeqToSuccLeq n m nLEQm nNEQm =
               =~= m
 
 leqRefl :: SNat n -> IsTrue (n <=? n)
-leqRefl sn = leqStep sn sn sZero (plusZeroR sn)
+leqRefl _ = Witness
 
 leqSuccStepR :: SNat n -> SNat m -> IsTrue (n <=? m) -> IsTrue (n <=? Succ m)
 leqSuccStepR _ _ Witness = Witness
