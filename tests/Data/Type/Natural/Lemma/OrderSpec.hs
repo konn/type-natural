@@ -10,9 +10,9 @@
 
 module Data.Type.Natural.Lemma.OrderSpec where
 
-import Control.Exception (ErrorCall, evaluate, try)
+import Control.Exception (SomeException (..), evaluate, try)
 import Data.Functor ((<&>))
-import Data.List (isPrefixOf)
+import Data.List (isInfixOf, isPrefixOf)
 import Data.Type.Natural
 import Data.Type.Natural.Lemma.Order
 import Data.Void (Void)
@@ -106,10 +106,13 @@ instance Arbitrary SomeLeqView where
 
 givesImpossibleVoid :: Void -> Property
 givesImpossibleVoid contradiction = ioProperty $ do
-  eith <- try @ErrorCall $ evaluate contradiction
+  eith <- try @SomeException $ evaluate contradiction
   case eith of
     Left someE -> do
-      pure $ property $ "Impossible" `isPrefixOf` show someE
+      pure $
+        property $
+          "Impossible" `isPrefixOf` show someE
+            || "Non-exhaustive" `isInfixOf` show someE
     Right {} -> pure $ property False
 
 test_Lemmas :: TestTree
@@ -294,6 +297,84 @@ test_Lemmas =
     , testProperty @(SomeSNat -> SomeSNat -> Property) "plusLeqR terminates" $
         \(SomeSNat n) (SomeSNat m) ->
           totalWitness $ plusLeqR n m
+    , testProperty @(SomeLeqNat -> SomeSNat -> Property) "plusCancelLeqL terminates" $
+        \(MkSomeLeqNat (m :: SNat m) (l :: SNat l)) (SomeSNat n) ->
+          totalWitness $
+            plusCancelLeqR
+              n
+              m
+              l
+              (unsafeCoerce (Witness :: IsTrue (m <=? l)))
+    , testProperty @(SomeLeqNat -> SomeSNat -> Property) "plusCancelLeqR terminates" $
+        \(MkSomeLeqNat (n :: SNat n) (m :: SNat m)) (SomeSNat l) ->
+          totalWitness $
+            plusCancelLeqR
+              n
+              m
+              l
+              (unsafeCoerce (Witness :: IsTrue (n <=? m)))
+    , testProperty @(SomeSNat -> Property) "succLeqZeroAbsurd works properly" $ \(SomeSNat n) ->
+        givesImpossibleVoid $ succLeqZeroAbsurd n (unsafeCoerce Witness)
+    , testProperty @(SomeSNat -> Property) "succLeqZeroAbsurd' works properly" $ \(SomeSNat n) ->
+        total $ succLeqZeroAbsurd' n
+    , testProperty @(SomeSNat -> Property) "succLeqAbsurd works properly" $ \(SomeSNat n) ->
+        givesImpossibleVoid $ succLeqAbsurd n (unsafeCoerce Witness)
+    , testProperty @(SomeSNat -> Property) "succLeqAbsurd' works properly" $ \(SomeSNat n) ->
+        total $ succLeqAbsurd' n
+    , testProperty @(SomeGtNat -> Property)
+        "notLeqToLeq terminates"
+        $ \(MkSomeGtNat n m) ->
+          case n %<=? m of
+            STrue -> error "impossible!"
+            SFalse ->
+              totalWitness $ notLeqToLeq n m
+    , testProperty
+        @(SomeSNat -> SomeSNat -> Property)
+        "leqSucc' terminates"
+        $ \(SomeSNat n) (SomeSNat m) ->
+          total $ leqSucc' n m
+    , testProperty @(SomeLeqNat -> Property) "leqToMin terminates" $
+        \(MkSomeLeqNat n m) ->
+          total $ leqToMin n m Witness
+    , testProperty @(SomeLeqNat -> Property) "geqToMin terminates" $
+        \(MkSomeLeqNat n m) ->
+          total $ geqToMin m n Witness
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "minComm terminates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          total $ minComm n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "minLeqL terminates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          totalWitness $ minLeqL n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "minLeqR terminates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          totalWitness $ minLeqR n m
+    , testProperty @(SomeLeqNat -> SomeSNat -> Property) "minLargest terminates" $
+        \(MkSomeLeqNat l n) (SomeSNat lm) ->
+          let m = l %+ lm
+           in totalWitness $
+                minLargest l n m Witness (unsafeCoerce Witness)
+    , testProperty @(SomeLeqNat -> Property) "leqToMax termaxates" $
+        \(MkSomeLeqNat n m) ->
+          total $ leqToMax n m Witness
+    , testProperty @(SomeLeqNat -> Property) "geqToMax termaxates" $
+        \(MkSomeLeqNat n m) ->
+          total $ geqToMax m n Witness
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "maxComm termaxates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          total $ maxComm n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "maxLeqL termaxates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          totalWitness $ maxLeqL n m
+    , testProperty @(SomeSNat -> SomeSNat -> Property) "maxLeqR termaxates" $
+        \(SomeSNat n) (SomeSNat m) ->
+          totalWitness $ maxLeqR n m
+    , testProperty @(SomeLeqNat -> Property) "maxLeast termaxates" $
+        \(MkSomeLeqNat n l) ->
+          forAll (elements [0 .. toNatural l]) $ \m0 ->
+            case toSomeSNat m0 of
+              SomeSNat m ->
+                totalWitness $
+                  maxLeast l n m Witness (unsafeCoerce Witness)
     ]
 
 totalWitness :: IsTrue p -> Property

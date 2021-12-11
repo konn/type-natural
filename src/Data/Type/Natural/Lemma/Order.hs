@@ -652,8 +652,10 @@ minLargest l n m lLEQn lLEQm =
             SFalse -> lLEQm
 
 leqToMax :: SNat n -> SNat m -> IsTrue (n <=? m) -> Max n m :~: m
-leqToMax n m nLEQm =
-  leqAntisymm (sMax n m) m (maxLeast m n m nLEQm (leqRefl m)) (maxLeqR n m)
+leqToMax n m Witness =
+  case n %>=? m of
+    STrue -> Refl
+    SFalse -> Refl
 
 geqToMax :: SNat n -> SNat m -> IsTrue (m <=? n) -> Max n m :~: n
 geqToMax n m mLEQn =
