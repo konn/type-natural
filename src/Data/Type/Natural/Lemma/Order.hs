@@ -368,8 +368,7 @@ ltToSuccLeq ::
   SNat b ->
   CmpNat a b :~: 'LT ->
   IsTrue (Succ a <=? b)
-ltToSuccLeq n m nLTm =
-  leqNeqToSuccLeq n m (ltToLeq n m nLTm) (ltToNeq n m nLTm)
+ltToSuccLeq _ _ Refl = Witness
 
 cmpZero :: SNat a -> CmpNat 0 (Succ a) :~: 'LT
 cmpZero _ = Refl
