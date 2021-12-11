@@ -1,5 +1,0 @@
-resolver: lts-17.2
-
-flags: {}
-packages:
-- '.'

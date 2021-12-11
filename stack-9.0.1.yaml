@@ -1,15 +1,5 @@
-resolver: nightly-2021-03-12
-compiler: ghc-9.0.1
-compiler-check: match-exact
+resolver: nightly-2021-11-06
 
 flags: {}
 packages:
 - .
-
-extra-deps:
-- th-expand-syns-0.4.8.0
-- th-desugar-1.12
-- syb-0.7.2.1
-- equational-reasoning-0.7.0.0@rev:1
-- indexed-traversable-instances-0.1
-- ghc-typelits-presburger-0.6.0.0

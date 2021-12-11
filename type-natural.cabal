@@ -6,91 +6,100 @@ license-file:  LICENSE
 copyright:     (C) Hiromi ISHII 2013-2014
 maintainer:    konn.jinro_at_gmail.com
 author:        Hiromi ISHII
-tested-with:
-    GHC ==8.6.5, GHC ==8.8.3, GHC ==8.10.4, GHC ==9.0.1
-
+tested-with:   GHC ==8.6.5 || ==8.8.4 || ==8.10.7 || ==9.0.1 || ==9.2.1
 homepage:      https://github.com/konn/type-natural
 synopsis:      Type-level natural and proofs of their properties.
 description:
-    Type-level natural numbers and proofs of their properties.
-    .
-    Version 0.6+ supports __GHC 8+ only__.
-    .
-    __Use 0.5.* with ~ GHC 7.10.3__.
+  Type-level natural numbers and proofs of their properties.
+  .
+  Version 0.6+ supports __GHC 8+ only__.
+  .
+  __Use 0.5.* with ~ GHC 7.10.3__.
 
 category:      Math
 build-type:    Simple
 
 source-repository head
-    type:     git
-    location: git://github.com/konn/type-natural.git
+  type:     git
+  location: git://github.com/konn/type-natural.git
 
 library
-    exposed-modules:
-        Data.Type.Natural
-        Data.Type.Ordinal
-        Data.Type.Ordinal.Builtin
-        Data.Type.Natural.Builtin
-        Data.Type.Natural.Lemma.Arithmetic
-        Data.Type.Natural.Lemma.Order
-        Data.Type.Natural.Presburger.MinMaxSolver
+  exposed-modules:
+    Data.Type.Natural
+    Data.Type.Natural.Builtin
+    Data.Type.Natural.Lemma.Arithmetic
+    Data.Type.Natural.Lemma.Order
+    Data.Type.Natural.Presburger.MinMaxSolver
+    Data.Type.Ordinal
+    Data.Type.Ordinal.Builtin
 
-    hs-source-dirs:     src
-    other-modules:
-        Data.Type.Natural.Core
-        Data.Type.Natural.Utils
-        Data.Type.Natural.Lemma.Presburger
+  hs-source-dirs:     src
+  other-modules:
+    Data.Type.Natural.Core
+    Data.Type.Natural.Lemma.Presburger
+    Data.Type.Natural.Utils
 
-    default-language:   Haskell2010
-    default-extensions:
-        DataKinds PolyKinds ConstraintKinds GADTs ScopedTypeVariables
-        TemplateHaskell TypeFamilies TypeOperators MultiParamTypeClasses
-        UndecidableInstances FlexibleContexts FlexibleInstances
+  default-language:   Haskell2010
+  default-extensions:
+    ConstraintKinds
+    DataKinds
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    MultiParamTypeClasses
+    PolyKinds
+    ScopedTypeVariables
+    TemplateHaskell
+    TypeFamilies
+    TypeOperators
+    UndecidableInstances
 
-    ghc-options:        -Wall -O2 -fno-warn-orphans
-    build-depends:
-        base ==4.*,
-        ghc,
-        equational-reasoning >=0.4.1.1,
-        template-haskell >=2.8,
-        constraints >=0.3,
-        ghc-typelits-natnormalise >=0.4,
-        ghc-typelits-presburger >=0.5.1,
-        ghc-typelits-knownnat -any,
-        integer-logarithms -any
+  ghc-options:        -Wall -O2 -fno-warn-orphans
+  build-depends:
+      base                       >=4       && <5
+    , constraints                >=0.3
+    , equational-reasoning       >=0.4.1.1
+    , ghc
+    , ghc-typelits-knownnat
+    , ghc-typelits-natnormalise  >=0.4
+    , ghc-typelits-presburger    >=0.5.1
+    , integer-logarithms
+    , template-haskell           >=2.8
 
-    if impl(ghc >=8.0.0)
-        ghc-options: -Wno-redundant-constraints
+  if impl(ghc >=8.0.0)
+    ghc-options: -Wno-redundant-constraints
 
-    if impl(ghc >=8.6)
-        default-extensions: NoStarIsType
+  if impl(ghc >=8.6)
+    default-extensions: NoStarIsType
 
 test-suite type-natural-test
-    type:           exitcode-stdio-1.0
-    main-is:        test.hs
-    build-tools:    tasty-discover -any
-    hs-source-dirs: tests
-    default-language:   Haskell2010
-    other-modules:
-        Shared
-        Data.Type.NaturalSpec
-        Data.Type.NaturalSpec.TH
-        Data.Type.Natural.Presburger.MinMaxSolverSpec
-        Data.Type.Natural.Presburger.Cases
-        Data.Type.OrdinalSpec
+  type:             exitcode-stdio-1.0
+  main-is:          test.hs
+  build-tools:      tasty-discover -any
+  hs-source-dirs:   tests
+  default-language: Haskell2010
+  ghc-options:      -Wall
+  other-modules:
+    Data.Type.Natural.Lemma.OrderSpec
+    Data.Type.Natural.Presburger.Cases
+    Data.Type.Natural.Presburger.MinMaxSolverSpec
+    Data.Type.NaturalSpec
+    Data.Type.NaturalSpec.TH
+    Data.Type.OrdinalSpec
+    Shared
 
-    build-depends:
-        tasty -any,
-        QuickCheck -any,
-        tasty-quickcheck -any,
-        quickcheck-instances -any,
-        integer-logarithms -any,
-        tasty-hunit -any,
-        tasty-discover -any,
-        template-haskell -any,
-        base -any,
-        type-natural -any,
-        equational-reasoning -any
+  build-depends:
+      base
+    , equational-reasoning
+    , integer-logarithms
+    , QuickCheck
+    , quickcheck-instances
+    , tasty
+    , tasty-discover
+    , tasty-hunit
+    , tasty-quickcheck
+    , template-haskell
+    , type-natural
 
-    if impl(ghc >=8.6)
-        default-extensions: NoStarIsType
+  if impl(ghc >=8.6)
+    default-extensions: NoStarIsType
