@@ -162,6 +162,11 @@ import Proof.Equational
     (=~=),
   )
 import Proof.Propositional (IsTrue (..), eliminate, withWitness)
+#if MIN_VERSION_ghc(9,2,0)
+import qualified Data.Type.Ord as DTO
+import qualified GHC.TypeNats as TN
+#endif
+
 
 --------------------------------------------------
 
@@ -223,9 +228,13 @@ sMin = coerce $ min @Natural
 sMax :: SNat n -> SNat m -> SNat (Max n m)
 sMax = coerce $ max @Natural
 
+#if MIN_VERSION_ghc(9,2,0)
+type MinAux (p :: Bool) (n :: Nat) (m :: Nat) = DTO.Min n m
+#else
 type family MinAux (p :: Bool) (n :: Nat) (m :: Nat) :: Nat where
   MinAux 'True n _ = n
   MinAux 'False _ m = m
+#endif
 
 type Max n m = MaxAux (n >=? m) n m
 
@@ -600,7 +609,14 @@ leqSucc' :: SNat n -> SNat m -> (n <=? m) :~: (Succ n <=? Succ m)
 leqSucc' _ _ = Refl
 
 leqToMin :: SNat n -> SNat m -> IsTrue (n <=? m) -> Min n m :~: n
+#if MIN_VERSION_ghc(9,2,0)
+leqToMin sn sm Witness = withKnownNat sn $ withKnownNat sm $ 
+  case TN.cmpNat sn sm of
+    DTO.LTI -> Refl
+    DTO.EQI -> Refl
+#else
 leqToMin _ _ Witness = Refl
+#endif
 
 geqToMin :: SNat n -> SNat m -> IsTrue (m <=? n) -> Min n m :~: m
 geqToMin n m Witness =
