@@ -658,8 +658,9 @@ leqToMax n m Witness =
     SFalse -> Refl
 
 geqToMax :: SNat n -> SNat m -> IsTrue (m <=? n) -> Max n m :~: n
-geqToMax n m mLEQn =
-  leqAntisymm (sMax n m) n (maxLeast n n m (leqRefl n) mLEQn) (maxLeqL n m)
+geqToMax n m Witness =
+  case n %>=? m of
+    STrue -> Refl
 
 maxComm :: SNat n -> SNat m -> Max n m :~: Max m n
 maxComm n m =
