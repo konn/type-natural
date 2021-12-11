@@ -1,6 +1,6 @@
 cabal-version: >=1.10
 name:          type-natural
-version:       1.1.0.0
+version:       1.1.0.1
 license:       BSD3
 license-file:  LICENSE
 copyright:     (C) Hiromi ISHII 2013-2014
