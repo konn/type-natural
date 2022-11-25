@@ -40,7 +40,7 @@ data SomeLtNat where
 
 data SomeLneqNat where
   MkSomeLneqNat ::
-    n < m =>
+    (n <? m) ~ 'True =>
     SNat n ->
     SNat m ->
     SomeLneqNat
