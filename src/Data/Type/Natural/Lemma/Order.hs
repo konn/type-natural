@@ -582,7 +582,7 @@ leqWitness = \sn -> leqWitPf (induction base step sn) @m
     step :: SNat x -> LeqWitPf x -> LeqWitPf (Succ x)
     step (n :: SNat x) (LeqWitPf ih) = LeqWitPf $ \m snLEQm ->
       case viewLeq (sSucc n) m snLEQm of
-#if !MIN_VERSION_ghc(9,2,0)
+#if !MIN_VERSION_ghc(9,2,0) || MIN_VERSION_ghc(9,4,0)
         LeqZero _ -> absurd $ succNonCyclic n Refl
 #endif
         LeqSucc (_ :: SNat n') pm nLEQpm ->

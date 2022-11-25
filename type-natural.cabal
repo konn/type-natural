@@ -1,12 +1,14 @@
 cabal-version: >=1.10
 name:          type-natural
-version:       1.2.0.0
+version:       1.2.0.1
 license:       BSD3
 license-file:  LICENSE
-copyright:     (C) Hiromi ISHII 2013-2014
+copyright:     (C) Hiromi ISHII 2013-2022
 maintainer:    konn.jinro_at_gmail.com
 author:        Hiromi ISHII
-tested-with:   GHC ==8.6.5 || ==8.8.4 || ==8.10.7 || ==9.0.1 || ==9.2.1
+tested-with:
+  GHC ==8.6.5 || ==8.8.4 || ==8.10.7 || ==9.0.1 || ==9.2.4 || ==9.4.3
+
 homepage:      https://github.com/konn/type-natural
 synopsis:      Type-level natural and proofs of their properties.
 description:
@@ -62,9 +64,14 @@ library
     , ghc
     , ghc-typelits-knownnat
     , ghc-typelits-natnormalise  >=0.4
-    , ghc-typelits-presburger    >=0.6.2
     , integer-logarithms
     , template-haskell           >=2.8
+
+  if impl(ghc >=9.4)
+    build-depends: ghc-typelits-presburger >=0.7.1
+
+  else
+    build-depends: ghc-typelits-presburger
 
   if impl(ghc >=8.0.0)
     ghc-options: -Wno-redundant-constraints

@@ -29,7 +29,7 @@ someNat' :: NonNegative Integer -> SomeSNat
 someNat' = toSomeSNat . fromInteger . getNonNegative
 
 data SomeLeqNat where
-  MkSomeLeqNat :: n <= m => SNat n -> SNat m -> SomeLeqNat
+  MkSomeLeqNat :: (n <=? m) ~ 'True => SNat n -> SNat m -> SomeLeqNat
 
 data SomeLtNat where
   MkSomeLtNat ::
@@ -40,7 +40,7 @@ data SomeLtNat where
 
 data SomeLneqNat where
   MkSomeLneqNat ::
-    n < m =>
+    (n <? m) ~ 'True =>
     SNat n ->
     SNat m ->
     SomeLneqNat

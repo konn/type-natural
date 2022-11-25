@@ -20,12 +20,8 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.KnownNat.Solver #-}
-{-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
-#if !MIN_VERSION_ghc(9,2,1)
 {-# OPTIONS_GHC -fplugin Data.Type.Natural.Presburger.MinMaxSolver #-}
 {-# OPTIONS_GHC -fobject-code #-}
-#endif
 
 {- | Set-theoretic ordinals for built-in type-level naturals
 
@@ -193,7 +189,7 @@ succOrd (OLt k) = OLt (sSucc k)
 instance (KnownNat n, 0 < n) => Bounded (Ordinal n) where
   minBound = OLt sZero
 
-  maxBound = OLt $ sNat @(n - 1)
+  maxBound = withKnownNat (sNat @n %- sNat @1) $ OLt $ sNat @(n - 1)
 
 {- | Converts @'Natural'@s into @'Ordinal n'@.
    If the given natural is greater or equal to @n@, raises exception.
