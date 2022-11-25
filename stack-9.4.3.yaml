@@ -6,5 +6,5 @@ packages:
 
 extra-deps:
 - equational-reasoning-0.7.0.1@rev:2
-- ghc-typelits-presburger-0.7.0.0
-- singletons-presburger-0.7.0.0
+- ghc-typelits-presburger-0.7.1.0
+- singletons-presburger-0.7.1.0

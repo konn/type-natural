@@ -62,7 +62,7 @@ library
     , ghc
     , ghc-typelits-knownnat
     , ghc-typelits-natnormalise  >=0.4
-    , ghc-typelits-presburger    >=0.6.2
+    , ghc-typelits-presburger    >=0.7.1
     , integer-logarithms
     , template-haskell           >=2.8
 
