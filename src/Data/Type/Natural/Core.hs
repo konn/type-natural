@@ -63,6 +63,9 @@ module Data.Type.Natural.Core
     SOrdering (..),
     SBool (..),
     Natural,
+    OrderingI(..),
+    fromOrderingI,
+    toOrderingI,
     -- Re-exports
     module GHC.TypeNats,
   )
@@ -77,6 +80,10 @@ import Math.NumberTheory.Logarithms (naturalLog2)
 import Type.Reflection (Typeable)
 import Unsafe.Coerce (unsafeCoerce)
 import Numeric.Natural
+
+#if MIN_VERSION_base(4,16,0)
+import Data.Type.Ord (OrderingI(..))
+#endif
 
 #if !MIN_VERSION_base(4,18,0)
 import Data.Proxy
@@ -240,26 +247,44 @@ viewNat n =
     Equal -> IsZero
     NonEqual -> IsSucc (sPred n)
 
+
+#if !MIN_VERSION_base(4,16,0)
+data OrderingI (a :: Nat) (b :: Nat) where
+  LTI :: CmpNat a b ~ 'LT => OrderingI a b
+  EQI :: CmpNat a b ~ 'EQ => OrderingI a b
+  GTI :: CmpNat a b ~ 'GT => OrderingI a b
+#endif
+
 type family FlipOrdering ord where
   FlipOrdering 'LT = 'GT
   FlipOrdering 'GT = 'LT
   FlipOrdering 'EQ = 'EQ
-
-sFlipOrdering :: SOrdering ord -> SOrdering (FlipOrdering ord)
-sFlipOrdering SLT = SGT
-sFlipOrdering SEQ = SEQ
-sFlipOrdering SGT = SLT
 
 data SOrdering (ord :: Ordering) where
   SLT :: SOrdering 'LT
   SEQ :: SOrdering 'EQ
   SGT :: SOrdering 'GT
 
+fromOrderingI :: OrderingI n m -> SOrdering (CmpNat n m)
+fromOrderingI LTI = SLT
+fromOrderingI EQI = SEQ
+fromOrderingI GTI = SGT
+
+toOrderingI :: SOrdering (CmpNat n m) -> OrderingI n m
+toOrderingI SLT = LTI
+toOrderingI SEQ = EQI
+toOrderingI SGT = GTI
+
 deriving instance Show (SOrdering ord)
 
 deriving instance Eq (SOrdering ord)
 
 deriving instance Typeable SOrdering
+
+sFlipOrdering :: SOrdering ord -> SOrdering (FlipOrdering ord)
+sFlipOrdering SLT = SGT
+sFlipOrdering SEQ = SEQ
+sFlipOrdering SGT = SLT
 
 data SBool (b :: Bool) where
   SFalse :: SBool 'False

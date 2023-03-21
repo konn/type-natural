@@ -105,6 +105,9 @@ module Data.Type.Natural
     -- * Singletons for auxiliary types
     SBool (..),
     SOrdering (..),
+    OrderingI(..),
+    fromOrderingI,
+    toOrderingI,
     FlipOrdering,
     sFlipOrdering,
   )
