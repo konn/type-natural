@@ -75,6 +75,10 @@ import Type.Reflection (Typeable)
 import Unsafe.Coerce (unsafeCoerce)
 
 #if !MIN_VERSION_base(4,18,0)
+import Data.Proxy
+#endif
+
+#if !MIN_VERSION_base(4,18,0)
 -- | A singleton for type-level naturals
 newtype SNat (n :: Nat) = UnsafeSNat Natural
   deriving newtype (Show, Eq, Ord)
