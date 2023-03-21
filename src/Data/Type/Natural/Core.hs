@@ -149,7 +149,7 @@ sNat :: forall n. KnownNat n => SNat n
 #if MIN_VERSION_ghc(4,18,0)
 sNat = SNat
 #else
-sNat = SNat $ natVal' (proxy# :: Proxy# n)
+sNat = UnsafeSNat $ natVal' (proxy# :: Proxy# n)
 #endif
 
 
