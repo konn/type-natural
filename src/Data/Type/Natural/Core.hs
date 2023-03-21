@@ -76,6 +76,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 #if !MIN_VERSION_base(4,18,0)
 import Data.Proxy
+import GHC.Exts
 #endif
 
 #if !MIN_VERSION_base(4,18,0)
