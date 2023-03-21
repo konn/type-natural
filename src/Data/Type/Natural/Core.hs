@@ -76,7 +76,7 @@ import Type.Reflection (Typeable)
 import Unsafe.Coerce (unsafeCoerce)
 
 #if !MIN_VERSION_base(4,18,0)
-  import Numeric.Natural
+import Numeric.Natural
 import Data.Proxy
 import GHC.Exts
 #endif
