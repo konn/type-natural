@@ -481,4 +481,4 @@ totalWitness w =
       )
 
 totalRefl :: a :~: b -> Property
-totalRefl = total
+totalRefl = within 10000 . total
