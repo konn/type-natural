@@ -94,7 +94,8 @@ withKnownNat :: forall n rep (r :: TYPE rep). SNat n -> (KnownNat n => r) -> r
 withKnownNat (UnsafeSNat n) act =
   case someNatVal n of
     SomeNat (_ :: Proxy m) ->
-      gcastWith (unsafeCoerce (Refl @()) :: n :~: m) act
+      case unsafeCoerce (Refl @()) :: n :~: m of
+        Refl -> act
 
 data KnownNatInstance (n :: Nat) where
   KnownNatInstance :: KnownNat n => KnownNatInstance n
