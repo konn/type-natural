@@ -131,6 +131,7 @@ givesImpossibleVoid contradiction = ioProperty $ do
         property $
           "Impossible" `isPrefixOf` show someE
             || "Non-exhaustive" `isInfixOf` show someE
+            || "missingAlt" `isInfixOf` show someE
     Right v -> 
       pure $ counterexample "Value of void returned..." 
         $ property False
