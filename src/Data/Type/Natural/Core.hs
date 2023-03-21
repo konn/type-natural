@@ -62,6 +62,7 @@ module Data.Type.Natural.Core
     FlipOrdering,
     SOrdering (..),
     SBool (..),
+    Natural,
     -- Re-exports
     module GHC.TypeNats,
   )
@@ -75,9 +76,9 @@ import GHC.TypeNats
 import Math.NumberTheory.Logarithms (naturalLog2)
 import Type.Reflection (Typeable)
 import Unsafe.Coerce (unsafeCoerce)
+import Numeric.Natural
 
 #if !MIN_VERSION_base(4,18,0)
-import Numeric.Natural
 import Data.Proxy
 import Data.Type.Equality
 import GHC.Exts
