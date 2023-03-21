@@ -146,7 +146,7 @@ sLog2 :: SNat n -> SNat (Log2 n)
 sLog2 = unsafeLiftSUnary $ fromIntegral . naturalLog2
 
 sNat :: forall n. KnownNat n => SNat n
-#if MIN_VERSION_ghc(4,18,0)
+#if MIN_VERSION_base(4,18,0)
 sNat = SNat
 #else
 sNat = UnsafeSNat $ natVal' (proxy# :: Proxy# n)
