@@ -28,6 +28,7 @@ module Data.Type.Natural.Core
 #if !MIN_VERSION_base(4,18,0)
     fromSNat,
     withKnownNat,
+    withSomeSNat,
 #endif
     ZeroOrSucc (..),
     viewNat,
@@ -104,6 +105,9 @@ knownNatInstance sn = withKnownNat sn KnownNatInstance
 pattern SNat :: forall n. () => KnownNat n => SNat n
 pattern SNat <- (knownNatInstance -> KnownNatInstance) 
   where SNat = sNat
+
+withSomeSNat :: forall rep (r :: TYPE rep). Natural -> (forall n. SNat n -> r) -> r
+withSomeSNat n f = f (UnsafeSNat n)
 #endif
 
 (%+) :: SNat n -> SNat m -> SNat (n + m)
