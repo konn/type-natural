@@ -78,6 +78,7 @@ import Unsafe.Coerce (unsafeCoerce)
 #if !MIN_VERSION_base(4,18,0)
 import Numeric.Natural
 import Data.Proxy
+import Data.Type.Equality
 import GHC.Exts
 #endif
 
