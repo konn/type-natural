@@ -127,11 +127,13 @@ givesImpossibleVoid contradiction = ioProperty $ do
   eith <- try @SomeException $ evaluate contradiction
   case eith of
     Left someE -> do
-      pure $
+      pure $ counterexample (show someE) $
         property $
           "Impossible" `isPrefixOf` show someE
             || "Non-exhaustive" `isInfixOf` show someE
-    Right {} -> pure $ property False
+    Right v -> 
+      pure $ counterexample "Value of void returned..." 
+        $ property False
 
 test_Lemmas :: TestTree
 test_Lemmas =
