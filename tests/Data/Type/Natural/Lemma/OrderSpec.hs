@@ -127,11 +127,14 @@ givesImpossibleVoid contradiction = ioProperty $ do
   eith <- try @SomeException $ evaluate contradiction
   case eith of
     Left someE -> do
-      pure $
+      pure $ counterexample (show someE) $
         property $
           "Impossible" `isPrefixOf` show someE
             || "Non-exhaustive" `isInfixOf` show someE
-    Right {} -> pure $ property False
+            || "missingAlt" `isInfixOf` show someE
+    Right v -> 
+      pure $ counterexample "Value of void returned..." 
+        $ property False
 
 test_Lemmas :: TestTree
 test_Lemmas =
@@ -146,8 +149,8 @@ test_Lemmas =
         \(SomeSNat sn) (SomeSNat sm) ->
           case succDiffNat sn (sn %+ sm) (DiffNat sn sm) of
             DiffNat sns sms ->
-              toNatural (sns %+ sms)
-                === toNatural sn + toNatural sm + 1
+              fromSNat (sns %+ sms)
+                === fromSNat sn + fromSNat sm + 1
     , testProperty @(SomeSNat -> SomeSNat -> Property)
         "compareCongR terminates"
         $ \(SomeSNat a) (SomeSNat (_ :: SNat b)) ->
@@ -157,9 +160,9 @@ test_Lemmas =
         $ \case
           MkSomeLeqNat a b ->
             case leqToCmp a b Witness of
-              Left Refl -> toNatural a === toNatural b
+              Left Refl -> fromSNat a === fromSNat b
               Right Refl ->
-                property $ toNatural a < toNatural b
+                property $ fromSNat a < fromSNat b
     , testProperty @(SomeSNat -> Property)
         "eqlCmpEQ terminates"
         $ \(SomeSNat n) ->
@@ -248,24 +251,24 @@ test_Lemmas =
     , testProperty @(SomeSNat -> Property) "leqViewRefl works properly" $ \(SomeSNat sn) ->
         case leqViewRefl sn of
           LeqZero sn' ->
-            toNatural sn' === toNatural sn .&&. toNatural sn' === 0
+            fromSNat sn' === fromSNat sn .&&. fromSNat sn' === 0
           LeqSucc sn' sm' Witness ->
-            toNatural sn' === toNatural sm'
-              .&&. toNatural sn' + 1 === toNatural sn
+            fromSNat sn' === fromSNat sm'
+              .&&. fromSNat sn' + 1 === fromSNat sn
     , testProperty @(SomeLeqNat -> Property) "viewLeq works properly" $ \(MkSomeLeqNat sn sm) ->
         case viewLeq sn sm Witness of
           LeqZero sm' ->
-            toNatural sn === 0 .&&. toNatural sm === toNatural sm'
+            fromSNat sn === 0 .&&. fromSNat sm === fromSNat sm'
           LeqSucc sn' sm' Witness ->
-            toNatural sn' + 1 === toNatural sn
-              .&&. toNatural sm' + 1 === toNatural sm
-              .&&. toNatural sn' <= toNatural sm'
+            fromSNat sn' + 1 === fromSNat sn
+              .&&. fromSNat sm' + 1 === fromSNat sm
+              .&&. fromSNat sn' <= fromSNat sm'
     , testProperty @(SomeLeqNat -> Property) "leqWitness gives the difference as a witness" $
         \(MkSomeLeqNat sn sm) ->
           case leqWitness sn sm Witness of
             DiffNat sn' delta ->
-              toNatural sn === toNatural sn'
-                .&&. toNatural sn' + toNatural delta === toNatural sm
+              fromSNat sn === fromSNat sn'
+                .&&. fromSNat sn' + fromSNat delta === fromSNat sm
     , testProperty @(SomeSNat -> SomeSNat -> Property)
         "leqStep terminates"
         $ \(SomeSNat n) (SomeSNat l) ->
@@ -392,7 +395,7 @@ test_Lemmas =
           totalWitness $ maxLeqR n m
     , testProperty @(SomeLeqNat -> Property) "maxLeast termaxates" $
         \(MkSomeLeqNat n l) ->
-          forAll (elements [0 .. toNatural l]) $ \m0 ->
+          forAll (elements [0 .. fromSNat l]) $ \m0 ->
             case toSomeSNat m0 of
               SomeSNat m ->
                 totalWitness $
@@ -479,4 +482,4 @@ totalWitness w =
       )
 
 totalRefl :: a :~: b -> Property
-totalRefl = total
+totalRefl = within 10000 . total

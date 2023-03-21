@@ -68,7 +68,7 @@ type instance Sing = SNat
 
 instance Demote Nat where
   type Demoted Nat = Natural
-  demote = toNatural
+  demote = fromSNat
 
 type instance Sing = SOrdering
 

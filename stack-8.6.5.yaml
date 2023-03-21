@@ -1,9 +1,0 @@
-resolver: lts-14.27
-
-flags: {}
-packages:
-- '.'
-
-extra-deps:
-- equational-reasoning-0.6.0.3
-- ghc-typelits-presburger-0.6.2.0

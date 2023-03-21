@@ -1,8 +1,0 @@
-cradle:
-  stack:
-    - path: "src"
-      component: "type-natural:lib"
-    - path: "tests"
-      component: "type-natural:test:type-natural-test"
-    - path: "sandpit/example.hs"
-      component: "sandpit/example.hs"

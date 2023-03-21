@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE EmptyCase #-}
@@ -23,11 +24,16 @@
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Presburger #-}
 
 module Data.Type.Natural.Core
-  ( SNat (.., Zero, Succ),
+  ( SNat (Zero, Succ),
+#if !MIN_VERSION_base(4,18,0)
+    fromSNat,
+    withKnownNat,
+    withSomeSNat,
+#endif
+    unsafeLiftSBin,
     ZeroOrSucc (..),
     viewNat,
     sNat,
-    withKnownNat,
     (%+),
     (%-),
     (%*),
@@ -56,60 +62,103 @@ module Data.Type.Natural.Core
     FlipOrdering,
     SOrdering (..),
     SBool (..),
+    Natural,
+    OrderingI(..),
+    fromOrderingI,
+    toOrderingI,
     -- Re-exports
     module GHC.TypeNats,
   )
 where
 
-import Data.Coerce (coerce)
-import Data.Proxy (Proxy)
 import Data.Type.Equality
-  ( TestEquality (..),
-    gcastWith,
-    type (:~:) (..),
+  ( type (:~:) (..),
     type (==),
   )
-import Data.Type.Natural.Utils
-import GHC.Exts (Proxy#, proxy#)
 import GHC.TypeNats
 import Math.NumberTheory.Logarithms (naturalLog2)
-import Numeric.Natural (Natural)
 import Type.Reflection (Typeable)
 import Unsafe.Coerce (unsafeCoerce)
+import Numeric.Natural
 
+#if MIN_VERSION_base(4,16,0)
+import Data.Type.Ord (OrderingI(..))
+#endif
+
+#if !MIN_VERSION_base(4,18,0)
+import Data.Proxy
+import Data.Type.Equality
+import GHC.Exts
+#endif
+
+#if !MIN_VERSION_base(4,18,0)
 -- | A singleton for type-level naturals
-newtype SNat (n :: Nat) = SNat Natural
+newtype SNat (n :: Nat) = UnsafeSNat Natural
   deriving newtype (Show, Eq, Ord)
 
-withKnownNat :: forall n r. SNat n -> (KnownNat n => r) -> r
-withKnownNat (SNat n) act =
+fromSNat :: SNat n -> Natural
+fromSNat = coerce
+
+withKnownNat :: forall n rep (r :: TYPE rep). SNat n -> (KnownNat n => r) -> r
+withKnownNat (UnsafeSNat n) act =
   case someNatVal n of
     SomeNat (_ :: Proxy m) ->
-      gcastWith (unsafeCoerce (Refl @()) :: n :~: m) act
+      case unsafeCoerce (Refl @()) :: n :~: m of
+        Refl -> act
+
+data KnownNatInstance (n :: Nat) where
+  KnownNatInstance :: KnownNat n => KnownNatInstance n
+
+-- An internal function that is only used for defining the SNat pattern
+-- synonym.
+knownNatInstance :: SNat n -> KnownNatInstance n
+knownNatInstance sn = withKnownNat sn KnownNatInstance
+
+pattern SNat :: forall n. () => KnownNat n => SNat n
+pattern SNat <- (knownNatInstance -> KnownNatInstance) 
+  where SNat = sNat
+
+withSomeSNat :: forall rep (r :: TYPE rep). Natural -> (forall n. SNat n -> r) -> r
+withSomeSNat n f = f (UnsafeSNat n)
+#endif
+
+unsafeLiftSBin :: (Natural -> Natural -> Natural) -> SNat n -> SNat m -> SNat k
+{-# INLINE unsafeLiftSBin #-}
+unsafeLiftSBin f = \l r -> withSomeSNat (fromSNat l `f` fromSNat r) unsafeCoerce
+
+unsafeLiftSUnary :: (Natural -> Natural) -> SNat n -> SNat k
+{-# INLINE unsafeLiftSUnary #-}
+unsafeLiftSUnary f = \l -> withSomeSNat (f $ fromSNat l) unsafeCoerce
 
 (%+) :: SNat n -> SNat m -> SNat (n + m)
-(%+) = coerce $ (+) @Natural
+{-# INLINE (%+) #-}
+(%+) = unsafeLiftSBin (+)
 
 (%-) :: SNat n -> SNat m -> SNat (n - m)
-(%-) = coerce $ (-) @Natural
+(%-) = unsafeLiftSBin (-)
 
 (%*) :: SNat n -> SNat m -> SNat (n * m)
-(%*) = coerce $ (*) @Natural
+(%*) = unsafeLiftSBin (*)
 
 sDiv :: SNat n -> SNat m -> SNat (Div n m)
-sDiv = coerce $ div @Natural
+sDiv = unsafeLiftSBin quot
 
 sMod :: SNat n -> SNat m -> SNat (Mod n m)
-sMod = coerce $ mod @Natural
+sMod = unsafeLiftSBin rem
 
 (%^) :: SNat n -> SNat m -> SNat (n ^ m)
-(%^) = coerce $ (^) @Natural @Natural
+(%^) = unsafeLiftSBin (^)
 
 sLog2 :: SNat n -> SNat (Log2 n)
-sLog2 = coerce $ fromIntegral @Int @Natural . naturalLog2
+sLog2 = unsafeLiftSUnary $ fromIntegral . naturalLog2
 
 sNat :: forall n. KnownNat n => SNat n
-sNat = SNat $ natVal' (proxy# :: Proxy# n)
+#if MIN_VERSION_base(4,18,0)
+sNat = SNat
+#else
+sNat = UnsafeSNat $ natVal' (proxy# :: Proxy# n)
+#endif
+
 
 infixl 6 %+, %-
 
@@ -117,11 +166,14 @@ infixl 7 %*, `sDiv`, `sMod`
 
 infixr 8 %^
 
+#if !MIN_VERSION_ghc(4,18,0)
 instance TestEquality SNat where
-  testEquality (SNat l) (SNat r) =
+  testEquality (UnsafeSNat l) (UnsafeSNat r) =
     if l == r
       then Just trustMe
       else Nothing
+#endif
+
 
 -- | Since 1.1.0.0 (Type changed)
 data Equality n m where
@@ -141,8 +193,8 @@ type family a === b where
 infix 4 ===, %~
 
 (%~) :: SNat l -> SNat r -> Equality l r
-SNat l %~ SNat r =
-  if l == r
+l %~ r =
+  if fromSNat l == fromSNat r
     then unsafeCoerce (Equal @())
     else unsafeCoerce (NonEqual @0 @1)
 
@@ -195,26 +247,44 @@ viewNat n =
     Equal -> IsZero
     NonEqual -> IsSucc (sPred n)
 
+
+#if !MIN_VERSION_base(4,16,0)
+data OrderingI (a :: Nat) (b :: Nat) where
+  LTI :: CmpNat a b ~ 'LT => OrderingI a b
+  EQI :: CmpNat a b ~ 'EQ => OrderingI a b
+  GTI :: CmpNat a b ~ 'GT => OrderingI a b
+#endif
+
 type family FlipOrdering ord where
   FlipOrdering 'LT = 'GT
   FlipOrdering 'GT = 'LT
   FlipOrdering 'EQ = 'EQ
-
-sFlipOrdering :: SOrdering ord -> SOrdering (FlipOrdering ord)
-sFlipOrdering SLT = SGT
-sFlipOrdering SEQ = SEQ
-sFlipOrdering SGT = SLT
 
 data SOrdering (ord :: Ordering) where
   SLT :: SOrdering 'LT
   SEQ :: SOrdering 'EQ
   SGT :: SOrdering 'GT
 
+fromOrderingI :: OrderingI n m -> SOrdering (CmpNat n m)
+fromOrderingI LTI = SLT
+fromOrderingI EQI = SEQ
+fromOrderingI GTI = SGT
+
+toOrderingI :: SOrdering (CmpNat n m) -> OrderingI n m
+toOrderingI SLT = LTI
+toOrderingI SEQ = EQI
+toOrderingI SGT = GTI
+
 deriving instance Show (SOrdering ord)
 
 deriving instance Eq (SOrdering ord)
 
 deriving instance Typeable SOrdering
+
+sFlipOrdering :: SOrdering ord -> SOrdering (FlipOrdering ord)
+sFlipOrdering SLT = SGT
+sFlipOrdering SEQ = SEQ
+sFlipOrdering SGT = SLT
 
 data SBool (b :: Bool) where
   SFalse :: SBool 'False
@@ -229,15 +299,16 @@ deriving instance Typeable SBool
 infix 4 %<=?
 
 (%<=?) :: SNat n -> SNat m -> SBool (n <=? m)
-SNat n %<=? SNat m =
-  if n <= m
+n %<=? m =
+  if fromSNat n <= fromSNat m
     then unsafeCoerce STrue
     else unsafeCoerce SFalse
 
 sCmpNat, sCompare :: SNat n -> SNat m -> SOrdering (CmpNat n m)
 sCompare = sCmpNat
-sCmpNat (SNat n) (SNat m) =
-  case compare n m of
+sCmpNat n m =
+  case compare (fromSNat n) (fromSNat m) of
     LT -> unsafeCoerce SLT
     EQ -> unsafeCoerce SEQ
     GT -> unsafeCoerce SGT
+

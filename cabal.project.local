@@ -1,0 +1,4 @@
+import: ci-configs/ghc-9.6.1.config
+ignore-project: False
+tests: True
+benchmarks: True

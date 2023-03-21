@@ -1,8 +1,0 @@
-resolver: lts-18.16
-
-flags: {}
-packages:
-- '.'
-
-extra-deps:
-- ghc-typelits-presburger-0.6.2.0
