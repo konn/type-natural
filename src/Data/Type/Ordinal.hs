@@ -137,7 +137,7 @@ instance
   (KnownNat n) =>
   Show (Ordinal (n :: Nat))
   where
-  showsPrec d o = showChar '#' . showParen True (showsPrec d (ordToNatural o) . showString " / " . showsPrec d (toNatural (sNat :: SNat n)))
+  showsPrec d o = showChar '#' . showParen True (showsPrec d (ordToNatural o) . showString " / " . showsPrec d (fromSNat (sNat :: SNat n)))
 
 instance Eq (Ordinal (n :: Nat)) where
   o == o' = ordToNatural o == ordToNatural o'
@@ -179,7 +179,7 @@ enumFromOrd ord =
 
 -- | Enumerate all @'Ordinal'@s less than @n@.
 enumOrdinal :: SNat (n :: Nat) -> [Ordinal n]
-enumOrdinal sn = withKnownNat sn $ map (reallyUnsafeNaturalToOrd Proxy) [0 .. toNatural sn - 1]
+enumOrdinal sn = withKnownNat sn $ map (reallyUnsafeNaturalToOrd Proxy) [0 .. fromSNat sn - 1]
 
 -- | Since 1.0.0.0 (type changed)
 succOrd :: forall (n :: Nat). (KnownNat n) => Ordinal n -> Ordinal (Succ n)
@@ -270,7 +270,7 @@ ordToSNat (OLt n) = withKnownNat n $ SomeSNat n
 ordToNatural ::
   Ordinal (n :: Nat) ->
   Natural
-ordToNatural (OLt n) = toNatural n
+ordToNatural (OLt n) = fromSNat n
 
 {- | Inclusion function for ordinals.
 

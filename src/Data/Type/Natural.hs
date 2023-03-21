@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE EmptyCase #-}
@@ -32,6 +33,7 @@ module Data.Type.Natural
     toSomeSNat,
     withSNat,
     withKnownNat,
+    fromSNat,
     natVal,
     natVal',
     someNatVal,
@@ -108,15 +110,15 @@ module Data.Type.Natural
   )
 where
 
-import Data.Coerce (coerce)
 import Data.Proxy (Proxy)
 import Data.Type.Natural.Core
 import Data.Type.Natural.Lemma.Arithmetic
 import Data.Type.Natural.Lemma.Order
 import Language.Haskell.TH (litT, numTyLit)
 import Language.Haskell.TH.Quote
-import Numeric.Natural
 import Text.Read (readMaybe)
+import Data.Ord (comparing)
+import Data.Function (on)
 
 {- | Quotesi-quoter for SNatleton types for @'GHC.TypeLits.Nat'@. This can be used for an expression.
 
@@ -141,7 +143,8 @@ snat =
     }
 
 toNatural :: SNat n -> Natural
-toNatural = coerce
+{-# DEPRECATED toNatural "Use fromSNat instead" #-}
+toNatural = fromSNat
 
 data SomeSNat where
   SomeSNat :: KnownNat n => SNat n -> SomeSNat
@@ -149,8 +152,12 @@ data SomeSNat where
 deriving instance Show SomeSNat
 
 instance Eq SomeSNat where
-  SomeSNat (SNat n) == SomeSNat (SNat m) = n == m
-  SomeSNat (SNat n) /= SomeSNat (SNat m) = n /= m
+  (==) = (==) `on` \(SomeSNat n) -> fromSNat n
+  {-# INLINE (==) #-}
+
+instance Ord SomeSNat where
+  compare = comparing (\(SomeSNat n) -> fromSNat n)
+  {-# INLINE compare #-}
 
 toSomeSNat :: Natural -> SomeSNat
 toSomeSNat n = case someNatVal n of

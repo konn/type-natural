@@ -23,50 +23,50 @@ test_arith =
     "Arithmetic operations on singletons behaves correctly"
     [ testProperty "(+), compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
-          toNatural (n %+ m) === (natVal n + natVal m)
+          fromSNat (n %+ m) === (natVal n + natVal m)
     , $(testBinary "(+)" ''(+) '(%+))
     , testProperty "(-), compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
           disjoin
-            [ natVal n < natVal m .&&. toNatural (m %- n) === (natVal m - natVal n)
-            , toNatural (n %- m) === (natVal n - natVal m)
+            [ natVal n < natVal m .&&. fromSNat (m %- n) === (natVal m - natVal n)
+            , fromSNat (n %- m) === (natVal n - natVal m)
             ]
     , $(testBinaryP (>=) "(-)" ''(-) '(%-))
     , testProperty "(*), compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
-          toNatural (n %* m) === (natVal n * natVal m)
+          fromSNat (n %* m) === (natVal n * natVal m)
     , $(testBinary "(*)" ''(*) '(%*))
     , testProperty "Div, compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
           label "divide by zero" (natVal m === 0)
-            .||. toNatural (n `sDiv` m) === (natVal n `div` natVal m)
+            .||. fromSNat (n `sDiv` m) === (natVal n `div` natVal m)
     , $(testBinaryP (const $ (/= 0)) "Div" ''Div 'sDiv)
     , testProperty "Mod, compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
           label "divide by zero" (natVal m === 0)
-            .||. toNatural (n `sMod` m) === (natVal n `mod` natVal m)
+            .||. fromSNat (n `sMod` m) === (natVal n `mod` natVal m)
     , $(testBinaryP (const $ (/= 0)) "Mod" ''Mod 'sMod)
     , testProperty "(^), compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
-          toNatural (n %^ m) === (natVal n ^ natVal m)
+          fromSNat (n %^ m) === (natVal n ^ natVal m)
     , $(testBinaryP (\a b -> a /= 0 && b /= 0) "(^)" ''(^) '(%^))
     , testProperty "(-.), compared to demoted" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
-          toNatural (n %-. m) === (if natVal n < natVal m then 0 else natVal n - natVal m)
+          fromSNat (n %-. m) === (if natVal n < natVal m then 0 else natVal n - natVal m)
     , $(testBinary "(-.)" ''(-.) '(%-.))
     , testProperty "Log2" $ \(SomeSNat n) ->
         tabulateDigits [natVal n] $
           label "undefined" (natVal n === 0)
-            .||. toNatural (sLog2 n) === fromIntegral (naturalLog2 (natVal n))
+            .||. fromSNat (sLog2 n) === fromIntegral (naturalLog2 (natVal n))
     , $(testUnary False "Log2" ''Log2 'sLog2)
     , testProperty "succ" $ \(SomeSNat n) ->
         tabulateDigits [natVal n] $
-          toNatural (sSucc n) === succ (natVal n)
+          fromSNat (sSucc n) === succ (natVal n)
     , $(testUnary True "Succ" ''Succ 'sSucc)
     , testProperty "pred" $ \(SomeSNat n) ->
         tabulateDigits [natVal n] $
           label "undefiend" (natVal n === 0)
-            .||. toNatural (sPred n) === pred (natVal n)
+            .||. fromSNat (sPred n) === pred (natVal n)
     , $(testUnary False "Pred" ''Pred 'sPred)
     ]
 
@@ -105,11 +105,11 @@ test_order =
     , $(testBinary "CmpNat" ''CmpNat 'sCmpNat)
     , testProperty "min" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
-          toNatural (n `sMin` m) === (natVal n `min` natVal m)
+          fromSNat (n `sMin` m) === (natVal n `min` natVal m)
     , $(testBinary "min" ''Min 'sMin)
     , testProperty "max" $ \(SomeSNat n) (SomeSNat m) ->
         tabulateDigits [natVal n, natVal m] $
-          toNatural (n `sMax` m) === (natVal n `max` natVal m)
+          fromSNat (n `sMax` m) === (natVal n `max` natVal m)
     , $(testBinary "max" ''Max 'sMax)
     ]
 
