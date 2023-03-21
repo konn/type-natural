@@ -154,12 +154,10 @@ module Data.Type.Natural.Lemma.Order
   )
 where
 
-import Data.Coerce (coerce)
 import Data.Type.Equality (gcastWith, (:~:) (..))
 import Data.Type.Natural.Core
 import Data.Type.Natural.Lemma.Arithmetic
 import Data.Void (Void, absurd)
-import Numeric.Natural (Natural)
 import Proof.Equational
   ( because,
     start,
@@ -172,7 +170,6 @@ import Proof.Propositional (IsTrue (..), eliminate, withWitness)
 #if MIN_VERSION_ghc(9,2,1)
 import qualified Data.Type.Ord as DTO
 import Data.Type.Ord (OrdCond)
-import Unsafe.Coerce (unsafeCoerce)
 #endif
 
 
@@ -273,11 +270,11 @@ type Min m n = OrdCond (CmpNat m n) m m n
 
 sMin :: SNat n -> SNat m -> SNat (Min n m)
 {-# INLINE sMin #-}
-sMin = \l r -> withSomeSNat (fromSNat l `min` fromSNat r) unsafeCoerce
+sMin = unsafeLiftSBin min
 
 sMax :: SNat n -> SNat m -> SNat (Max n m)
 {-# INLINE sMax #-}
-sMax = \l r -> withSomeSNat (fromSNat l `max` fromSNat r) unsafeCoerce
+sMax = unsafeLiftSBin max
 
 #if MIN_VERSION_ghc(9,2,1)
 type Max m n = DTO.Max @Nat m n

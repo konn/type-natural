@@ -30,6 +30,7 @@ module Data.Type.Natural.Core
     withKnownNat,
     withSomeSNat,
 #endif
+    unsafeLiftSBin,
     ZeroOrSucc (..),
     viewNat,
     sNat,
@@ -113,27 +114,35 @@ withSomeSNat :: forall rep (r :: TYPE rep). Natural -> (forall n. SNat n -> r) -
 withSomeSNat n f = f (UnsafeSNat n)
 #endif
 
+unsafeLiftSBin :: (Natural -> Natural -> Natural) -> SNat n -> SNat m -> SNat k
+{-# INLINE unsafeLiftSBin #-}
+unsafeLiftSBin f = \l r -> withSomeSNat (fromSNat l `f` fromSNat r) unsafeCoerce
+
+unsafeLiftSUnary :: (Natural -> Natural) -> SNat n -> SNat k
+{-# INLINE unsafeLiftSUnary #-}
+unsafeLiftSUnary f = \l -> withSomeSNat (f $ fromSNat l) unsafeCoerce
+
 (%+) :: SNat n -> SNat m -> SNat (n + m)
 {-# INLINE (%+) #-}
-(%+) = \l r -> withSomeSNat (fromSNat l + fromSNat r) unsafeCoerce
+(%+) = unsafeLiftSBin (+)
 
 (%-) :: SNat n -> SNat m -> SNat (n - m)
-(%-) = \l r -> withSomeSNat (fromSNat l - fromSNat r) unsafeCoerce
+(%-) = unsafeLiftSBin (-)
 
 (%*) :: SNat n -> SNat m -> SNat (n * m)
-(%*) = \l r -> withSomeSNat (fromSNat l * fromSNat r) unsafeCoerce
+(%*) = unsafeLiftSBin (*)
 
 sDiv :: SNat n -> SNat m -> SNat (Div n m)
-sDiv = \l r -> withSomeSNat (fromSNat l `quot` fromSNat r) unsafeCoerce
+sDiv = unsafeLiftSBin quot
 
 sMod :: SNat n -> SNat m -> SNat (Mod n m)
-sMod = \l r -> withSomeSNat (fromSNat l `rem` fromSNat r) unsafeCoerce
+sMod = unsafeLiftSBin rem
 
 (%^) :: SNat n -> SNat m -> SNat (n ^ m)
-(%^) = \l r -> withSomeSNat (fromSNat l ^ fromSNat r) unsafeCoerce
+(%^) = unsafeLiftSBin (^)
 
 sLog2 :: SNat n -> SNat (Log2 n)
-sLog2 = \l -> withSomeSNat (fromIntegral $ naturalLog2 $ fromSNat l) unsafeCoerce
+sLog2 = unsafeLiftSUnary $ fromIntegral . naturalLog2
 
 sNat :: forall n. KnownNat n => SNat n
 #if MIN_VERSION_ghc(4,18,0)
@@ -276,3 +285,4 @@ sCmpNat n m =
     LT -> unsafeCoerce SLT
     EQ -> unsafeCoerce SEQ
     GT -> unsafeCoerce SGT
+
