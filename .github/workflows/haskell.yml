@@ -29,6 +29,7 @@ jobs:
 
   build:
     needs: [enumerate]
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
