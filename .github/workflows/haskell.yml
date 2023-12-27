@@ -47,8 +47,8 @@ jobs:
         cabal-version: 3.10.1.0
         enable-stack: false
 
-    - name: Cache ~/.cabal/store
-      uses: actions/cache@v3
+    - name: Restore Cache ~/.cabal/store
+      uses: actions/cache/restore@v3
       env:
         cache-name: cache-cabal-store
       with:
@@ -72,6 +72,17 @@ jobs:
       run: |
         ${CABAL} v2-configure --enable-tests --enable-benchmarks
         ${CABAL} v2-update
+    - name: Build Dependencies
+      run: |
+        ${CABAL} v2-build all --only-dependencies
+    - name: Save Cache ~/.cabal/store
+      uses: actions/cache/save@v3
+      env:
+        cache-name: cache-cabal-store
+      with:
+        path: ~/.cabal/store
+        key: build-${{ runner.os }}-${{env.cache-name}}-${{matrix.ghc}}-${{ hashFiles('**/*.cabal', '${{matrix.plan}}') }}
+
     - name: Build
       run: |
         ${CABAL} v2-build all
