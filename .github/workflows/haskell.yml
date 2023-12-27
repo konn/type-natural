@@ -123,8 +123,3 @@ jobs:
           echo "Executing: ${TEST}"
           "${TEST}"
         done
-        
-        find artifacts/exes -type f | while read -r TEST; do
-          echo "Executing: ${TEST}"
-          "${TEST}"
-        done
