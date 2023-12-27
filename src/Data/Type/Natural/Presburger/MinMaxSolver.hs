@@ -10,7 +10,6 @@ import Control.Monad (mzero)
 import GHC.TypeLits.Presburger.Compat
 import GHC.TypeLits.Presburger.Types
 
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Plugins
   ( Plugin,
     fsLit,
@@ -19,16 +18,6 @@ import GHC.Plugins
     splitTyConApp_maybe,
   )
 import GHC.Tc.Plugin
-#else
-import GhcPlugins
-  ( Plugin,
-    fsLit,
-    mkModuleName,
-    mkTcOcc,
-    splitTyConApp_maybe,
-  )
-import TcPluginM
-#endif
 
 plugin :: Plugin
 plugin =
