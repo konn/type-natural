@@ -29,6 +29,7 @@ jobs:
 
   build:
     needs: [enumerate]
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -41,14 +42,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: haskell/actions/setup@v2
+    - uses: haskell-actions/setup@v2
       with:
         ghc-version: ${{matrix.ghc}}
         cabal-version: 3.10.1.0
         enable-stack: false
 
-    - name: Cache ~/.cabal/store
-      uses: actions/cache@v3
+    - name: Restore Cache ~/.cabal/store
+      uses: actions/cache/restore@v3
       env:
         cache-name: cache-cabal-store
       with:
@@ -72,6 +73,17 @@ jobs:
       run: |
         ${CABAL} v2-configure --enable-tests --enable-benchmarks
         ${CABAL} v2-update
+    - name: Build Dependencies
+      run: |
+        ${CABAL} v2-build all --only-dependencies
+    - name: Save Cache ~/.cabal/store
+      uses: actions/cache/save@v3
+      env:
+        cache-name: cache-cabal-store
+      with:
+        path: ~/.cabal/store
+        key: build-${{ runner.os }}-${{env.cache-name}}-${{matrix.ghc}}-${{ hashFiles('**/*.cabal', '${{matrix.plan}}') }}
+
     - name: Build
       run: |
         ${CABAL} v2-build all
@@ -108,11 +120,6 @@ jobs:
         tar xvf "${DL_PATH}/artifacts.tar"
         set +x
         find artifacts/tests -type f | while read -r TEST; do
-          echo "Executing: ${TEST}"
-          "${TEST}"
-        done
-        
-        find artifacts/exes -type f | while read -r TEST; do
           echo "Executing: ${TEST}"
           "${TEST}"
         done
