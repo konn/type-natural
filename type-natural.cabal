@@ -1,27 +1,23 @@
-cabal-version:      >=1.10
-name:               type-natural
-version:            1.3.0.1
-license:            BSD3
-license-file:       LICENSE
-copyright:          (C) Hiromi ISHII 2013-2023
-maintainer:         konn.jinro_at_gmail.com
-author:             Hiromi ISHII
-tested-with:        GHC ==9.0.2 || ==9.2.8 || ==9.4.8 || ==9.6.3 || ==9.8.1
-homepage:           https://github.com/konn/type-natural
-synopsis:           Type-level natural and proofs of their properties.
+cabal-version: 3.0
+name: type-natural
+version: 1.3.0.1
+license: BSD-3-Clause
+license-file: LICENSE
+copyright: (C) Hiromi ISHII 2013-2024
+maintainer: konn.jinro_at_gmail.com
+author: Hiromi ISHII
+tested-with: ghc ==9.0.2 || ==9.2.8 || ==9.4.8 || ==9.6.5 || ==9.8.2 || ==9.10.1
+homepage: https://github.com/konn/type-natural
+synopsis: Type-level natural and proofs of their properties.
 description:
   Type-level natural numbers and proofs of their properties.
-  .
-  Version 0.6+ supports __GHC 8+ only__.
-  .
-  __Use 0.5.* with ~ GHC 7.10.3__.
 
-category:           Math
-build-type:         Simple
+category: Math
+build-type: Simple
 extra-source-files: Changelog.md
 
 source-repository head
-  type:     git
+  type: git
   location: git://github.com/konn/type-natural.git
 
 library
@@ -34,13 +30,13 @@ library
     Data.Type.Ordinal
     Data.Type.Ordinal.Builtin
 
-  hs-source-dirs:     src
+  hs-source-dirs: src
   other-modules:
     Data.Type.Natural.Core
     Data.Type.Natural.Lemma.Presburger
     Data.Type.Natural.Utils
 
-  default-language:   Haskell2010
+  default-language: Haskell2010
   default-extensions:
     ConstraintKinds
     DataKinds
@@ -56,38 +52,39 @@ library
     UndecidableInstances
 
   default-extensions: NoStarIsType
-  ghc-options:        -Wall -Wno-orphans -Wno-redundant-constraints
+  ghc-options:
+    -Wall
+    -Wno-orphans
+    -Wno-redundant-constraints
+
   build-depends:
-      base                       >=4       && <5
-    , constraints                >=0.3
-    , equational-reasoning       >=0.4.1.1
-    , ghc
-    , ghc-typelits-knownnat
-    , ghc-typelits-natnormalise  >=0.4
-    , integer-logarithms
-    , template-haskell           >=2.8
+    base >=4 && <5,
+    constraints >=0.3,
+    equational-reasoning >=0.4.1.1,
+    ghc,
+    ghc-typelits-knownnat,
+    ghc-typelits-natnormalise >=0.4,
+    integer-logarithms,
+    template-haskell >=2.8,
 
-  if impl(ghc >=9.8)
+  if impl(ghc >= 9.8)
     build-depends: ghc-typelits-presburger >=0.7.3
-
   else
-    if impl(ghc >=9.6)
+    if impl(ghc >= 9.6)
       build-depends: ghc-typelits-presburger >=0.7.2
-
     else
-      if impl(ghc >=9.4)
+      if impl(ghc >= 9.4)
         build-depends: ghc-typelits-presburger >=0.7.1
-
       else
         build-depends: ghc-typelits-presburger
 
 test-suite type-natural-test
-  type:               exitcode-stdio-1.0
-  main-is:            test.hs
-  build-tool-depends: tasty-discover:tasty-discover -any
-  hs-source-dirs:     tests
-  default-language:   Haskell2010
-  ghc-options:        -Wall
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  build-tool-depends: tasty-discover:tasty-discover
+  hs-source-dirs: tests
+  default-language: Haskell2010
+  ghc-options: -Wall
   other-modules:
     Data.Type.Natural.Lemma.OrderSpec
     Data.Type.Natural.Presburger.Cases
@@ -98,16 +95,16 @@ test-suite type-natural-test
     Shared
 
   build-depends:
-      base
-    , equational-reasoning
-    , integer-logarithms
-    , QuickCheck
-    , quickcheck-instances
-    , tasty
-    , tasty-discover
-    , tasty-hunit
-    , tasty-quickcheck
-    , template-haskell
-    , type-natural
+    QuickCheck,
+    base,
+    equational-reasoning,
+    integer-logarithms,
+    quickcheck-instances,
+    tasty,
+    tasty-discover,
+    tasty-hunit,
+    tasty-quickcheck,
+    template-haskell,
+    type-natural,
 
   default-extensions: NoStarIsType
