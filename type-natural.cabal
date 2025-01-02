@@ -6,7 +6,7 @@ license-file: LICENSE
 copyright: (C) Hiromi ISHII 2013-2024
 maintainer: konn.jinro_at_gmail.com
 author: Hiromi ISHII
-tested-with: ghc ==9.0.2 || ==9.2.8 || ==9.4.8 || ==9.6.5 || ==9.8.2 || ==9.10.1
+tested-with: ghc ==9.2.8 || ==9.4.8 || ==9.6.5 || ==9.8.4 || ==9.10.1
 homepage: https://github.com/konn/type-natural
 synopsis: Type-level natural and proofs of their properties.
 description:
@@ -21,6 +21,7 @@ source-repository head
   location: git://github.com/konn/type-natural.git
 
 library
+  -- cabal-gild: discover src --exclude src/**/Core.hs --exclude src/**/Utils.hs --exclude src/Data/Type/Natural/Lemma/Presburger.hs
   exposed-modules:
     Data.Type.Natural
     Data.Type.Natural.Builtin
@@ -67,13 +68,13 @@ library
     integer-logarithms,
     template-haskell >=2.8,
 
-  if impl(ghc >= 9.8)
+  if impl(ghc >=9.8)
     build-depends: ghc-typelits-presburger >=0.7.3
   else
-    if impl(ghc >= 9.6)
+    if impl(ghc >=9.6)
       build-depends: ghc-typelits-presburger >=0.7.2
     else
-      if impl(ghc >= 9.4)
+      if impl(ghc >=9.4)
         build-depends: ghc-typelits-presburger >=0.7.1
       else
         build-depends: ghc-typelits-presburger

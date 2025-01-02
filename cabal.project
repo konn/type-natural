@@ -2,6 +2,7 @@ if impl(ghc >= 9.10)
     packages: 
       type-natural.cabal
       https://hackage.haskell.org/package/equational-reasoning-0.7.1.0/candidate/equational-reasoning-0.7.1.0.tar.gz
+      https://hackage.haskell.org/package/ghc-typelits-presburger-0.7.4.1/candidate/ghc-typelits-presburger-0.7.4.1.tar.gz
 else
     packages: 
       type-natural.cabal
